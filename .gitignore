@@ -1,0 +1,8 @@
+node_modules
+
+/.cache
+/public/build
+.env
+.env.production
+/.vscode/settings.json
+/build

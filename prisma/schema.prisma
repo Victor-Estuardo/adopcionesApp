@@ -1,0 +1,215 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model module {
+  id           Int                 @id(map: "pk_module") @default(autoincrement())
+  key          String              @db.VarChar(100)
+  name         String              @db.VarChar(100)
+  icon         String              @db.VarChar(100)
+  order        Int
+  is_active    Boolean
+  nav_zone     nav_zone_module
+  nav_audience nav_audience_module
+  permission   permission[]
+}
+
+model pet {
+  id                        Int                   @id @default(autoincrement())
+  name                      String                @db.VarChar(100)
+  adopted                   Boolean               @default(false)
+  gender                    gender_pet
+  pet_species_id            Int
+  birthdate                 DateTime              @db.Date
+  size                      String                @db.VarChar(50)
+  color                     String                @db.VarChar(50)
+  vaccinated                Boolean               @default(false)
+  sterilized                Boolean               @default(false)
+  description               String?
+  race                      String?               @db.VarChar(100)
+  creation_date             DateTime              @db.Timestamp(6)
+  creator_id                Int
+  update_date               DateTime              @db.Timestamp(6)
+  updater_id                Int
+  adoptionApplication       adoptionApplication[]
+  user_pet_creator_idTouser user                  @relation("pet_creator_idTouser", fields: [creator_id], references: [id], onUpdate: Restrict, map: "fk_creator_pet")
+  petSpecies                petSpecies            @relation(fields: [pet_species_id], references: [id], onUpdate: Restrict, map: "fk_species_pet")
+  user_pet_updater_idTouser user                  @relation("pet_updater_idTouser", fields: [updater_id], references: [id], onUpdate: Restrict, map: "fk_updater_pet")
+  pet_images                pet_images[]
+  savedPet                  savedPet[]
+
+  @@index([name])
+}
+
+model petSpecies {
+  id                               Int      @id(map: "petcategory_pkey") @default(autoincrement())
+  name                             String   @db.VarChar(100)
+  active                           Boolean  @default(true)
+  creation_date                    DateTime @default(now()) @db.Timestamp(6)
+  creator_id                       Int
+  update_date                      DateTime @default(now()) @db.Timestamp(6)
+  updater_id                       Int
+  pet                              pet[]
+  user_petSpecies_creator_idTouser user     @relation("petSpecies_creator_idTouser", fields: [creator_id], references: [id], onUpdate: Restrict, map: "fk_creator_petcategory")
+  user_petSpecies_updater_idTouser user     @relation("petSpecies_updater_idTouser", fields: [updater_id], references: [id], onUpdate: Restrict, map: "pk_updater_petcategory")
+}
+
+model pet_images {
+  id                               Int      @id @default(autoincrement())
+  pet_id                           Int
+  path                             String   @db.VarChar(100)
+  creation_date                    DateTime @db.Timestamp(6)
+  creator_id                       Int
+  update_date                      DateTime @db.Timestamp(6)
+  updater_id                       Int
+  user_pet_images_creator_idTouser user     @relation("pet_images_creator_idTouser", fields: [creator_id], references: [id], onUpdate: Restrict, map: "fk_creator_pet_images")
+  pet                              pet      @relation(fields: [pet_id], references: [id], onUpdate: Restrict, map: "fk_pet_pet_images")
+  user_pet_images_updater_idTouser user     @relation("pet_images_updater_idTouser", fields: [updater_id], references: [id], onUpdate: Restrict, map: "fk_updater_pet_images")
+}
+
+model role {
+  id                 Int               @id(map: "pk_rol") @default(autoincrement())
+  name               String            @db.VarChar(100)
+  description        String?           @db.VarChar(100)
+  active             Boolean?          @default(true)
+  created_in         DateTime          @db.Timestamp(6)
+  its_administrative Boolean           @default(false)
+  permission_role    permission_role[]
+  user               user[]
+}
+
+model user {
+  id                                     Int                   @id @default(autoincrement())
+  first_name                             String                @db.VarChar(100)
+  last_name                              String                @db.VarChar(100)
+  email                                  String                @unique(map: "user_username_key") @db.VarChar(100)
+  password                               String                @db.VarChar(255)
+  role_id                                Int
+  registration_date                      DateTime?             @default(now()) @db.Timestamp(6)
+  it_is_verified                         Boolean               @default(false)
+  profile_public_id                      String?               @unique(map: "user_unique")
+  phone                                  String?               @db.VarChar(25)
+  profile_version                        String?               @db.VarChar(100)
+  adoptionApplication                    adoptionApplication[]
+  passwordResetToken                     passwordResetToken[]
+  pet_pet_creator_idTouser               pet[]                 @relation("pet_creator_idTouser")
+  pet_pet_updater_idTouser               pet[]                 @relation("pet_updater_idTouser")
+  petSpecies_petSpecies_creator_idTouser petSpecies[]          @relation("petSpecies_creator_idTouser")
+  petSpecies_petSpecies_updater_idTouser petSpecies[]          @relation("petSpecies_updater_idTouser")
+  pet_images_pet_images_creator_idTouser pet_images[]          @relation("pet_images_creator_idTouser")
+  pet_images_pet_images_updater_idTouser pet_images[]          @relation("pet_images_updater_idTouser")
+  savedPet                               savedPet[]
+  role                                   role                  @relation(fields: [role_id], references: [id], onUpdate: Restrict, map: "user_rol_fk")
+}
+
+model permission {
+  id              Int               @id(map: "pk_permission") @default(autoincrement())
+  name            String            @db.VarChar(100)
+  description     String            @db.VarChar(200)
+  module_id       Int
+  action          action_permission
+  created_in      DateTime          @db.Timestamp(6)
+  module          module            @relation(fields: [module_id], references: [id], onUpdate: Restrict, map: "fk_module_permission")
+  permission_role permission_role[]
+}
+
+model permission_role {
+  id            Int        @id(map: "pk_permission_role") @default(autoincrement())
+  role_id       Int
+  permission_id Int
+  created_in    DateTime   @db.Timestamp(6)
+  permission    permission @relation(fields: [permission_id], references: [id], onUpdate: Restrict, map: "fk_permission_permission_role")
+  role          role       @relation(fields: [role_id], references: [id], onUpdate: Restrict, map: "fk_role_permission_role")
+}
+
+model passwordResetToken {
+  id         String   @id(map: "passwordresettoken_pk") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  token      String   @unique(map: "passwordresettoken_unique")
+  user_id    Int
+  expires_at DateTime @db.Timestamp(6)
+  created_at DateTime @db.Timestamp(6)
+  user       user     @relation(fields: [user_id], references: [id], onUpdate: Restrict, map: "fk_user_passwordresettoken")
+}
+
+model formQuestion {
+  id                String              @id(map: "pk_formQuestions") @default(dbgenerated("gen_random_uuid()"))
+  section           String?             @db.VarChar(100)
+  question_text     String
+  field_type        String              @db.VarChar(100)
+  options           Json?
+  required          Boolean
+  sort_order        Int
+  active            Boolean
+  applicationAnswer applicationAnswer[]
+}
+
+model adoptionApplication {
+  id                      String                @id(map: "pk_adoptionApplications") @default(dbgenerated("gen_random_uuid()"))
+  pet_id                  Int
+  user_id                 Int
+  status                  String                @db.VarChar(50)
+  submitted_at            DateTime              @db.Timestamp(6)
+  updated_at              DateTime              @db.Timestamp(6)
+  pet                     pet                   @relation(fields: [pet_id], references: [id], onUpdate: Restrict, map: "fk_pet_adoptionapplications")
+  user                    user                  @relation(fields: [user_id], references: [id], onUpdate: Restrict, map: "fk_user_adoptionapplications")
+  other_applicationAnswer applicationAnswer[]   @relation("applicationAnswerToapplicationAnswer")
+  commitmentAgreement     commitmentAgreement[]
+}
+
+model applicationAnswer {
+  id                String              @id(map: "pk_applicationanswers") @default(dbgenerated("gen_random_uuid()"))
+  application_id    String
+  question_id       String
+  answer_value      String
+  applicationAnswer adoptionApplication @relation("applicationAnswerToapplicationAnswer", fields: [application_id], references: [id], onUpdate: Restrict, map: "applicationanswers_applicationanswers_fk")
+  formQuestion      formQuestion        @relation(fields: [question_id], references: [id], onUpdate: Restrict, map: "applicationanswers_formquestions_fk")
+}
+
+model commitmentAgreement {
+  id                  String              @id(map: "commitmentagreement_pk") @default(dbgenerated("gen_random_uuid()"))
+  application_id      String
+  agreement_text      String
+  accepted            Boolean
+  ip_address          String?             @db.VarChar
+  signed_at           DateTime            @db.Timestamp(6)
+  adoptionApplication adoptionApplication @relation(fields: [application_id], references: [id], onUpdate: Restrict, map: "commitmentagreement_adoptionapplication_fk")
+}
+
+model savedPet {
+  id       String   @id(map: "savedpet_pk") @default(dbgenerated("gen_random_uuid()"))
+  user_id  Int
+  pet_id   Int
+  saved_at DateTime @default(now()) @db.Timestamp(6)
+  pet      pet      @relation(fields: [pet_id], references: [id], onUpdate: Restrict, map: "savedpet_pet_fk")
+  user     user     @relation(fields: [user_id], references: [id], onUpdate: Restrict, map: "savedpet_user_fk")
+}
+
+enum nav_audience_module {
+  ALL
+  AUTH_ONLY
+  ADMIN_ONLY
+}
+
+enum nav_zone_module {
+  TOPBAR
+  ACCOUNT
+  ADMIN_SIDEBAR
+}
+
+enum gender_pet {
+  Macho
+  Hembra
+}
+
+enum action_permission {
+  Leer
+  Crear
+  Actualizar
+  Eliminar
+  Guardar
+}
