@@ -1,4 +1,9 @@
 //<reference> https://stackoverflow.com/questions/9781218/how-to-change-node-jss-console-font-color
+
+import { $Enums } from "@prisma/client";
+import { Session } from "@remix-run/node";
+import { PermissionSession } from "~/services/auth/login.service";
+
 //Example: console.log('\x1b[33m%s\x1b[0m', stringToMakeYellow);  //yellow
 export const LOG_COLORS = {
   Reset: "\x1b[0m",
@@ -140,4 +145,31 @@ export function handlePasswordValidation(
  */
 export function getDateGt(): Date {
   return new Date(new Date().getTime() - 6 * 60 * 60 * 1000);
+}
+
+/*------------------------------------------------------------------------*/
+/**
+ * Función que Verifica los permisos de navegación
+ * @returns {Boolean} si tiene permiso o no
+ */
+export function validatePermission(
+  session: Session,
+  moduleId: number,
+  action: $Enums.action_permission,
+): Response | null {
+  // Obtenemos los permisos
+  const permissions: PermissionSession[] = session.get("permissions") || [];
+
+  if (
+    !permissions.find((p) => p.module_id === moduleId && p.action === action)
+  ) {
+    return new Response(
+      "No cuenta con los permisos necesarios para ejecutar la acción",
+      {
+        status: 404,
+      },
+    );
+  }
+
+  return null;
 }

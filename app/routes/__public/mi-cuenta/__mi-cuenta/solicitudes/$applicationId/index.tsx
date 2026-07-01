@@ -21,11 +21,6 @@ export const meta = () => {
   return [{ title: "PROGRESO DE SOLICITUD" }];
 };
 
-/*==============================| Loader Function |==============================*/
-export const loader: LoaderFunction = async ({}) => {
-  return json({});
-};
-
 /*==============================| Action Function |==============================*/
 export const action: ActionFunction = async ({ request, params }) => {
   const cookie = request.headers.get("cookie");

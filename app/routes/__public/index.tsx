@@ -1,4 +1,4 @@
-import { ActionFunction, LoaderFunction, json } from "@remix-run/node";
+import { ActionFunction, json } from "@remix-run/node";
 import { Link, useFetcher, useSearchParams } from "@remix-run/react";
 import { useEffect, useMemo, useState } from "react";
 import SearchInput from "~/components/Input/SearchInput";
@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { RiArrowDropDownLine } from "react-icons/ri";
 import ListWithChek from "~/components/List/ListWithChek";
 import { listPetSpeciesDb } from "~/services/db/petSpecies.service";
+import { SecondaryButton } from "~/components/Button/secondary";
 
 export const meta = () => {
   return [{ title: "ADOPCIONES" }];
@@ -28,11 +29,6 @@ interface FilterOption {
   value: string;
   label: string;
 }
-
-/*==============================| Loader Function |==============================*/
-export const loader: LoaderFunction = async ({ request }) => {
-  return json({});
-};
 
 /*==============================| Action Function |==============================*/
 export const action: ActionFunction = async ({ request }) => {
@@ -301,6 +297,7 @@ export default function () {
               <div
                 key={`${index}_${pet.name}`}
                 className="w-[249px] h-80 pb-3 flex flex-col justify-center items-center rounded-lg shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] cursor-pointer"
+                onClick={() => (window.location.href = `/mascota/${pet.id}`)}
               >
                 <img
                   src={pet.pet_images?.[0]?.path}
@@ -318,12 +315,12 @@ export default function () {
                     <p className="min-w-max">{pet.gender}</p>
                   </div>
                 </div>
-                <Link
-                  to={`/mascota/${pet.id}`}
-                  className="w-[80%] text-center px-4 py-1 border border-blue-meraki rounded-full text-[.75rem] md:text-base"
-                >
-                  Ver
-                </Link>
+                <SecondaryButton
+                  label="Ver"
+                  borderColor="border-blue-meraki"
+                  textColor="white"
+                  width="w-[80%]"
+                />
               </div>
             ))}
           </div>

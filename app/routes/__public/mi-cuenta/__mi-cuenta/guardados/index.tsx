@@ -10,7 +10,7 @@ import {
   listSavedPetWithPetDb,
 } from "~/services/db/savedPet.service";
 import { getSession } from "~/services/sessions/sessions.service";
-import { calculateAge } from "~/utils/common";
+import { calculateAge, validatePermission } from "~/utils/common";
 
 /*==============================| Types |==============================*/
 type SavedPetItem = {
@@ -30,6 +30,14 @@ type SavedPetItem = {
 
 /*==============================| Loader Function |==============================*/
 export const loader: LoaderFunction = async ({ request }) => {
+  const cookie = request.headers.get("cookie");
+  const session = await getSession(cookie);
+
+  // Verificamos que tenga permiso de Leer "mis guardados";
+  const validateRequest = validatePermission(session, 8, "Leer");
+
+  if (validateRequest) throw validateRequest;
+
   return json({});
 };
 
@@ -45,7 +53,7 @@ export const action: ActionFunction = async ({ request }) => {
 
   if (action === "loadInformation") {
     const savedPetListRes = await listSavedPetWithPetDb(
-      { user_id: dbUserId },
+      { user_id: dbUserId || -100 },
       { saved_at: "desc" },
     );
 

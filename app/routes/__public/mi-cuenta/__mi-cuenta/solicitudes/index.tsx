@@ -9,14 +9,22 @@ import {
   ListApplicationWithPet,
 } from "~/services/db/adoptionApplication.service";
 import { getSession } from "~/services/sessions/sessions.service";
-import { calculateAge } from "~/utils/common";
+import { calculateAge, validatePermission } from "~/utils/common";
 
 export const meta = () => {
   return [{ title: "SOLICITUDES DE ADOPCIÓN" }];
 };
 
 /*==============================| Loader Function |==============================*/
-export const loader: LoaderFunction = async ({}) => {
+export const loader: LoaderFunction = async ({ request }) => {
+  const cookie = request.headers.get("cookie");
+  const session = await getSession(cookie);
+
+  // Verificamos que tenga permiso de Leer "mis solicitudes";
+  const validateRequest = validatePermission(session, 7, "Leer");
+
+  if (validateRequest) throw validateRequest;
+
   return json({});
 };
 
@@ -32,7 +40,7 @@ export const action: ActionFunction = async ({ request }) => {
 
   if (action === "loadInformation") {
     const applicationsRes = await listAdoptionApplicationWithPetDb({
-      user_id: dbUserId,
+      user_id: dbUserId || -100,
     });
 
     if (!applicationsRes.success)

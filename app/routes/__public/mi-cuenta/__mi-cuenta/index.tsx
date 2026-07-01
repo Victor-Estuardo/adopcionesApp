@@ -9,6 +9,7 @@ import { getSession } from "~/services/sessions/sessions.service";
 import { countSavedpetDb } from "~/services/db/savedPet.service";
 import { getUserDb } from "~/services/db/user.service";
 import { user } from "@prisma/client";
+import { validatePermission } from "~/utils/common";
 
 export const meta = () => {
   return [{ title: "MI CUENTA" }];
@@ -16,6 +17,14 @@ export const meta = () => {
 
 /*==============================| Loader Function |==============================*/
 export const loader: LoaderFunction = async ({ request }) => {
+  const cookie = request.headers.get("cookie");
+  const session = await getSession(cookie);
+
+  // Verificamos que tenga permiso de Leer "mi Cuenta";
+  const validateRequest = validatePermission(session, 5, "Leer");
+
+  if (validateRequest) throw validateRequest;
+
   return json({});
 };
 

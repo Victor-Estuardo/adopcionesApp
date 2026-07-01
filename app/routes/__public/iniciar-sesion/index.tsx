@@ -56,7 +56,7 @@ export const action: ActionFunction = async ({ request }) => {
     const { email, password } = data;
 
     // Verificamos y creamos la sesión
-    const loginRes: any = await loginWebApp(email, password, session);
+    const loginRes = await loginWebApp(email, password, session);
 
     if (!loginRes.sucess) {
       return json({
@@ -71,11 +71,16 @@ export const action: ActionFunction = async ({ request }) => {
     const url = new URL(request.url);
     const search = url.searchParams;
 
-    return redirect(search.get("redirect") || "/mi-cuenta", {
-      headers: {
-        "Set-Cookie": await commitSession(session),
+    return redirect(
+      search.get("redirect") || loginRes?.administrative
+        ? "/dashboard"
+        : "/mi-cuenta",
+      {
+        headers: {
+          "Set-Cookie": await commitSession(session),
+        },
       },
-    });
+    );
   }
 
   if (action === "forwardEmail") {

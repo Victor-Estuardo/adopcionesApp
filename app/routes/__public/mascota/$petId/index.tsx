@@ -25,11 +25,6 @@ export const meta = () => {
   return [{ title: "MASCOTA" }];
 };
 
-/*==============================| Loader Function |==============================*/
-export const loader: LoaderFunction = async ({}) => {
-  return json({});
-};
-
 /*==============================| Action Function |==============================*/
 export const action: ActionFunction = async ({ request, params }) => {
   const cookie = request.headers.get("cookie");
@@ -58,7 +53,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 
     // Obtenemos información de si la mascota ha sido guardada
     const getSavedPetRes = await getSavedPetDb({
-      user_id: dbUserId,
+      user_id: dbUserId || -100,
       pet_id: Number(petId),
     });
 
@@ -73,6 +68,9 @@ export const action: ActionFunction = async ({ request, params }) => {
       isUser: !!session.get("dbUserId"),
       allowedLikePet: permissions.find(
         (p) => p.module_id === 1 && p.action === "Guardar",
+      ),
+      allowedRequestPet: permissions.find(
+        (p) => p.module_id === 1 && p.action === "Crear",
       ),
       pet_saved_id: getSavedPetRes.data?.id,
     });
@@ -144,6 +142,7 @@ export default function () {
   // Información del usuario
   const [isUser, setIsUser] = useState(false);
   const [allowedLike, setAllowedLike] = useState(false);
+  const [allowedRequest, setAllowedRequest] = useState(false);
 
   // Banderas
   const [isLoading, setIsLoading] = useState(true);
@@ -177,6 +176,9 @@ export default function () {
     }
     if (fetcher.data?.allowedLikePet) {
       setAllowedLike(true);
+    }
+    if (fetcher.data?.allowedRequestPet) {
+      setAllowedRequest(true);
     }
     if (fetcher.data?.pet_saved_id) {
       setPetSavedId(fetcher.data.pet_saved_id);
@@ -301,11 +303,13 @@ export default function () {
             </div>
             <p className="text-gray-700 leading-relaxed">{pet.description}</p>
             <div className="flex gap-4">
-              <PrimaryButton
-                disabled={pet.adopted}
-                onClick={() => handleAdoptionPet()}
-                label={pet.adopted ? "Adoptado" : "Solicitar Adopción"}
-              />
+              {(!isUser || allowedRequest) && (
+                <PrimaryButton
+                  disabled={pet.adopted}
+                  onClick={() => handleAdoptionPet()}
+                  label={pet.adopted ? "Adoptado" : "Solicitar Adopción"}
+                />
+              )}
               {(!isUser || allowedLike) && (
                 <SecondaryButton
                   color={petSavedId ? "bg-rose-400" : undefined}

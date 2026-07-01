@@ -21,7 +21,7 @@ import {
   commitSession,
   getSession,
 } from "~/services/sessions/sessions.service";
-import { getDateGt } from "~/utils/common";
+import { getDateGt, validatePermission } from "~/utils/common";
 import { generateSecureToken, hashText } from "~/utils/crypto.server";
 import { resizeImage } from "~/utils/image";
 
@@ -31,8 +31,15 @@ export const meta = () => {
 
 /*==============================| Loader Function |==============================*/
 export const loader: LoaderFunction = async ({ request }) => {
+  const cookie = request.headers.get("cookie");
+  const session = await getSession(cookie);
   const url = new URL(request.url);
   const searchParams = url.searchParams;
+
+  // Verificamos que tenga permiso de Leer "editar mi Cuenta";
+  const validateRequest = validatePermission(session, 6, "Leer");
+
+  if (validateRequest) throw validateRequest;
 
   return json({
     edit_profile: searchParams.get("editProfile") === "true",
@@ -226,6 +233,7 @@ export default function () {
     // Mensaje de error durante algun proceso
     if (fetcher.data?.errorMsg) {
       toast.error(fetcher.data.errorMsg);
+      setIsLoading(false);
     }
 
     if (fetcher.data?.user) {

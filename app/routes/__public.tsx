@@ -1,4 +1,4 @@
-import { json, LoaderFunction, redirect } from "@remix-run/node";
+import { json, LoaderFunction } from "@remix-run/node";
 import {
   useRouteError,
   isRouteErrorResponse,
@@ -24,7 +24,6 @@ export const loader: LoaderFunction = async ({ request }) => {
   // Datos de navegación
   const cookie = request.headers.get("Cookie");
   const session = await getSession(cookie);
-  const url = new URL(request.url);
 
   // Datos de la sesión
   const modules: ModuleSession[] = session.get("modules");
@@ -32,7 +31,11 @@ export const loader: LoaderFunction = async ({ request }) => {
   const last_name = session.get("last_name") || "";
   const profile = session.get("profile");
   const profileV = session.get("profile_v");
-  const baseProfile = `https://res.cloudinary.com/${config.cloudinaryCloudName}/image/upload`;
+  const baseCloud = `https://res.cloudinary.com/${config.cloudinaryCloudName}/image/upload`;
+
+  // Creamos las iniciales del usuario
+  const initials =
+    first_name?.charAt(0).toUpperCase() + last_name?.charAt(0).toUpperCase();
 
   if (!modules) {
     // Si es una visita publica se lista solo los modulos publicos
@@ -44,22 +47,26 @@ export const loader: LoaderFunction = async ({ request }) => {
     if (publicModuleListRes.success) {
       session.set("modules", publicModuleListRes.data);
 
-      return redirect(url.pathname, {
-        headers: {
-          "Set-Cookie": await commitSession(session),
+      return json(
+        {
+          modules,
+          initials,
+          profile: profile ? `${baseCloud}/v${profileV}/${profile}` : undefined,
+          isLoggenIn: !!session.get("dbUserId"),
         },
-      });
+        {
+          headers: {
+            "Set-Cookie": await commitSession(session),
+          },
+        },
+      );
     }
   }
-
-  // Creamos las iniciales del usuario
-  const initials =
-    first_name?.charAt(0).toUpperCase() + last_name?.charAt(0).toUpperCase();
 
   return json({
     modules,
     initials,
-    profile: profile ? `${baseProfile}/v${profileV}/${profile}` : undefined,
+    profile: profile ? `${baseCloud}/v${profileV}/${profile}` : undefined,
     isLoggenIn: !!session.get("dbUserId"),
   });
 };
@@ -71,17 +78,21 @@ export function ErrorBoundary() {
 
   //Esto es lo que usualmente va hacia `CatchBoundary`
   if (isRouteErrorResponse(error)) {
+    // Si el error.data es string se usa caso contrario se busca message
+    const errorMsg =
+      typeof error.data === "string" ? error.data : error.data.message;
+
     return (
       <ErrorBoundaryAlert
-        title={`CatchBoundary - ${error.status} - app/routes${route}`}
-        description={error.data.message}
+        title={`CatchBoundary - ${error.status} - ${route}`}
+        description={errorMsg}
       />
     );
   }
 
   return (
     <ErrorBoundaryAlert
-      title={`Error - app/routes${route}`}
+      title={`Error - ${route}`}
       description={error?.toString() ?? ""}
     />
   );

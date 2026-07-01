@@ -18,6 +18,8 @@ import {
 import { createApplicationAnswersDb } from "~/services/db/applicationAnswer.service";
 import { toast } from "sonner";
 import { createcommitmentAgreementDb } from "~/services/db/commitmentAgreement.service";
+import { PermissionSession } from "~/services/auth/login.service";
+import { validatePermission } from "~/utils/common";
 
 export const meta = () => {
   return [{ title: "SOLICITUD DE ADOPCIÓN" }];
@@ -28,6 +30,10 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   const cookie = request.headers.get("cookie");
   const session = await getSession(cookie);
   const dbUserId = session.get("dbUserId");
+
+  // verificamos que tenga permiso de solicitar adopción
+  const validateRequest = validatePermission(session, 1, "Crear");
+  if (validateRequest) throw validateRequest;
 
   // Obtenemos el id de la mascota
   const { petId } = params;

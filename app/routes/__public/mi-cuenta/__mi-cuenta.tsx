@@ -1,4 +1,4 @@
-import { json, LoaderFunction, redirect } from "@remix-run/node";
+import { json, LoaderFunction } from "@remix-run/node";
 import {
   NavLink,
   Outlet,
@@ -21,17 +21,6 @@ export const meta = () => {
 export const loader: LoaderFunction = async ({ request }) => {
   const cookie = request.headers.get("Cookie");
   const session = await getSession(cookie);
-  const modules: ModuleSession[] = session.get("modules") || [];
-
-  // Si no ha iniciado sesión se redirige a ello
-  if (!session.get("dbUserId")) {
-    return redirect("/iniciar-sesion");
-  }
-
-  // Si no tiene agregado el modulo se manda al inicio
-  if (!modules.find((m) => m.key === "/mi-cuenta")) {
-    return redirect("/");
-  }
 
   // Obtenemos el nombre del usuario
   const username = [session.get("first_name"), session.get("last_name")].join(
@@ -53,7 +42,6 @@ const ModuleIcons: { [x: string]: IconType } = {
 export default function () {
   //Hooks..
   const routeData = useRouteLoaderData("routes/__public");
-
   const { username } = useLoaderData<{
     username: string;
   }>();

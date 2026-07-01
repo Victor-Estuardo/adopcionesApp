@@ -109,7 +109,7 @@ export async function loginWebApp(
     }));
 
   // Modulos disponibles al rol
-  const availableModules: $Enums.nav_audience_module[] = ["ALL"];
+  /*const availableModules: $Enums.nav_audience_module[] = ["ALL"];
 
   if (roleInfo?.its_administrative) {
     availableModules.push("ADMIN_ONLY");
@@ -120,6 +120,18 @@ export async function loginWebApp(
   // Modulos disponibles por su rol
   const allowedModulesRes = await listModulesForSessionDb({
     nav_audience: { in: availableModules },
+  });*/
+  const allowedModulesRes = await listModulesForSessionDb({
+    OR: [
+      {
+        id: {
+          in: permissionList
+            .filter((p) => p.action === "Leer")
+            .map((p) => p.module_id),
+        },
+      },
+      { nav_audience: "ALL" },
+    ],
   });
 
   if (!allowedModulesRes.success) {
@@ -140,5 +152,6 @@ export async function loginWebApp(
 
   return {
     sucess: true,
+    administrative: roleInfo?.its_administrative,
   };
 }
