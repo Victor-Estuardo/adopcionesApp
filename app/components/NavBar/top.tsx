@@ -2,17 +2,21 @@ import { NavLink, useNavigate } from "@remix-run/react";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { FaUserCircle } from "react-icons/fa";
 import { MdMenuOpen } from "react-icons/md";
-import { IoLogOutOutline } from "react-icons/io5";
 import { ModuleSession } from "~/services/db/module.service";
 
 interface TopNavProps {
-  modules: ModuleSession[];
+  modules?: ModuleSession[];
   isLoggedIn: boolean;
   profile: string;
   initials: string;
 }
 
-export default ({ modules, isLoggedIn, initials, profile }: TopNavProps) => {
+export default ({
+  modules = [],
+  isLoggedIn,
+  initials,
+  profile,
+}: TopNavProps) => {
   // hooks...
   const navigate = useNavigate();
 
@@ -57,7 +61,7 @@ export default ({ modules, isLoggedIn, initials, profile }: TopNavProps) => {
           <img
             alt="Imagen de perfil"
             src={profile}
-            className="w-6 h-6 md:w-8 md:h-8 rounded-full"
+            className="w-9 h-9 md:w-12 md:h-12 rounded-full"
           />
         </NavLink>
       );
@@ -66,7 +70,7 @@ export default ({ modules, isLoggedIn, initials, profile }: TopNavProps) => {
     if (initials) {
       return (
         <NavLink to={"/mi-cuenta"}>
-          <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-[#374151] flex justify-center items-center">
+          <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-[#374151] flex justify-center items-center">
             <p className="text-base text-white font-bold">{initials}</p>
           </div>
         </NavLink>
@@ -75,7 +79,7 @@ export default ({ modules, isLoggedIn, initials, profile }: TopNavProps) => {
 
     return (
       <NavLink to={"/mi-cuenta"}>
-        <FaUserCircle className="w-6 h-6 md:w-8 md:h-8" />
+        <FaUserCircle className="w-9 h-9 md:w-12 md:h-12" />
       </NavLink>
     );
   };
@@ -114,7 +118,7 @@ export default ({ modules, isLoggedIn, initials, profile }: TopNavProps) => {
             ))}
           </div>
           {!isLoggedIn ? (
-            <NavLink to={"/mi-cuenta"}>
+            <NavLink to={isLoggedIn ? "/mi-cuenta" : "iniciar-sesion"}>
               <FaUserCircle className="w-6 h-6 md:w-8 md:h-8" />
             </NavLink>
           ) : (

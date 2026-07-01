@@ -8,6 +8,7 @@ type SecondaryButtonProps = {
   color?: string;
   textColor?: string;
   borderColor?: string;
+  width?: string;
 };
 
 export function SecondaryButton({
@@ -18,10 +19,13 @@ export function SecondaryButton({
   color,
   textColor = "text-medium-turquoise-meraki",
   borderColor = "border-medium-turquoise-meraki",
+  width = "",
 }: SecondaryButtonProps) {
   return (
     <button
-      className={`flex items-center gap-x-2 border px-6 py-2 rounded-full ${color} ${textColor} ${borderColor}`}
+      className={`${
+        Icon ? "flex items-center gap-x-2" : ""
+      } border px-6 py-2 rounded-full ${width} ${color} ${textColor} ${borderColor}`}
       onClick={onClick}
       disabled={disabled}
     >
