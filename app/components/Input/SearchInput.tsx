@@ -2,16 +2,25 @@ import { IoSearchOutline } from "react-icons/io5";
 
 type SearchIconProp = {
   value?: string | number | readonly string[];
+  placeholder?: string;
   onChange?: React.ChangeEventHandler<HTMLInputElement>;
+  size?: "base" | "lg";
 };
 
 export default (props: SearchIconProp) => {
-  const { onChange, value } = props;
+  const { onChange, value, placeholder, size = "base" } = props;
+
+  const sizeStyle = {
+    base: "",
+    lg: "w-full",
+  };
+
   return (
-    <div className="relative">
+    <div className={`relative ${sizeStyle[size]}`}>
       <input
         type="text"
-        className="py-1 pr-2 pl-8 border border-peach-meraki rounded-lg focus:outline-pink-meraki"
+        placeholder={placeholder}
+        className={`${sizeStyle[size]} py-1 pr-2 pl-8 border border-peach-meraki rounded-lg focus:outline-pink-meraki`}
         value={value}
         onChange={onChange}
       />

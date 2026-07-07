@@ -5,6 +5,7 @@ type PrimaryButtonProps = {
   disabled?: boolean;
   Icon?: IconType;
   label: string;
+  className?: string;
 };
 
 export function PrimaryButton({
@@ -12,10 +13,13 @@ export function PrimaryButton({
   onClick,
   Icon,
   label,
+  className,
 }: PrimaryButtonProps) {
   return (
     <button
-      className="bg-medium-turquoise-meraki px-4 py-2 text-white rounded-full disabled:opacity-60 disabled:cursor-not-allowed"
+      className={`${
+        Icon ? "flex items-center gap-x-2" : ""
+      } ${className} bg-medium-turquoise-meraki px-4 py-2 text-white rounded-full text-sm md:text-base disabled:opacity-60 disabled:cursor-not-allowed`}
       onClick={onClick}
       disabled={disabled}
     >

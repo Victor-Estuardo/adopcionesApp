@@ -7,11 +7,6 @@ export const meta = () => {
   return [{ title: "DASHBOARD" }];
 };
 
-/*==============================| Loader Function |==============================*/
-export const loader: LoaderFunction = async ({ request }) => {
-  return json({});
-};
-
 /*==============================| Action Function |==============================*/
 export const action: ActionFunction = async ({ request }) => {
   //=============| Datos del POST |==============================//

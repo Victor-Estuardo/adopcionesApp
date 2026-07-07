@@ -68,6 +68,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     initials,
     profile: profile ? `${baseCloud}/v${profileV}/${profile}` : undefined,
     isLoggenIn: !!session.get("dbUserId"),
+    administrative: session.get("administrative") === true,
   });
 };
 
@@ -118,6 +119,7 @@ export default () => {
       initials={data.initials}
       profile={data.profile}
       isLoggenIn={data.isLoggenIn}
+      administrative={data.administrative}
     >
       <Outlet />
     </PublicLayout>

@@ -4,12 +4,15 @@ import { useEffect, useState } from "react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { FaPaw, FaChevronRight, FaClipboardList } from "react-icons/fa";
 import { toast } from "sonner";
+import { ApplicationCard } from "~/components/Card/applicationCard";
+import { config } from "~/config";
 import {
   listAdoptionApplicationWithPetDb,
   ListApplicationWithPet,
 } from "~/services/db/adoptionApplication.service";
 import { getSession } from "~/services/sessions/sessions.service";
 import { calculateAge, validatePermission } from "~/utils/common";
+import { petImageUrl } from "~/utils/image";
 
 export const meta = () => {
   return [{ title: "SOLICITUDES DE ADOPCIÓN" }];
@@ -50,7 +53,7 @@ export const action: ActionFunction = async ({ request }) => {
 
     return json({
       applications: applicationsRes.data,
-      first_name: session.get("first_name") || "",
+      cloudName: config.cloudinaryCloudName,
     });
   }
 
@@ -91,14 +94,6 @@ const STATUS_CONFIG = {
   },
 } as const;
 
-function formatDate(date: string | Date) {
-  return new Date(date).toLocaleDateString("es-GT", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
-
 /*==============================| Component |==============================*/
 export default function () {
   //Hooks...
@@ -109,9 +104,7 @@ export default function () {
   const [applications, setApplications] = useState<ListApplicationWithPet[]>(
     [],
   );
-
-  // Datos del usuario
-  const [firstName, setFirstName] = useState("");
+  const [cloudName, setCloudName] = useState("");
 
   // Banderas
   const [isLoading, setIsLoading] = useState(true);
@@ -149,8 +142,8 @@ export default function () {
       setIsLoading(false);
     }
 
-    if (fetcher.data?.first_name) {
-      setFirstName(fetcher.data?.first_name);
+    if (fetcher.data?.cloudName) {
+      setCloudName(fetcher.data?.cloudName);
     }
   }, [fetcher.data]);
 
@@ -173,7 +166,7 @@ export default function () {
           <p className="text-sm text-gray-400 mt-1">
             {isEmpty
               ? "Aún no has enviado ninguna solicitud de adopción."
-              : `Hola ${firstName}, aquí están todas tus solicitudes.`}
+              : `aquí están todas tus solicitudes.`}
           </p>
         </div>
 
@@ -225,67 +218,9 @@ export default function () {
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            {applications.map((app) => {
-              const status =
-                (app.status as keyof typeof STATUS_CONFIG) ?? "pendiente";
-              const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.pendiente;
-              const pet = app.pet;
-
-              return (
-                <button
-                  key={app.id}
-                  onClick={() => navigate(`${app.id}?rc=applications`)}
-                  className="w-full bg-white rounded-2xl border border-gray-100 shadow-sm p-5
-                    hover:border-teal-200 hover:shadow-md transition-all text-left group"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                      {pet.pet_images?.[0].path ? (
-                        <img
-                          src={pet.pet_images[0].path}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <FaPaw className="w-6 h-6 text-gray-300" />
-                      )}
-                    </div>
-
-                    {/* Info principal */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="font-semibold text-gray-800 truncate group-hover:text-teal-600 transition-colors">
-                            {pet.name}
-                          </p>
-                          <p className="text-xs text-gray-400 mt-0.5">
-                            {pet.petSpecies.name} · {pet.race} ·{" "}
-                            {calculateAge(pet.birthdate)}
-                          </p>
-                        </div>
-
-                        {/* Badge de estado */}
-                        <div
-                          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold flex-shrink-0 ${cfg.bg} ${cfg.border} ${cfg.text}`}
-                        >
-                          <span
-                            className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`}
-                          />
-                          {cfg.label}
-                        </div>
-                      </div>
-
-                      {/* Fecha + flecha */}
-                      <div className="flex items-center justify-between mt-2">
-                        <span className="text-xs text-gray-400">
-                          Enviada el {formatDate(app.submitted_at)}
-                        </span>
-                        <FaChevronRight className="w-3 h-3 text-gray-300 group-hover:text-teal-400 transition-colors" />
-                      </div>
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
+            {applications.map((app) => (
+              <ApplicationCard key={app.id} app={app} cloudName={cloudName} />
+            ))}
           </div>
         )}
 

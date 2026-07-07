@@ -1,16 +1,13 @@
-import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
+import { ActionFunction, json } from "@remix-run/node";
 import { useFetcher, useNavigate, useSearchParams } from "@remix-run/react";
 import { useEffect, useState } from "react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
-import {
-  FaCheck,
-  FaChevronLeft,
-  FaClock,
-  FaPaw,
-  FaEnvelope,
-  FaPhone,
-} from "react-icons/fa";
+import { FaCheck, FaChevronLeft, FaEnvelope, FaPhone } from "react-icons/fa";
 import { toast } from "sonner";
+import { ApplicationDetailCard } from "~/components/Card/ApplicationDetailCard";
+import { ApplicationPanel } from "~/components/Panel/ApplicationPanel";
+import { ApplicationTimeLine } from "~/components/TimeLine/ApplicationTimeLine";
+import { config } from "~/config";
 import {
   AdoptionAppAllInfo,
   getAdoptionApplicationAllInfoDb,
@@ -52,58 +49,17 @@ export const action: ActionFunction = async ({ request, params }) => {
       throw new Response("No autorizado", { status: 403 });
     }
 
-    return json({ application, first_name: session.get("first_name") || "" });
+    return json({
+      application,
+      first_name: session.get("first_name") || "",
+      cloudName: config.cloudinaryCloudName,
+    });
   }
 
   return json({
     errorMsg: "Ocurrió un error al cargar la pagina",
   });
 };
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-const STATUS_CONFIG = {
-  pendiente: {
-    label: "Solicitud recibida",
-    description: "Hemos recibido tu solicitud. La revisaremos pronto.",
-    color: "text-amber-600",
-    bg: "bg-amber-50",
-    border: "border-amber-200",
-    dot: "bg-amber-400",
-    step: 1,
-  },
-  en_revision: {
-    label: "En revisión",
-    description: "Estamos revisando tu solicitud actualmente.",
-    color: "text-blue-600",
-    bg: "bg-blue-50",
-    border: "border-blue-200",
-    dot: "bg-blue-400",
-    step: 2,
-  },
-  aprobada: {
-    label: "¡Solicitud aprobada!",
-    description:
-      "Tu solicitud fue aprobada. Nos pondremos en contacto contigo.",
-    color: "text-teal-600",
-    bg: "bg-teal-50",
-    border: "border-teal-200",
-    dot: "bg-teal-400",
-    step: 3,
-  },
-  rechazada: {
-    label: "Solicitud no aprobada",
-    description:
-      "Lamentablemente tu solicitud no fue aprobada en esta ocasión.",
-    color: "text-red-600",
-    bg: "bg-red-50",
-    border: "border-red-200",
-    dot: "bg-red-400",
-    step: 3,
-  },
-} as const;
-
-const STEPS = ["Enviada", "En revisión", "Decisión final"];
 
 function formatDate(date: string | Date) {
   return new Date(date).toLocaleDateString("es-GT", {
@@ -124,6 +80,7 @@ export default function () {
 
   // Datos de la aplicacion
   const [application, setApplication] = useState<AdoptionAppAllInfo>();
+  const [cloudName, setCloudName] = useState("");
 
   // Datos del usuario
   const [firstName, setFirstName] = useState("");
@@ -132,20 +89,6 @@ export default function () {
   const [isLoading, setIsLoading] = useState(true);
   const recienEnviada = searchParams.get("enviada") === "true";
   const routeComing = searchParams.get("rc") || "pets";
-
-  // Estado de solicitud
-  const status =
-    (application?.status as keyof typeof STATUS_CONFIG) ?? "pendiente";
-  const config = STATUS_CONFIG[status] ?? STATUS_CONFIG.pendiente;
-
-  // Agrupar respuestas por sección
-  const answersBySection = application?.other_applicationAnswer.reduce<
-    Record<string, typeof application.other_applicationAnswer>
-  >((acc, a) => {
-    const sec = a.formQuestion.section;
-    acc[sec || "GENERAL"] = [...(acc[sec || "GENERAL"] ?? []), a];
-    return acc;
-  }, {});
 
   /*------------------------------CARGA DE CATÁLOGOS------------------------------*/
   useEffect(() => {
@@ -168,6 +111,10 @@ export default function () {
     if (fetcher.data?.application) {
       setApplication(fetcher.data.application);
       setIsLoading(false);
+    }
+
+    if (fetcher.data?.cloudName) {
+      setCloudName(fetcher.data.cloudName);
     }
 
     if (fetcher.data?.first_name) {
@@ -220,141 +167,16 @@ export default function () {
         )}
 
         {/* ── Encabezado con info del animal ── */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 grid grid-cols-[min-content_1fr] md:flex items-center gap-5">
-          <div className="w-16 h-16 rounded-xl bg-gray-100 flex items-center justify-center shrink-0 overflow-hidden">
-            {application?.pet.pet_images?.[0].path ? (
-              <img
-                src={application.pet.pet_images[0].path}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <FaPaw className="w-7 h-7 text-gray-300" />
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <h1 className="text-sm md:text-xl font-bold text-gray-800 truncate">
-              Solicitud para adoptar a{" "}
-              <span className="text-teal-600">{application?.pet.name}</span>
-            </h1>
-            <p className="text-sm text-gray-400 mt-0.5">
-              Enviada el {formatDate(application?.submitted_at || "")}
-            </p>
-          </div>
-          {/* Badge de estado */}
-          <div className="md:hidden"></div>
-          <div
-            className={`max-w-min text-nowrap justify-self-end flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold flex-shrink-0 ${config.bg} ${config.border} ${config.color}`}
-          >
-            <span className={`w-2 h-2 rounded-full ${config.dot}`} />
-            {config.label}
-          </div>
-        </div>
+        <ApplicationDetailCard
+          application={application}
+          cloudName={cloudName}
+        />
 
         {/* ── Timeline de pasos ── */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-5">
-            Estado de tu solicitud
-          </h2>
-
-          <div className="flex items-center gap-0">
-            {STEPS.map((stepLabel, i) => {
-              const stepNum = i + 1;
-              const isDone = config.step > stepNum;
-              const isCurrent = config.step === stepNum;
-              const isRejected = status === "rechazada" && stepNum === 3;
-
-              return (
-                <div
-                  key={stepLabel}
-                  className="flex items-center flex-1 last:flex-none"
-                >
-                  <div className="flex flex-col items-center gap-1.5">
-                    <div
-                      className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold transition-all
-                        ${
-                          isDone
-                            ? "bg-teal-500 text-white"
-                            : isCurrent && !isRejected
-                            ? "bg-teal-100 text-teal-600 ring-2 ring-teal-400 ring-offset-2"
-                            : isRejected
-                            ? "bg-red-100 text-red-500 ring-2 ring-red-300 ring-offset-2"
-                            : "bg-gray-100 text-gray-400"
-                        }`}
-                    >
-                      {isDone ? <FaCheck className="w-3.5 h-3.5" /> : stepNum}
-                    </div>
-                    <span
-                      className={`text-xs font-medium whitespace-nowrap
-                        ${
-                          isCurrent
-                            ? config.color
-                            : isDone
-                            ? "text-teal-600"
-                            : "text-gray-400"
-                        }`}
-                    >
-                      {stepLabel}
-                    </span>
-                  </div>
-
-                  {/* Línea conectora */}
-                  {i < STEPS.length - 1 && (
-                    <div
-                      className={`flex-1 h-0.5 mx-2 mb-5 rounded-full transition-all
-                      ${
-                        config.step > stepNum + 1 || isDone
-                          ? "bg-teal-400"
-                          : "bg-gray-100"
-                      }`}
-                    />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          <p
-            className={`mt-5 text-sm rounded-xl px-4 py-3 border ${config.bg} ${config.border} ${config.color}`}
-          >
-            <FaClock className="inline w-3.5 h-3.5 mr-1.5" />
-            {config.description}
-          </p>
-        </div>
+        <ApplicationTimeLine application={application} adopter />
 
         {/* ── Resumen de respuestas ── */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-5">
-            Tus respuestas
-          </h2>
-
-          <div className="flex flex-col gap-6">
-            {Object.entries(answersBySection ?? {}).map(
-              ([section, answers]) => (
-                <div key={section}>
-                  <h3 className="text-xs font-semibold text-teal-600 uppercase tracking-wider mb-3 pb-2 border-b border-gray-100">
-                    {section}
-                  </h3>
-                  <div className="flex flex-col gap-3">
-                    {answers.map((a) => (
-                      <div key={a.id} className="flex flex-col gap-0.5">
-                        <span className="text-xs text-gray-400">
-                          {a.formQuestion.question_text}
-                        </span>
-                        <span className="text-sm text-gray-700 font-medium">
-                          {a.answer_value || (
-                            <span className="text-gray-300 italic">
-                              Sin respuesta
-                            </span>
-                          )}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ),
-            )}
-          </div>
-        </div>
+        <ApplicationPanel application={application} />
 
         {/* ── Firma del compromiso ── */}
         {application?.commitmentAgreement?.[0] && (

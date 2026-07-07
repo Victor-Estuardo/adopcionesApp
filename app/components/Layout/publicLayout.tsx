@@ -7,6 +7,7 @@ interface MainLayoutProps {
   profile: string;
   isLoggenIn?: boolean;
   children: React.ReactNode;
+  administrative?: boolean;
 }
 
 export default ({
@@ -15,6 +16,7 @@ export default ({
   initials = "",
   profile = "",
   isLoggenIn = false,
+  administrative = false,
 }: MainLayoutProps) => {
   return (
     <>
@@ -23,6 +25,7 @@ export default ({
         isLoggedIn={isLoggenIn}
         profile={profile}
         initials={initials}
+        administrative={administrative}
       />
       <main className="w-screen h-[calc(100dvh-5rem)] overflow-hidden">
         {children}

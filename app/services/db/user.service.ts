@@ -1,6 +1,14 @@
 import { Prisma, user } from "@prisma/client";
 import prisma, { handlePosiblePrismaError, PrismaUtilResponse } from "./prisma";
 
+/*==================================================| TYPE |==================================================*/
+export type EssentialInfoUser = {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string | null;
+};
+
 /*==================================================| CREATE |==================================================*/
 /**
  * Función para crear un usuario
@@ -33,7 +41,7 @@ export const updateUserDb = async (
 
 /*==================================================| GET |==================================================*/
 /**
- * Función para obtener a u usuario
+ * Función para obtener a un usuario
  * @param where Información del usuario
  * @returns usuario
  */
@@ -42,5 +50,22 @@ export const getUserDb = async (
 ): Promise<PrismaUtilResponse<user | null>> => {
   return await handlePosiblePrismaError(async () => {
     return prisma.user.findFirst({ where });
+  });
+};
+
+/*--------------------------------------------------------------------------------------------------------*/
+/**
+ * Función para obteneinfo esencial de usuario
+ * @param where Información del usuario
+ * @returns usuario
+ */
+export const getEssentialUserDb = async (
+  where?: Prisma.userWhereInput,
+): Promise<PrismaUtilResponse<EssentialInfoUser | null>> => {
+  return await handlePosiblePrismaError(async () => {
+    return prisma.user.findFirst({
+      where,
+      select: { first_name: true, last_name: true, email: true, phone: true },
+    });
   });
 };

@@ -18,7 +18,6 @@ import {
 import { createApplicationAnswersDb } from "~/services/db/applicationAnswer.service";
 import { toast } from "sonner";
 import { createcommitmentAgreementDb } from "~/services/db/commitmentAgreement.service";
-import { PermissionSession } from "~/services/auth/login.service";
 import { validatePermission } from "~/utils/common";
 
 export const meta = () => {
@@ -208,7 +207,7 @@ export default function () {
       toast.success("Solicitud enviada exitosamente,", { duration: 4000 });
 
       navigate(
-        `/mi-cuenta/mis-solicitudes/${actionData.answers_success}?rc=pet&enviada=true`,
+        `/mi-cuenta/solicitudes/${actionData.answers_success}?rc=pet&enviada=true`,
       );
     }
   }, [actionData]);

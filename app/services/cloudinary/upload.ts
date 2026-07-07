@@ -109,7 +109,7 @@ export async function uploadProfileImage(
  */
 export async function uploadPetImage(
   file: File,
-  petId: string,
+  petId: string | number,
 ): Promise<UploadResult> {
   const validationError = validateFile(file);
   if (validationError) {
@@ -123,7 +123,7 @@ export async function uploadPetImage(
       folder: `pet/${petId}`,
       overwrite: false,
       transformation: [
-        { width: 1000, crop: "limit" },
+        { width: 1600, crop: "limit" },
         { quality: "auto", fetch_format: "auto" },
       ],
     });

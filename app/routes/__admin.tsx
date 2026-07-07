@@ -43,10 +43,14 @@ export function ErrorBoundary() {
   const error = useRouteError();
 
   if (isRouteErrorResponse(error)) {
+    // Si el error.data es string se usa caso contrario se busca message
+    const errorMsg =
+      typeof error.data === "string" ? error.data : error.data.message;
+
     return (
       <ErrorBoundaryAlert
-        title={`CatchBoundary - ${error.status} - app/routes${route}`}
-        description={error.data.message}
+        title={`CatchBoundary - ${error.status} - ${route}`}
+        description={errorMsg}
       />
     );
   }

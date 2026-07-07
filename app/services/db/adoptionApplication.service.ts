@@ -40,6 +40,25 @@ export const createAdoptionApplicationDb = async (
   });
 };
 
+/*==================================================| UPDATE |==================================================*/
+/**
+ * Función para actualizar una solicitud de adopción (usada para aprobar/rechazar)
+ * @param id Id de la solicitud
+ * @param data Campos a actualizar
+ * @returns Solicitud actualizada
+ */
+export const updateAdoptionApplicationDb = async (
+  id: string,
+  data: Prisma.adoptionApplicationUncheckedUpdateInput,
+): Promise<PrismaUtilResponse<adoptionApplication>> => {
+  return await handlePosiblePrismaError(async () => {
+    return prisma.adoptionApplication.update({
+      where: { id },
+      data,
+    });
+  });
+};
+
 /*==================================================| GET |==================================================*/
 /**
  * Función para obtener una aplicación a adopcion
@@ -91,11 +110,15 @@ export const getAdoptionApplicationAllInfoDb = async (
 export const listAdoptionApplicationWithPetDb = async (
   where?: Prisma.adoptionApplicationWhereInput,
   orderBy?: Prisma.adoptionApplicationOrderByWithRelationInput,
+  skip?: number,
+  take?: number,
 ): Promise<PrismaUtilResponse<ListApplicationWithPet[]>> => {
   return await handlePosiblePrismaError(async () => {
     return prisma.adoptionApplication.findMany({
       where,
       orderBy,
+      skip,
+      take,
       include: { pet: { include: { petSpecies: true, pet_images: true } } },
     });
   });

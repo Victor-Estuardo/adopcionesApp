@@ -9,6 +9,7 @@ interface TopNavProps {
   isLoggedIn: boolean;
   profile: string;
   initials: string;
+  administrative: boolean;
 }
 
 export default ({
@@ -16,6 +17,7 @@ export default ({
   isLoggedIn,
   initials,
   profile,
+  administrative,
 }: TopNavProps) => {
   // hooks...
   const navigate = useNavigate();
@@ -55,9 +57,11 @@ export default ({
 
   // Devolvemos un objeto
   const IconProfile = () => {
+    const route = administrative ? "/dashboard" : "/mi-cuenta";
+
     if (profile) {
       return (
-        <NavLink to={"/mi-cuenta"}>
+        <NavLink to={route}>
           <img
             alt="Imagen de perfil"
             src={profile}
@@ -69,7 +73,7 @@ export default ({
 
     if (initials) {
       return (
-        <NavLink to={"/mi-cuenta"}>
+        <NavLink to={route}>
           <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-[#374151] flex justify-center items-center">
             <p className="text-base text-white font-bold">{initials}</p>
           </div>
@@ -78,7 +82,7 @@ export default ({
     }
 
     return (
-      <NavLink to={"/mi-cuenta"}>
+      <NavLink to={route}>
         <FaUserCircle className="w-9 h-9 md:w-12 md:h-12" />
       </NavLink>
     );

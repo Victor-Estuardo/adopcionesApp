@@ -1,6 +1,6 @@
 import { ActionFunction, json } from "@remix-run/node";
-import { Link, useFetcher, useSearchParams } from "@remix-run/react";
-import { useEffect, useMemo, useState } from "react";
+import { useFetcher, useSearchParams } from "@remix-run/react";
+import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react";
 import SearchInput from "~/components/Input/SearchInput";
 import {
   CountPetsDb,
@@ -9,9 +9,6 @@ import {
 } from "~/services/db/pet.service";
 import { IoFilterOutline } from "react-icons/io5";
 import Pagination from "~/components/Pagination";
-import { LiaBirthdayCakeSolid } from "react-icons/lia";
-import { calculateAge } from "~/utils/common";
-import { PiGenderIntersexBold } from "react-icons/pi";
 import { gender_pet, Prisma } from "@prisma/client";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { toast } from "sonner";
@@ -19,9 +16,11 @@ import { RiArrowDropDownLine } from "react-icons/ri";
 import ListWithChek from "~/components/List/ListWithChek";
 import { listPetSpeciesDb } from "~/services/db/petSpecies.service";
 import { SecondaryButton } from "~/components/Button/secondary";
+import { PetCard } from "~/components/Card/PetCard";
+import { config } from "~/config";
 
 export const meta = () => {
-  return [{ title: "ADOPCIONES" }];
+  return [{ title: "MASCOTAS" }];
 };
 
 /*==============================| Types |==============================*/
@@ -56,6 +55,7 @@ export const action: ActionFunction = async ({ request }) => {
 
     return json({
       species_filter: speciesFilter,
+      cloudName: config.cloudinaryCloudName,
     });
   }
 
@@ -155,6 +155,7 @@ export default function () {
 
   // Lista de mascotas
   const [petList, setpetList] = useState<PetWithImage[]>([]);
+  const [cloudName, setCloudName] = useState("");
 
   // Paginación
   const page = Number(searchParams.get("page") || "1");
@@ -184,6 +185,10 @@ export default function () {
       handleLoadPets({});
     }
 
+    if (fetcher.data?.cloudName) {
+      setCloudName(fetcher.data.cloudName);
+    }
+
     if (fetcher.data?.petList) {
       const list = fetcher.data.petList;
       setpetList(list);
@@ -191,8 +196,6 @@ export default function () {
       setLoadingPets(false);
     }
   }, [fetcher.data]);
-
-  /*------------------------------EFECTOS------------------------------*/
 
   /*------------------------------FUNCIONES------------------------------*/
   // Función que maneja el cambio en el filtro de texto
@@ -234,12 +237,9 @@ export default function () {
   };
 
   // Función que maneja el click de los filtros
-  const handleClickFilter = (
-    type: "gender" | "species",
-    value: string | number,
-  ) => {
+  const handleClickFilter = (type: string, value: string | number) => {
     // Mapeamos los filtros internos
-    const setFilterMaps = {
+    const setFilterMaps: { [x: string]: Dispatch<SetStateAction<string[]>> } = {
       gender: setSeGenderFilter,
       species: setSeSpeciesFilter,
     };
@@ -292,36 +292,25 @@ export default function () {
         ) : petList.length == 0 ? (
           <p>No se encontraron mascotas disponibles...</p>
         ) : (
-          <div className="flex-grow grid grid-cols-[repeat(auto-fill,minmax(249px,1fr))] md:gap-x-16 gap-y-7 md:gap-y-11 justify-items-center">
+          <div className="flex-grow grid grid-cols-[repeat(auto-fill,minmax(350px,1fr))] md:gap-x-16 gap-y-7 md:gap-y-11 justify-items-center">
             {petList.map((pet, index) => (
-              <div
+              <PetCard
                 key={`${index}_${pet.name}`}
-                className="w-[249px] h-80 pb-3 flex flex-col justify-center items-center rounded-lg shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] cursor-pointer"
-                onClick={() => (window.location.href = `/mascota/${pet.id}`)}
+                pet={pet}
+                onClickCard={() =>
+                  (window.location.href = `/mascota/${pet.id}`)
+                }
+                cloudName={cloudName}
               >
-                <img
-                  src={pet.pet_images?.[0]?.path}
-                  alt={`Perfil de ${pet.name}`}
-                  className="rounded-t-lg max-h-[140px] aspect-video"
-                />
-                <div className="w-full h-full p-2 flex flex-col gap-y-2">
-                  <p className="text-2xl font-bold">{pet.name}</p>
-                  <div className="flex justify-start items-center gap-x-2">
-                    <LiaBirthdayCakeSolid className="text-medium-turquoise-meraki" />
-                    <p className="min-w-max">{calculateAge(pet.birthdate)}</p>
-                  </div>
-                  <div className="flex justify-start items-center gap-x-2">
-                    <PiGenderIntersexBold className="text-medium-turquoise-meraki" />
-                    <p className="min-w-max">{pet.gender}</p>
-                  </div>
+                <div className="flex justify-center items-center border-t border-[#F0EDE5] pt-3">
+                  <SecondaryButton
+                    label="Ver"
+                    borderColor="border-blue-meraki"
+                    textColor="white"
+                    width="w-[80%]"
+                  />
                 </div>
-                <SecondaryButton
-                  label="Ver"
-                  borderColor="border-blue-meraki"
-                  textColor="white"
-                  width="w-[80%]"
-                />
-              </div>
+              </PetCard>
             ))}
           </div>
         )}

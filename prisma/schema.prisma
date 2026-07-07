@@ -155,6 +155,7 @@ model adoptionApplication {
   status                  String                @db.VarChar(50)
   submitted_at            DateTime              @db.Timestamp(6)
   updated_at              DateTime              @db.Timestamp(6)
+  rejection_reason        String?
   pet                     pet                   @relation(fields: [pet_id], references: [id], onUpdate: Restrict, map: "fk_pet_adoptionapplications")
   user                    user                  @relation(fields: [user_id], references: [id], onUpdate: Restrict, map: "fk_user_adoptionapplications")
   other_applicationAnswer applicationAnswer[]   @relation("applicationAnswerToapplicationAnswer")

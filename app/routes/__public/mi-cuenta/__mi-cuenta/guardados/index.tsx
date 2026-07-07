@@ -5,12 +5,18 @@ import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { FaChevronRight } from "react-icons/fa";
 import { LuCalendar, LuHeart, LuMapPin } from "react-icons/lu";
 import { toast } from "sonner";
+import { config } from "~/config";
 import {
   deleteSavedPetDb,
   listSavedPetWithPetDb,
 } from "~/services/db/savedPet.service";
 import { getSession } from "~/services/sessions/sessions.service";
 import { calculateAge, validatePermission } from "~/utils/common";
+import { petImageUrl } from "~/utils/image";
+
+export const meta = () => {
+  return [{ title: "GUARDADOS" }];
+};
 
 /*==============================| Types |==============================*/
 type SavedPetItem = {
@@ -80,6 +86,7 @@ export const action: ActionFunction = async ({ request }) => {
 
     return json({
       saved_pets: items,
+      cloudName: config.cloudinaryCloudName,
     });
   }
 
@@ -121,6 +128,7 @@ export default function () {
 
   // Items
   const [items, setItems] = useState<SavedPetItem[]>([]);
+  const [cloudName, setCloudName] = useState("");
 
   /*------------------------------CARGA DE CATÁLOGOS------------------------------*/
   useEffect(() => {
@@ -150,6 +158,10 @@ export default function () {
       toast.success("Se quitó exitosamente");
       setItems((prev) => prev.filter((p) => p.savedId != tempSaveId));
     }
+
+    if (fetcher.data?.cloudName) {
+      setCloudName(fetcher.data.cloudName);
+    }
   }, [fetcher.data]);
 
   if (isLoading) {
@@ -167,7 +179,7 @@ export default function () {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Guardados</h1>
+          <h1 className="text-2xl font-bold text-gray-800">Guardados</h1>
           <p className="text-sm text-gray-500 mt-0.5">
             {items.length === 0
               ? "Aún no tienes mascotas guardadas"
@@ -193,7 +205,11 @@ export default function () {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {items.map((item) => (
-            <SavedPetCard key={item.savedId} item={item} />
+            <SavedPetCard
+              key={item.savedId}
+              item={item}
+              cloudName={cloudName}
+            />
           ))}
         </div>
       )}
@@ -202,7 +218,13 @@ export default function () {
 }
 
 /*==============================| SavedPetCard |==============================*/
-function SavedPetCard({ item }: { item: SavedPetItem }) {
+function SavedPetCard({
+  item,
+  cloudName,
+}: {
+  item: SavedPetItem;
+  cloudName: string;
+}) {
   return (
     <div className="group relative bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200">
       {/* Foto */}
@@ -210,7 +232,7 @@ function SavedPetCard({ item }: { item: SavedPetItem }) {
         <div className="relative aspect-[4/3] bg-gray-50 overflow-hidden">
           {item.pet.imageUrl ? (
             <img
-              src={item.pet.imageUrl}
+              src={petImageUrl(cloudName, item.pet.imageUrl, "full")}
               alt={item.pet.name}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             />

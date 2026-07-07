@@ -30,7 +30,7 @@ export default ({ modules, initials, profile, children }: AdminLayoutProps) => {
           onToggleMobile={() => setMobileOpen(true)}
           modules={modules}
         />
-        <main className="flex-1 overflow-y-auto border-t border-gray-100 md:rounded-tl-lg">
+        <main className="flex-1 border-t border-gray-100 overflow-hidden">
           {children}
         </main>
       </div>

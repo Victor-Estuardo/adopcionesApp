@@ -1,6 +1,6 @@
 import { ActionFunction, LoaderFunction, json } from "@remix-run/node";
 import { useFetcher, useNavigate } from "@remix-run/react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Carousel from "~/components/Carousel";
 import { getPetWithImagesDb, PetWithImage } from "~/services/db/pet.service";
 import { FaChevronLeft, FaMapPin } from "react-icons/fa";
@@ -20,6 +20,8 @@ import {
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { SecondaryButton } from "~/components/Button/secondary";
 import { PrimaryButton } from "~/components/Button/primary";
+import { config } from "~/config";
+import { petImageUrl } from "~/utils/image";
 
 export const meta = () => {
   return [{ title: "MASCOTA" }];
@@ -73,6 +75,7 @@ export const action: ActionFunction = async ({ request, params }) => {
         (p) => p.module_id === 1 && p.action === "Crear",
       ),
       pet_saved_id: getSavedPetRes.data?.id,
+      cloudName: config.cloudinaryCloudName,
     });
   }
 
@@ -138,6 +141,16 @@ export default function () {
 
   // Información de la mascota
   const [pet, setPet] = useState<PetWithImage | null>(null);
+  const [cloudName, setCloudName] = useState("");
+  const petImages = useMemo(() => {
+    if (pet && cloudName) {
+      return pet.pet_images.map((img) =>
+        petImageUrl(cloudName, img.path, "full"),
+      );
+    }
+
+    return [];
+  }, [pet, cloudName]);
 
   // Información del usuario
   const [isUser, setIsUser] = useState(false);
@@ -182,6 +195,9 @@ export default function () {
     }
     if (fetcher.data?.pet_saved_id) {
       setPetSavedId(fetcher.data.pet_saved_id);
+    }
+    if (fetcher.data?.cloudName) {
+      setCloudName(fetcher.data.cloudName);
     }
     if (fetcher.data?.pet_saved) {
       toast.success("Guardado exitosamente.");
@@ -256,13 +272,7 @@ export default function () {
         <div className="w-full flex flex-col md:flex-row">
           {/** Imagenes */}
           <div className="md:w-1/2">
-            <Carousel
-              displayImages={[
-                "/perro.png",
-                "/perro2.png",
-                "https://images.unsplash.com/photo-1618826411640-d6df44dd3f7a?w=500&h=400&fit=crop",
-              ]}
-            />
+            <Carousel displayImages={petImages} />
           </div>
           {/** Información principal */}
           <div className="md:w-1/2 py-4 md:py-0 md:px-4 flex flex-col justify-between gap-y-4">

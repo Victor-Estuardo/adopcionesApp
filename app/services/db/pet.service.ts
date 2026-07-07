@@ -7,6 +7,21 @@ export type Pet = Omit<pet, OmitField>;
 export type PetImage = Omit<pet_images, OmitField>;
 export type PetWithImage = Pet & {
   pet_images: PetImage[];
+  petSpecies?: { id: number; name: string };
+};
+
+/*==================================================| CREATE |==================================================*/
+/**
+ * Función para crear una nueva mascota
+ * @param data Información de la mascota
+ * @returns
+ */
+export const createPetDb = async (
+  data: Prisma.petUncheckedCreateInput,
+): Promise<PrismaUtilResponse<pet>> => {
+  return await handlePosiblePrismaError(async () => {
+    return prisma.pet.create({ data });
+  });
 };
 
 /*==================================================| LIST |==================================================*/
@@ -43,6 +58,12 @@ export const listPetsWithImagesDb = async (
             id: true,
             path: true,
             pet_id: true,
+          },
+        },
+        petSpecies: {
+          select: {
+            id: true,
+            name: true,
           },
         },
       },
