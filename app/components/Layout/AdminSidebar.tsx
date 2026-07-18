@@ -2,8 +2,9 @@ import { NavLink } from "@remix-run/react";
 import { Fragment, useMemo } from "react";
 import { IconType } from "react-icons";
 import { BsClipboard2Heart } from "react-icons/bs";
-import { FaPaw } from "react-icons/fa";
+import { FaPaw, FaUsers } from "react-icons/fa";
 import { IoIosLogOut } from "react-icons/io";
+import { LuClipboardList } from "react-icons/lu";
 import { MdDashboard, MdMenuOpen } from "react-icons/md";
 import { ModuleSession } from "~/services/db/module.service";
 
@@ -31,6 +32,8 @@ export default ({
       MdDashboard: MdDashboard,
       FaPaw: FaPaw,
       BsClipboard2Heart: BsClipboard2Heart,
+      LuClipboardList: LuClipboardList,
+      FaUsers: FaUsers,
     }),
     [],
   );
