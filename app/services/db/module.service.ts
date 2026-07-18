@@ -1,4 +1,10 @@
-import { nav_audience_module, nav_zone_module, Prisma } from "@prisma/client";
+import {
+  nav_audience_module,
+  nav_zone_module,
+  Prisma,
+  module,
+  permission,
+} from "@prisma/client";
 import prisma, { handlePosiblePrismaError, PrismaUtilResponse } from "./prisma";
 
 export interface ModuleSession {
@@ -10,6 +16,8 @@ export interface ModuleSession {
   nav_zone: nav_zone_module;
   nav_audience: nav_audience_module;
 }
+
+export type ModuleWithPermissions = module & { permission: permission[] };
 
 /*==================================================| LIST |==================================================*/
 /**
@@ -33,6 +41,24 @@ export const listModulesForSessionDb = async (
         order: true,
       },
       orderBy: { order: "asc" },
+    });
+  });
+};
+
+/*==================================================| LIST |==================================================*/
+/**
+ * Función para listar módulos junto con su catálogo de permisos (para armar la matriz)
+ * @param where Objeto que contiene los filtros a aplicar a la query
+ * @returns Lista de módulos con sus permisos
+ */
+export const listModulesWithPermissionsDb = async (
+  where?: Prisma.moduleWhereInput,
+): Promise<PrismaUtilResponse<ModuleWithPermissions[]>> => {
+  return await handlePosiblePrismaError(async () => {
+    return prisma.module.findMany({
+      where,
+      orderBy: { order: "asc" },
+      include: { permission: true },
     });
   });
 };

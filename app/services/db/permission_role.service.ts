@@ -1,4 +1,4 @@
-import { module, permission, permission_role, Prisma } from "@prisma/client";
+import { permission, permission_role, Prisma } from "@prisma/client";
 import prisma, { handlePosiblePrismaError, PrismaUtilResponse } from "./prisma";
 
 type PermissionRole = permission_role & {
@@ -20,6 +20,35 @@ export const listPermissionRoleDb = async (
       include: {
         permission: true,
       },
+    });
+  });
+};
+
+/*==================================================| SYNC |==================================================*/
+/**
+ * Función para sincronizar los permisos de un rol: elimina los actuales y crea los nuevos
+ * @param roleId Id del rol
+ * @param permissionIds Ids de los permisos que debe tener el rol
+ */
+export const syncPermissionRoleDb = async (
+  roleId: number,
+  permissionIds: number[],
+): Promise<PrismaUtilResponse<{ count: number }>> => {
+  return await handlePosiblePrismaError(async () => {
+    return prisma.$transaction(async (tx) => {
+      await tx.permission_role.deleteMany({ where: { role_id: roleId } });
+
+      if (permissionIds.length > 0) {
+        await tx.permission_role.createMany({
+          data: permissionIds.map((permission_id) => ({
+            role_id: roleId,
+            permission_id,
+            created_in: new Date(),
+          })),
+        });
+      }
+
+      return { count: permissionIds.length };
     });
   });
 };

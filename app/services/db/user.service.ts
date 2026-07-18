@@ -1,4 +1,4 @@
-import { Prisma, user } from "@prisma/client";
+import { Prisma, role, user } from "@prisma/client";
 import prisma, { handlePosiblePrismaError, PrismaUtilResponse } from "./prisma";
 
 /*==================================================| TYPE |==================================================*/
@@ -8,6 +8,8 @@ export type EssentialInfoUser = {
   email: string;
   phone: string | null;
 };
+
+export type UserWithRole = user & { role: role };
 
 /*==================================================| CREATE |==================================================*/
 /**
@@ -66,6 +68,24 @@ export const getEssentialUserDb = async (
     return prisma.user.findFirst({
       where,
       select: { first_name: true, last_name: true, email: true, phone: true },
+    });
+  });
+};
+
+/*==================================================| LIST |==================================================*/
+/**
+ * Función para listar usuarios administrativos (excluye adoptantes)
+ * @param where Objeto que contiene los filtros a aplicar a la query
+ * @returns Lista de usuarios con su rol
+ */
+export const listUsersDb = async (
+  where?: Prisma.userWhereInput,
+): Promise<PrismaUtilResponse<UserWithRole[]>> => {
+  return await handlePosiblePrismaError(async () => {
+    return prisma.user.findMany({
+      where: { ...where, role: { its_administrative: true } },
+      orderBy: { registration_date: "desc" },
+      include: { role: true },
     });
   });
 };
