@@ -72,7 +72,7 @@ export const action: ActionFunction = async ({ request }) => {
       await prisma.$transaction([
         prisma.user.update({
           where: { id: validation.userId },
-          data: { password: hashPass },
+          data: { password: hashPass, it_is_verified: true },
         }),
         prisma.passwordResetToken.deleteMany({
           where: { user_id: validation.userId },

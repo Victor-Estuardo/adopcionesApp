@@ -175,7 +175,7 @@ export const action: ActionFunction = async ({ request }) => {
     });
 
     await sendPasswordResetEmail(
-      "devmeraki68@gmail.com", //user.email,
+      user.email,
       `${new URL(request.url).origin}/restablecer-clave?token=${token}`,
       user.first_name,
     );

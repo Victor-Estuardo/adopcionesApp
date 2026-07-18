@@ -75,7 +75,7 @@ export const action: ActionFunction = async ({ request }) => {
     await sendVerificationEmail(
       {
         id: user.id,
-        email: "devmeraki68@gmail.com", // email,
+        email: email,
         name: firstName,
       },
       new URL(request.url).origin,
@@ -109,7 +109,7 @@ export const action: ActionFunction = async ({ request }) => {
     await sendVerificationEmail(
       {
         id: userId,
-        email: "devmeraki68@gmail.com", // email,
+        email: email,
         name,
       },
       new URL(request.url).origin,
