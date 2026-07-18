@@ -315,3 +315,111 @@ export async function sendVerificationEmail(
     return { success: false };
   }
 }
+
+export async function sendSetPasswordEmail(
+  email: string,
+  setPasswordUrl: string,
+  userName?: string,
+): Promise<boolean> {
+  try {
+    const { data, error } = await resend.emails.send({
+      from: `${EMAIL_FROM_NAME} <${EMAIL_FROM}>`,
+      to: [email],
+      subject: "Configura tu contraseña - Meraki",
+      html: getSetPasswordEmailHtml(setPasswordUrl, userName),
+      text: getSetPasswordEmailText(setPasswordUrl, userName),
+    });
+
+    if (error) {
+      console.error(
+        "Error al enviar correo de configuración de contraseña:",
+        error,
+      );
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error(
+      "No se pudo enviar el correo de configuración de contraseña:",
+      error,
+    );
+    return false;
+  }
+}
+
+function getSetPasswordEmailHtml(
+  setPasswordUrl: string,
+  userName?: string,
+): string {
+  return `
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+        .container { background-color: #f9f9f9; border-radius: 10px; padding: 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { color: #52C9BB; margin: 0; }
+        .content { background-color: white; padding: 25px; border-radius: 8px; }
+        .button { display: inline-block; padding: 15px 30px; background-color: #52C9BB; color: white !important; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0; }
+        .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
+        .warning { background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 10px; margin: 20px 0; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>¡Bienvenido al equipo Meraki!</h1>
+        </div>
+        <div class="content">
+          ${
+            userName
+              ? `<p>Hola <strong>${userName}</strong>,</p>`
+              : "<p>Hola,</p>"
+          }
+          <p>Se creó una cuenta administrativa para ti en el panel de Meraki. Para comenzar, define tu contraseña haciendo clic en el botón de abajo:</p>
+          <div style="text-align: center;">
+            <a href="${setPasswordUrl}" class="button">Configurar mi contraseña</a>
+          </div>
+          <p>O copia y pega este enlace en tu navegador:</p>
+          <p style="word-break: break-all; color: #666; font-size: 12px;">${setPasswordUrl}</p>
+          <div class="warning">
+            <strong>⏱️ Importante:</strong> Este enlace expirará en 24 horas por razones de seguridad.
+          </div>
+          <p>Si no reconoces esta invitación, puedes ignorar este correo.</p>
+        </div>
+        <div class="footer">
+          <p>© 2025 MERAKI. Todos los derechos reservados.</p>
+          <p>Este es un correo automático, por favor no respondas a este mensaje.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+function getSetPasswordEmailText(
+  setPasswordUrl: string,
+  userName?: string,
+): string {
+  return `
+    ¡Bienvenido al equipo Meraki!
+
+    ${userName ? `Hola ${userName},` : "Hola,"}
+
+    Se creó una cuenta administrativa para ti en el panel de Meraki.
+
+    Define tu contraseña visitando el siguiente enlace:
+    ${setPasswordUrl}
+
+    ⏱️ Este enlace expirará en 24 horas.
+
+    Si no reconoces esta invitación, puedes ignorar este correo.
+
+    Saludos,
+    El equipo de MERAKI
+  `;
+}
