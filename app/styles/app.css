@@ -738,12 +738,20 @@ video {
   margin-right: auto;
 }
 
+.-mt-1 {
+  margin-top: -0.25rem;
+}
+
 .mb-0\.5 {
   margin-bottom: 0.125rem;
 }
 
 .mb-1 {
   margin-bottom: 0.25rem;
+}
+
+.mb-2 {
+  margin-bottom: 0.5rem;
 }
 
 .mb-3 {
@@ -832,6 +840,10 @@ video {
 
 .inline-flex {
   display: inline-flex;
+}
+
+.table {
+  display: table;
 }
 
 .grid {
@@ -1415,6 +1427,10 @@ video {
   overflow: hidden;
 }
 
+.overflow-x-auto {
+  overflow-x: auto;
+}
+
 .overflow-y-auto {
   overflow-y: auto;
 }
@@ -1508,6 +1524,11 @@ video {
   border-style: dashed;
 }
 
+.border-\[\#52C9BB\] {
+  --tw-border-opacity: 1;
+  border-color: rgb(82 201 187 / var(--tw-border-opacity, 1));
+}
+
 .border-\[\#52C9BB\]\/20 {
   border-color: rgb(82 201 187 / 0.2);
 }
@@ -1530,6 +1551,10 @@ video {
 .border-\[\#F2768C\] {
   --tw-border-opacity: 1;
   border-color: rgb(242 118 140 / var(--tw-border-opacity, 1));
+}
+
+.border-\[\#F2768C\]\/20 {
+  border-color: rgb(242 118 140 / 0.2);
 }
 
 .border-amber-100 {
@@ -1665,6 +1690,10 @@ video {
   background-color: rgb(82 201 187 / var(--tw-bg-opacity, 1));
 }
 
+.bg-\[\#52C9BB\]\/10 {
+  background-color: rgb(82 201 187 / 0.1);
+}
+
 .bg-\[\#52C9BB\]\/5 {
   background-color: rgb(82 201 187 / 0.05);
 }
@@ -1727,6 +1756,18 @@ video {
 .bg-\[\#F2768C\] {
   --tw-bg-opacity: 1;
   background-color: rgb(242 118 140 / var(--tw-bg-opacity, 1));
+}
+
+.bg-\[\#F2768C\]\/10 {
+  background-color: rgb(242 118 140 / 0.1);
+}
+
+.bg-\[\#F2768C\]\/5 {
+  background-color: rgb(242 118 140 / 0.05);
+}
+
+.bg-\[\#F2B84B\]\/10 {
+  background-color: rgb(242 184 75 / 0.1);
 }
 
 .bg-\[\#F3E4D2\] {
@@ -1982,6 +2023,11 @@ video {
 .py-1\.5 {
   padding-top: 0.375rem;
   padding-bottom: 0.375rem;
+}
+
+.py-10 {
+  padding-top: 2.5rem;
+  padding-bottom: 2.5rem;
 }
 
 .py-12 {
@@ -2281,6 +2327,11 @@ video {
   color: rgb(242 118 140 / var(--tw-text-opacity, 1));
 }
 
+.text-\[\#F2B84B\] {
+  --tw-text-opacity: 1;
+  color: rgb(242 184 75 / var(--tw-text-opacity, 1));
+}
+
 .text-amber-600 {
   --tw-text-opacity: 1;
   color: rgb(217 119 6 / var(--tw-text-opacity, 1));
@@ -2339,6 +2390,11 @@ video {
 .text-emerald-800 {
   --tw-text-opacity: 1;
   color: rgb(6 95 70 / var(--tw-text-opacity, 1));
+}
+
+.text-gray-200 {
+  --tw-text-opacity: 1;
+  color: rgb(229 231 235 / var(--tw-text-opacity, 1));
 }
 
 .text-gray-300 {
@@ -2470,6 +2526,10 @@ video {
 
 .underline-offset-8 {
   text-underline-offset: 8px;
+}
+
+.accent-\[\#52C9BB\] {
+  accent-color: #52C9BB;
 }
 
 .accent-teal-500 {
@@ -2637,6 +2697,10 @@ video {
   background-color: rgb(58 54 46 / var(--tw-bg-opacity, 1));
 }
 
+.hover\:bg-\[\#52C9BB\]\/5:hover {
+  background-color: rgb(82 201 187 / 0.05);
+}
+
 .hover\:bg-\[\#52C9BB\]\/90:hover {
   background-color: rgb(82 201 187 / 0.9);
 }
@@ -2785,6 +2849,10 @@ video {
   --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
   --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
   box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+}
+
+.focus\:ring-\[\#52C9BB\]\/30:focus {
+  --tw-ring-color: rgb(82 201 187 / 0.3);
 }
 
 .focus\:ring-\[\#F2768C\]\/30:focus {
@@ -2998,6 +3066,10 @@ video {
     width: 480px;
   }
 
+  .md\:w-\[640px\] {
+    width: 640px;
+  }
+
   .md\:w-\[70\%\] {
     width: 70%;
   }
@@ -3018,6 +3090,10 @@ video {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .md\:grid-cols-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
   .md\:grid-cols-\[repeat\(auto-fill\2c minmax\(400px\2c 1fr\)\)\] {
     grid-template-columns: repeat(auto-fill,minmax(400px,1fr));
   }
@@ -3032,6 +3108,10 @@ video {
 
   .md\:items-center {
     align-items: center;
+  }
+
+  .md\:justify-start {
+    justify-content: flex-start;
   }
 
   .md\:justify-between {
@@ -3160,6 +3240,10 @@ video {
 @media (min-width: 1024px) {
   .lg\:h-auto {
     height: auto;
+  }
+
+  .lg\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .lg\:grid-cols-3 {
