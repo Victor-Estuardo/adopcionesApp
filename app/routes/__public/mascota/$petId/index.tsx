@@ -1,9 +1,9 @@
-import { ActionFunction, LoaderFunction, json } from "@remix-run/node";
+import { ActionFunction, json } from "@remix-run/node";
 import { useFetcher, useNavigate } from "@remix-run/react";
 import { useEffect, useMemo, useState } from "react";
 import Carousel from "~/components/Carousel";
 import { getPetWithImagesDb, PetWithImage } from "~/services/db/pet.service";
-import { FaChevronLeft, FaMapPin } from "react-icons/fa";
+import { FaChevronLeft, FaMapPin, FaRegHeart } from "react-icons/fa";
 import { PiGenderIntersexBold } from "react-icons/pi";
 import { LiaBirthdayCakeSolid } from "react-icons/lia";
 import { calculateAge } from "~/utils/common";
@@ -22,6 +22,7 @@ import { SecondaryButton } from "~/components/Button/secondary";
 import { PrimaryButton } from "~/components/Button/primary";
 import { config } from "~/config";
 import { petImageUrl } from "~/utils/image";
+import { getPetStatusConfig } from "~/utils/pet-helpers";
 
 export const meta = () => {
   return [{ title: "MASCOTA" }];
@@ -286,15 +287,19 @@ export default function () {
               >
                 {pet.name}
               </h1>
-              {pet.adopted ? (
-                <span className="flex items-center gap-x-2 text-red-500">
-                  <GrStatusGoodSmall /> Adoptado
-                </span>
-              ) : (
-                <span className="flex items-center gap-x-2 text-green-500">
-                  <GrStatusGoodSmall /> En adopción
-                </span>
-              )}
+              {(() => {
+                const statusConfig = getPetStatusConfig(pet.status);
+                return (
+                  <span
+                    className={`flex items-center gap-x-2 ${statusConfig.color}`}
+                  >
+                    <GrStatusGoodSmall />
+                    {statusConfig.canRequestAdoption
+                      ? "En adopción"
+                      : statusConfig.label}
+                  </span>
+                );
+              })()}
             </div>
 
             <div className="w-full flex flex-wrap gap-3 text-gray-600">
@@ -315,16 +320,19 @@ export default function () {
             <div className="flex gap-4">
               {(!isUser || allowedRequest) && (
                 <PrimaryButton
-                  disabled={pet.adopted}
+                  disabled={!getPetStatusConfig(pet.status).canRequestAdoption}
                   onClick={() => handleAdoptionPet()}
-                  label={pet.adopted ? "Adoptado" : "Solicitar Adopción"}
+                  label={
+                    getPetStatusConfig(pet.status).canRequestAdoption
+                      ? "Solicitar Adopción"
+                      : getPetStatusConfig(pet.status).label
+                  }
                 />
               )}
               {(!isUser || allowedLike) && (
                 <SecondaryButton
-                  color={petSavedId ? "bg-rose-400" : undefined}
-                  textColor={petSavedId ? "text-white" : undefined}
-                  borderColor={petSavedId ? "border-white" : undefined}
+                  textColor={"text-rose-400"}
+                  borderColor="border-rose-400"
                   onClick={() => handleSavePet()}
                   disabled={saving}
                   label={
@@ -336,7 +344,7 @@ export default function () {
                       ? "Guardado"
                       : "Guardar"
                   }
-                  Icon={FaHeart}
+                  Icon={petSavedId ? FaHeart : FaRegHeart}
                 />
               )}
             </div>

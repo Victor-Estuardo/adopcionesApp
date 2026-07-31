@@ -13,6 +13,8 @@ import {
 import { getSession } from "~/services/sessions/sessions.service";
 import { calculateAge, validatePermission } from "~/utils/common";
 import { petImageUrl } from "~/utils/image";
+import { getPetStatusConfig } from "~/utils/pet-helpers";
+import { status_pet } from "@prisma/client";
 
 export const meta = () => {
   return [{ title: "GUARDADOS" }];
@@ -28,7 +30,7 @@ type SavedPetItem = {
     gender: string;
     size: string;
     birthdate: string;
-    adopted: boolean;
+    status: status_pet;
     species: string;
     imageUrl: string | null;
   };
@@ -78,7 +80,7 @@ export const action: ActionFunction = async ({ request }) => {
         gender: s.pet.gender,
         size: s.pet.size,
         birthdate: s.pet.birthdate.toISOString(),
-        adopted: s.pet.adopted,
+        status: s.pet.status,
         species: s.pet.petSpecies.name,
         imageUrl: s.pet.pet_images[0].path,
       },
@@ -225,6 +227,8 @@ function SavedPetCard({
   item: SavedPetItem;
   cloudName: string;
 }) {
+  const statusConfig = getPetStatusConfig(item.pet.status);
+
   return (
     <div className="group relative bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200">
       {/* Foto */}
@@ -242,10 +246,12 @@ function SavedPetCard({
             </div>
           )}
 
-          {/* Badge adoptado */}
-          {item.pet.adopted && (
-            <div className="absolute top-2 left-2 bg-emerald-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
-              Adoptado
+          {/* Badge de estado (solo si no está disponible para adopción) */}
+          {!statusConfig.canRequestAdoption && (
+            <div
+              className={`absolute top-2 left-2 ${statusConfig.bg} ${statusConfig.color} text-xs font-semibold px-2 py-0.5 rounded-full`}
+            >
+              {statusConfig.label}
             </div>
           )}
         </div>
@@ -291,13 +297,15 @@ function SavedPetCard({
         <Link
           to={`/mascota/${item.pet.id}`}
           className={`mt-4 w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl text-sm font-medium transition-colors ${
-            item.pet.adopted
-              ? "bg-gray-100 text-gray-400 cursor-not-allowed pointer-events-none"
-              : "bg-medium-turquoise-meraki hover:bg-teal-600 text-white"
+            statusConfig.canRequestAdoption
+              ? "bg-medium-turquoise-meraki hover:bg-teal-600 text-white"
+              : "bg-gray-100 text-gray-400"
           }`}
         >
-          {item.pet.adopted ? "Ya fue adoptado" : "Ver perfil"}
-          {!item.pet.adopted && <FaChevronRight className="w-4 h-4" />}
+          {statusConfig.canRequestAdoption ? "Ver perfil" : statusConfig.label}
+          {statusConfig.canRequestAdoption && (
+            <FaChevronRight className="w-4 h-4" />
+          )}
         </Link>
       </div>
     </div>

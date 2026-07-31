@@ -251,7 +251,6 @@ export default function () {
       <div className="flex flex-col gap-6 md:gap-3 pb-3 md:flex-row md:items-center">
         <SearchInput
           placeholder="Buscar por nombre de mascota..."
-          size="lg"
           value={q}
           onChange={(e) => handleChangeSearch(e.target.value)}
         />

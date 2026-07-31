@@ -3,7 +3,7 @@ import { IoFemaleOutline, IoMaleOutline } from "react-icons/io5";
 import { PetWithImage } from "~/services/db/pet.service";
 import { calculateAge } from "~/utils/common";
 import { petImageUrl } from "~/utils/image";
-import { getSpeciesAccent } from "~/utils/pet-helpers";
+import { getPetStatusConfig, getSpeciesAccent } from "~/utils/pet-helpers";
 
 interface PetCardProps {
   pet: PetWithImage;
@@ -23,6 +23,7 @@ export function PetCard({
   cloudName = "",
 }: PetCardProps) {
   const accent = getSpeciesAccent(pet.petSpecies?.name || "default");
+  const statusConfig = getPetStatusConfig(pet.status);
   const cover = pet.pet_images?.[0]
     ? petImageUrl(cloudName, pet.pet_images[0].path, "card")
     : null;
@@ -61,19 +62,13 @@ export function PetCard({
         {petTagNub && (
           <div className="absolute right-3 top-3">
             <span
-              className={`inline-flex items-center gap-1.5 rounded-full py-1 pl-2 pr-3 text-xs font-medium ${
-                pet.adopted
-                  ? "bg-[#EEECE7] text-[#6B665C]"
-                  : "bg-[#E4F5EC] text-[#1F7A4D]"
-              } `}
+              className={`inline-flex items-center gap-1.5 rounded-full py-1 pl-2 pr-3 text-xs font-medium ${statusConfig.bg} ${statusConfig.color}`}
             >
               <span
-                className={`h-1.5 w-1.5 rounded-full ${
-                  pet.adopted ? "bg-[#A6A092]" : "bg-[#2FA36B]"
-                }`}
+                className={`h-1.5 w-1.5 rounded-full ${statusConfig.dot}`}
                 aria-hidden
               />
-              {pet.adopted ? "Adoptado" : "Disponible"}
+              {statusConfig.label}
             </span>
           </div>
         )}

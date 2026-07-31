@@ -1,4 +1,4 @@
-import { gender_pet, petSpecies, Prisma } from "@prisma/client";
+import { gender_pet, petSpecies, Prisma, status_pet } from "@prisma/client";
 import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
 import {
   useFetcher,
@@ -33,6 +33,7 @@ import { listPetSpeciesDb } from "~/services/db/petSpecies.service";
 import prisma from "~/services/db/prisma";
 import { getSession } from "~/services/sessions/sessions.service";
 import { validatePermission } from "~/utils/common";
+import { getPetStatusConfig, PET_STATUS_OPTIONS } from "~/utils/pet-helpers";
 
 export const meta = () => {
   return [{ title: "MASCOTAS" }];
@@ -63,8 +64,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 
   // Filtro para la llamada de lista de mascotas
   const whereListPets: Prisma.petWhereInput = {
-    adopted:
-      status == "adoptado" ? true : status == "disponible" ? false : undefined,
+    status: status ? (status as status_pet) : undefined,
     name: { contains: search, mode: "insensitive" },
     gender: { equals: gender as gender_pet | undefined },
     pet_species_id: { equals: specie ? Number(specie) : undefined },
@@ -234,14 +234,14 @@ export const action: ActionFunction = async ({ request }) => {
     return json({ update_pet: true });
   }
 
-  if (intent === "toggle-adopted") {
+  if (intent === "update-status") {
     const validateRequest = validatePermission(session, 9, "Actualizar");
     if (validateRequest) throw validateRequest;
 
     await prisma.pet.update({
       where: { id: Number(formData.get("id")) },
       data: {
-        adopted: formData.get("adopted") === "true",
+        status: formData.get("status") as status_pet,
         update_date: new Date(),
         updater_id: userId,
       },
@@ -368,11 +368,12 @@ export default function () {
     setPanelOpen(true);
   }
 
-  function onToggleAdopted(id: number, next: boolean) {
+  // Función para cambiar el estado de una mascota (Disponible, En tratamiento, etc.)
+  function onChangeStatus(id: number, status: status_pet) {
     const fd = new FormData();
-    fd.set("intent", "toggle-adopted");
+    fd.set("intent", "update-status");
     fd.set("id", String(id));
-    fd.set("adopted", String(next));
+    fd.set("status", status);
     fetcher.submit(fd, { method: "POST", encType: "multipart/form-data" });
   }
 
@@ -396,7 +397,6 @@ export default function () {
       <div className="flex flex-col gap-6 md:gap-3 pb-3 md:flex-row md:items-center">
         <SearchInput
           placeholder="Buscar por nombre..."
-          size="lg"
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
@@ -421,8 +421,11 @@ export default function () {
             onChange={(e) => updateParam("status", e.target.value)}
           >
             <option value="">Todo estado</option>
-            <option value="disponible">Disponible</option>
-            <option value="adoptado">Adoptado</option>
+            {PET_STATUS_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
           </Select>
           <Select
             id="gender"
@@ -467,36 +470,54 @@ export default function () {
             isNavigating ? "opacity-60" : "opacity-100"
           }`}
         >
-          {petList.map((pet: PetWithImage, index: number) => (
-            <PetCard
-              key={`${index}_${pet.name}`}
-              pet={pet}
-              healthStatus
-              petTagNub
-              cloudName={cloudName}
-            >
-              <div className="flex items-center gap-2 border-t border-[#F0EDE5] pt-3">
-                {allowedToUpdate && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => openEdit(pet.id)}
-                      className="flex-1 rounded-lg border border-medium-turquoise-meraki px-3 py-1.5 text-sm font-medium text-medium-turquoise-meraki transition-colors hover:bg-medium-turquoise-meraki/10"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onToggleAdopted(pet.id, !pet.adopted)}
-                      className="flex-1 rounded-lg bg-medium-turquoise-meraki px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-medium-turquoise-meraki/80"
-                    >
-                      {pet.adopted ? "Marcar disponible" : "Dar en adopción"}
-                    </button>
-                  </>
-                )}
-              </div>
-            </PetCard>
-          ))}
+          {petList.map((pet: PetWithImage, index: number) => {
+            const statusConfig = getPetStatusConfig(pet.status);
+            return (
+              <PetCard
+                key={`${index}_${pet.name}`}
+                pet={pet}
+                healthStatus
+                petTagNub
+                cloudName={cloudName}
+              >
+                <div className="flex flex-col gap-2 border-t border-[#F0EDE5] pt-3">
+                  {allowedToUpdate && (
+                    <>
+                      <div className="flex items-center gap-2">
+                        <label
+                          htmlFor={`status-${pet.id}`}
+                          className="text-xs font-medium text-[#8A8577] whitespace-nowrap"
+                        >
+                          Estado
+                        </label>
+                        <select
+                          id={`status-${pet.id}`}
+                          value={pet.status}
+                          onChange={(e) =>
+                            onChangeStatus(pet.id, e.target.value as status_pet)
+                          }
+                          className={`flex-1 cursor-pointer rounded-lg border-0 px-2 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-medium-turquoise-meraki/50 ${statusConfig.bg} ${statusConfig.color}`}
+                        >
+                          {PET_STATUS_OPTIONS.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => openEdit(pet.id)}
+                        className="w-full rounded-lg border border-medium-turquoise-meraki px-3 py-1.5 text-sm font-medium text-medium-turquoise-meraki transition-colors hover:bg-medium-turquoise-meraki/10"
+                      >
+                        Editar
+                      </button>
+                    </>
+                  )}
+                </div>
+              </PetCard>
+            );
+          })}
         </div>
       )}
       <Pagination

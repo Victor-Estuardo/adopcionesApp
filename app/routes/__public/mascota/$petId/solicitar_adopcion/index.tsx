@@ -19,6 +19,7 @@ import { createApplicationAnswersDb } from "~/services/db/applicationAnswer.serv
 import { toast } from "sonner";
 import { createcommitmentAgreementDb } from "~/services/db/commitmentAgreement.service";
 import { validatePermission } from "~/utils/common";
+import { getPetStatusConfig } from "~/utils/pet-helpers";
 
 export const meta = () => {
   return [{ title: "SOLICITUD DE ADOPCIÓN" }];
@@ -74,8 +75,8 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   const pet = getPetResponse.data;
   const questions = getQuestionsResponse.data;
 
-  // Verificiar que aun este en adopcion la mascota
-  if (pet?.adopted) {
+  // Verificar que la mascota siga disponible para adopción
+  if (pet && !getPetStatusConfig(pet.status).canRequestAdoption) {
     throw new Response("La mascota no está disponible para adopción", {
       status: 404,
     });

@@ -41,7 +41,7 @@ export const listPetsWithImagesDb = async (
       skip,
       take,
       select: {
-        adopted: true,
+        status: true,
         birthdate: true,
         gender: true,
         id: true,
@@ -85,7 +85,7 @@ export const getPetWithImagesDb = async (
     return prisma.pet.findFirst({
       where,
       select: {
-        adopted: true,
+        status: true,
         birthdate: true,
         gender: true,
         id: true,
@@ -122,7 +122,7 @@ export const getPetDb = async (
     return prisma.pet.findFirst({
       where,
       select: {
-        adopted: true,
+        status: true,
         birthdate: true,
         gender: true,
         id: true,
