@@ -1,0 +1,324 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table module {
+  id Int [pk, increment]
+  key String [not null]
+  name String [not null]
+  icon String [not null]
+  order Int [not null]
+  is_active Boolean [not null]
+  nav_zone nav_zone_module [not null]
+  nav_audience nav_audience_module [not null]
+  permission permission [not null]
+}
+
+Table pet {
+  id Int [pk, increment]
+  name String [not null]
+  gender gender_pet [not null]
+  pet_species_id Int [not null]
+  birthdate DateTime [not null]
+  size String [not null]
+  color String [not null]
+  vaccinated Boolean [not null, default: false]
+  sterilized Boolean [not null, default: false]
+  description String
+  race String
+  creation_date DateTime [not null]
+  creator_id Int [not null]
+  update_date DateTime [not null]
+  updater_id Int [not null]
+  status status_pet [not null, default: 'Disponible']
+  adoptionApplication adoptionApplication [not null]
+  user_pet_creator_idTouser user [not null]
+  petSpecies petSpecies [not null]
+  user_pet_updater_idTouser user [not null]
+  pet_images pet_images [not null]
+  savedPet savedPet [not null]
+}
+
+Table petSpecies {
+  id Int [pk, increment]
+  name String [not null]
+  active Boolean [not null, default: true]
+  creation_date DateTime [default: `now()`, not null]
+  creator_id Int [not null]
+  update_date DateTime [default: `now()`, not null]
+  updater_id Int [not null]
+  pet pet [not null]
+  user_petSpecies_creator_idTouser user [not null]
+  user_petSpecies_updater_idTouser user [not null]
+}
+
+Table pet_images {
+  id Int [pk, increment]
+  pet_id Int [not null]
+  path String [not null]
+  creation_date DateTime [not null]
+  creator_id Int [not null]
+  update_date DateTime [not null]
+  updater_id Int [not null]
+  user_pet_images_creator_idTouser user [not null]
+  pet pet [not null]
+  user_pet_images_updater_idTouser user [not null]
+}
+
+Table role {
+  id Int [pk, increment]
+  name String [not null]
+  description String
+  active Boolean [default: true]
+  created_in DateTime [not null]
+  its_administrative Boolean [not null, default: false]
+  permission_role permission_role [not null]
+  user user [not null]
+}
+
+Table user {
+  id Int [pk, increment]
+  first_name String [not null]
+  last_name String [not null]
+  email String [unique, not null]
+  password String [not null]
+  role_id Int [not null]
+  registration_date DateTime [default: `now()`]
+  it_is_verified Boolean [not null, default: false]
+  profile_public_id String [unique]
+  phone String
+  profile_version String
+  adoptionApplication adoptionApplication [not null]
+  donation_donation_reviewed_byTouser donation [not null]
+  donation_donation_user_idTouser donation [not null]
+  donationBankAccount_donationBankAccount_creator_idTouser donationBankAccount [not null]
+  donationBankAccount_donationBankAccount_updater_idTouser donationBankAccount [not null]
+  passwordResetToken passwordResetToken [not null]
+  pet_pet_creator_idTouser pet [not null]
+  pet_pet_updater_idTouser pet [not null]
+  petSpecies_petSpecies_creator_idTouser petSpecies [not null]
+  petSpecies_petSpecies_updater_idTouser petSpecies [not null]
+  pet_images_pet_images_creator_idTouser pet_images [not null]
+  pet_images_pet_images_updater_idTouser pet_images [not null]
+  savedPet savedPet [not null]
+  role role [not null]
+}
+
+Table permission {
+  id Int [pk, increment]
+  name String [not null]
+  description String [not null]
+  module_id Int [not null]
+  action action_permission [not null]
+  created_in DateTime [not null]
+  module module [not null]
+  permission_role permission_role [not null]
+}
+
+Table permission_role {
+  id Int [pk, increment]
+  role_id Int [not null]
+  permission_id Int [not null]
+  created_in DateTime [not null]
+  permission permission [not null]
+  role role [not null]
+}
+
+Table passwordResetToken {
+  id String [pk]
+  token String [unique, not null]
+  user_id Int [not null]
+  expires_at DateTime [not null]
+  created_at DateTime [not null]
+  user user [not null]
+}
+
+Table formQuestion {
+  id String [pk]
+  section String
+  question_text String [not null]
+  field_type String [not null]
+  options Json
+  required Boolean [not null]
+  sort_order Int [not null]
+  active Boolean [not null]
+  applicationAnswer applicationAnswer [not null]
+}
+
+Table adoptionApplication {
+  id String [pk]
+  pet_id Int [not null]
+  user_id Int [not null]
+  status String [not null]
+  submitted_at DateTime [not null]
+  updated_at DateTime [not null]
+  rejection_reason String
+  pet pet [not null]
+  user user [not null]
+  other_applicationAnswer applicationAnswer [not null]
+  commitmentAgreement commitmentAgreement [not null]
+}
+
+Table applicationAnswer {
+  id String [pk]
+  application_id String [not null]
+  question_id String [not null]
+  answer_value String [not null]
+  applicationAnswer adoptionApplication [not null]
+  formQuestion formQuestion [not null]
+}
+
+Table commitmentAgreement {
+  id String [pk]
+  application_id String [not null]
+  agreement_text String [not null]
+  accepted Boolean [not null]
+  ip_address String
+  signed_at DateTime [not null]
+  adoptionApplication adoptionApplication [not null]
+}
+
+Table savedPet {
+  id String [pk]
+  user_id Int [not null]
+  pet_id Int [not null]
+  saved_at DateTime [default: `now()`, not null]
+  pet pet [not null]
+  user user [not null]
+}
+
+Table donation {
+  id String [pk]
+  user_id Int
+  donor_name String
+  donor_email String
+  donor_phone String
+  donation_type donation_type_donation [not null]
+  amount Decimal
+  item_description String
+  bank_account_id Int
+  reference_number String
+  status String [not null]
+  is_public Boolean [not null, default: false]
+  is_anonymous Boolean [not null, default: false]
+  submitted_at DateTime [not null]
+  updated_at DateTime [not null]
+  rejection_reason String
+  reviewed_by Int
+  comment String
+  donationBankAccount donationBankAccount
+  user_donation_reviewed_byTouser user
+  user_donation_user_idTouser user
+}
+
+Table donationBankAccount {
+  id Int [pk, increment]
+  bank_name String [not null]
+  account_type account_type_donationBankAccount [not null]
+  account_number String [not null]
+  account_holder String
+  active Boolean [not null, default: true]
+  creation_date DateTime [default: `now()`, not null]
+  creator_id Int [not null]
+  update_date DateTime [default: `now()`, not null]
+  updater_id Int [not null]
+  donation donation [not null]
+  user_donationBankAccount_creator_idTouser user [not null]
+  user_donationBankAccount_updater_idTouser user [not null]
+}
+
+Enum nav_audience_module {
+  ALL
+  AUTH_ONLY
+  ADMIN_ONLY
+}
+
+Enum nav_zone_module {
+  TOPBAR
+  ACCOUNT
+  ADMIN_SIDEBAR
+}
+
+Enum gender_pet {
+  Macho
+  Hembra
+}
+
+Enum action_permission {
+  Leer
+  Crear
+  Actualizar
+  Eliminar
+  Guardar
+}
+
+Enum account_type_donationBankAccount {
+  Monetaria
+  Ahorro
+  Pr_stamo
+  Tarjeta_de_cr_dito
+}
+
+Enum donation_type_donation {
+  Monetaria
+  Especie
+}
+
+Enum status_pet {
+  Disponible
+  En_tratamiento
+  Incapacitado
+  Fallecido
+  Retirado
+  Adoptado
+}
+
+Ref: pet.creator_id > user.id
+
+Ref: pet.pet_species_id > petSpecies.id
+
+Ref: pet.updater_id > user.id
+
+Ref: petSpecies.creator_id > user.id
+
+Ref: petSpecies.updater_id > user.id
+
+Ref: pet_images.creator_id > user.id
+
+Ref: pet_images.pet_id > pet.id
+
+Ref: pet_images.updater_id > user.id
+
+Ref: user.role_id > role.id
+
+Ref: permission.module_id > module.id
+
+Ref: permission_role.permission_id > permission.id
+
+Ref: permission_role.role_id > role.id
+
+Ref: passwordResetToken.user_id > user.id
+
+Ref: adoptionApplication.pet_id > pet.id
+
+Ref: adoptionApplication.user_id > user.id
+
+Ref: applicationAnswer.application_id > adoptionApplication.id
+
+Ref: applicationAnswer.question_id > formQuestion.id
+
+Ref: commitmentAgreement.application_id > adoptionApplication.id
+
+Ref: savedPet.pet_id > pet.id
+
+Ref: savedPet.user_id > user.id
+
+Ref: donation.bank_account_id > donationBankAccount.id [delete: No Action]
+
+Ref: donation.reviewed_by > user.id [delete: No Action]
+
+Ref: donation.user_id > user.id [delete: No Action]
+
+Ref: donationBankAccount.creator_id > user.id [delete: No Action]
+
+Ref: donationBankAccount.updater_id > user.id [delete: No Action]
