@@ -423,3 +423,99 @@ function getSetPasswordEmailText(
     El equipo de MERAKI
   `;
 }
+
+export async function sendApplicationDecisionEmail(
+  email: string,
+  applicationUrl: string,
+  userName?: string,
+): Promise<boolean> {
+  try {
+    const { data, error } = await resend.emails.send({
+      from: `${EMAIL_FROM_NAME} <${EMAIL_FROM}>`,
+      to: [email],
+      subject: "Hay novedades sobre tu solicitud de adopción",
+      html: getApplicationDecisionEmailHtml(applicationUrl, userName),
+      text: getApplicationDecisionEmailText(applicationUrl, userName),
+    });
+
+    if (error) {
+      console.error("Error al enviar correo de decisión de solicitud:", error);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error(
+      "No se pudo enviar el correo de decisión de solicitud:",
+      error,
+    );
+    return false;
+  }
+}
+
+function getApplicationDecisionEmailHtml(
+  applicationUrl: string,
+  userName?: string,
+): string {
+  return `
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+        .container { background-color: #f9f9f9; border-radius: 10px; padding: 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { color: #52C9BB; margin: 0; }
+        .content { background-color: white; padding: 25px; border-radius: 8px; }
+        .button { display: inline-block; padding: 15px 30px; background-color: #52C9BB; color: white !important; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0; }
+        .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>Actualización de tu solicitud</h1>
+        </div>
+        <div class="content">
+          ${
+            userName
+              ? `<p>Hola <strong>${userName}</strong>,</p>`
+              : "<p>Hola,</p>"
+          }
+          <p>Se tomó una decisión sobre tu solicitud de adopción. Para conocer el detalle, ingresa a tu cuenta y revisa el estado de tu solicitud:</p>
+          <div style="text-align: center;">
+            <a href="${applicationUrl}" class="button">Ver mi solicitud</a>
+          </div>
+          <p>O copia y pega este enlace en tu navegador:</p>
+          <p style="word-break: break-all; color: #666; font-size: 12px;">${applicationUrl}</p>
+        </div>
+        <div class="footer">
+          <p>© 2025 MERAKI. Todos los derechos reservados.</p>
+          <p>Este es un correo automático, por favor no respondas a este mensaje.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+function getApplicationDecisionEmailText(
+  applicationUrl: string,
+  userName?: string,
+): string {
+  return `
+    Actualización de tu solicitud
+
+    ${userName ? `Hola ${userName},` : "Hola,"}
+
+    Se tomó una decisión sobre tu solicitud de adopción.
+
+    Ingresa a tu cuenta y revisa el estado de tu solicitud en el siguiente enlace:
+    ${applicationUrl}
+
+    Saludos,
+    El equipo de MERAKI
+  `;
+}

@@ -26,8 +26,36 @@ import {
   EssentialInfoUser,
   getEssentialUserDb,
 } from "~/services/db/user.service";
+import { sendApplicationDecisionEmail } from "~/services/mail/resend.service";
 import { getSession } from "~/services/sessions/sessions.service";
 import { validatePermission } from "~/utils/common";
+
+// Notifica al adoptante que se tomó una decisión, sin revelar cuál, con un link a su solicitud
+async function notifyAdopterDecision(
+  request: Request,
+  userId: number,
+  applicationId: string,
+) {
+  try {
+    const adopterRes = await getEssentialUserDb({ id: userId });
+
+    if (!adopterRes.success || !adopterRes.data) return;
+
+    const baseUrl = new URL(request.url).origin;
+    const applicationUrl = `${baseUrl}/mi-cuenta/solicitudes/${applicationId}`;
+
+    await sendApplicationDecisionEmail(
+      adopterRes.data.email,
+      applicationUrl,
+      adopterRes.data.first_name,
+    );
+  } catch (error) {
+    console.error(
+      "No se pudo notificar al adoptante sobre la decisión de su solicitud:",
+      error,
+    );
+  }
+}
 
 export const meta = () => {
   return [{ title: "PROGRESO DE SOLICITUD" }];
@@ -126,6 +154,12 @@ export const action: ActionFunction = async ({ request, params }) => {
       return json({ errorMsg: "Ocurrió un error al aprobar la solicitud" });
     }
 
+    await notifyAdopterDecision(
+      request,
+      updateRes.data.user_id,
+      applicationId,
+    );
+
     return json({ confirmed: true, newStatus: "aprobada" });
   }
 
@@ -147,6 +181,12 @@ export const action: ActionFunction = async ({ request, params }) => {
     if (!updateRes.success) {
       return json({ errorMsg: "Ocurrió un error al rechazar la solicitud" });
     }
+
+    await notifyAdopterDecision(
+      request,
+      updateRes.data.user_id,
+      applicationId,
+    );
 
     return json({ deleted: true, newStatus: "rechazada" });
   }
