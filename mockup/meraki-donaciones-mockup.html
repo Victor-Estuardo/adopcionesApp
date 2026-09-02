@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MERAKI — Módulo de Donaciones</title>
+<style>
+  :root{
+    --teal-dark:#0f6d5f;
+    --teal:#1c8f7c;
+    --teal-light:#2fbfa5;
+    --teal-pale:#e6f7f3;
+    --blue:#4f6ef7;
+    --blue-dark:#3b56d9;
+    --blue-pale:#eef1ff;
+    --ink:#12181b;
+    --ink-soft:#5b6670;
+    --ink-faint:#98a2ab;
+    --line:#e6e9ec;
+    --bg:#ffffff;
+    --bg-soft:#f7f8fa;
+    --amber:#b06a00;
+    --amber-bg:#fdf1de;
+    --rose:#c22b4d;
+    --rose-bg:#fbe7ec;
+    --info:#2757d6;
+    --info-bg:#eaf0fe;
+    --radius:14px;
+    --radius-sm:9px;
+    --shadow:0 1px 2px rgba(18,24,27,.04), 0 8px 24px -12px rgba(18,24,27,.12);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink);
+    background:var(--bg-soft);
+    -webkit-font-smoothing:antialiased;
+  }
+  button{font-family:inherit;cursor:pointer;}
+  input,select,textarea{font-family:inherit;}
+  a{color:inherit;}
+  .hidden{display:none !important;}
+  img.ph{display:block;width:100%;height:100%;object-fit:cover;}
+
+  /* ---------- demo switcher ---------- */
+  .demo-bar{
+    position:sticky;top:0;z-index:100;
+    background:var(--ink);
+    color:#fff;
+    display:flex;align-items:center;gap:14px;
+    padding:10px 20px;
+    font-size:13px;
+  }
+  .demo-bar .label{color:#9aa4ab;}
+  .demo-toggle{
+    display:inline-flex;background:#232b2e;border-radius:999px;padding:3px;gap:2px;
+  }
+  .demo-toggle button{
+    border:none;background:transparent;color:#c7ced2;
+    padding:7px 14px;border-radius:999px;font-size:13px;font-weight:600;
+    transition:.15s;
+  }
+  .demo-toggle button.active{background:#fff;color:var(--ink);}
+  .demo-note{margin-left:auto;color:#8b959c;font-size:12.5px;}
+
+  /* ============ PUBLIC ============ */
+  #public-view{background:var(--bg);min-height:100vh;}
+  .pub-nav{
+    display:flex;align-items:center;gap:36px;
+    padding:16px 40px;border-bottom:1px solid var(--line);
+  }
+  .pub-logo{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.2px;font-size:15px;}
+  .pub-logo .mark{
+    width:34px;height:34px;border-radius:10px;
+    background:linear-gradient(135deg,var(--teal-light),var(--teal-dark));
+    display:flex;align-items:center;justify-content:center;
+  }
+  .pub-nav-links{display:flex;gap:28px;margin-left:8px;font-size:14.5px;font-weight:600;color:var(--ink-soft);}
+  .pub-nav-links a{cursor:pointer;padding-bottom:4px;}
+  .pub-nav-links a.active{color:var(--ink);border-bottom:2px solid var(--blue);}
+  .pub-avatar{
+    margin-left:auto;width:36px;height:36px;border-radius:50%;
+    background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;
+    font-size:12.5px;font-weight:700;
+  }
+
+  .pub-page{max-width:1180px;margin:0 auto;padding:40px 40px 90px;}
+  .pub-hero{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:36px;}
+  .pub-hero h1{font-size:29px;margin:0 0 8px;letter-spacing:-.3px;}
+  .pub-hero p{margin:0;color:var(--ink-soft);font-size:15px;max-width:560px;line-height:1.55;}
+
+  .btn{
+    border:none;border-radius:999px;padding:11px 20px;font-size:14px;font-weight:700;
+    display:inline-flex;align-items:center;gap:8px;white-space:nowrap;transition:.15s;
+  }
+  .btn-blue{background:var(--blue);color:#fff;}
+  .btn-blue:hover{background:var(--blue-dark);}
+  .btn-teal{background:var(--teal);color:#fff;}
+  .btn-teal:hover{background:var(--teal-dark);}
+  .btn-outline{background:#fff;border:1.5px solid var(--line);color:var(--ink);}
+  .btn-outline:hover{border-color:var(--ink-faint);}
+  .btn-ghost{background:transparent;color:var(--ink-soft);}
+  .btn-rose-outline{background:#fff;border:1.5px solid var(--rose-bg);color:var(--rose);}
+  .btn-rose-outline:hover{background:var(--rose-bg);}
+  .btn-sm{padding:8px 14px;font-size:13px;}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+
+  .section-label{font-size:12.5px;font-weight:800;letter-spacing:.3px;color:var(--ink-faint);margin:0 0 14px;}
+
+  .pub-tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);margin-bottom:32px;}
+  .pub-tabs button{
+    border:none;background:transparent;color:var(--ink-soft);font-size:14.5px;font-weight:700;
+    padding:12px 4px;margin-right:26px;border-bottom:2.5px solid transparent;position:relative;top:1px;
+  }
+  .pub-tabs button.active{color:var(--ink);border-bottom-color:var(--blue);}
+  .pub-section{animation:fadeIn .15s ease-out;}
+  @keyframes fadeIn{from{opacity:0;} to{opacity:1;}}
+
+  .needs-row{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px;}
+  .need-chip{
+    display:flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:999px;
+    padding:8px 14px;font-size:13px;color:var(--ink-soft);background:#fff;
+  }
+  .need-chip span{color:var(--teal-dark);display:flex;}
+
+  .stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:36px;}
+  .stat-card{border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;background:#fff;}
+  .stat-card .num{font-size:26px;font-weight:800;letter-spacing:-.5px;}
+  .stat-card .cap{color:var(--ink-soft);font-size:13px;margin-top:3px;}
+  .stat-foot{color:var(--ink-faint);font-size:12.5px;margin:-24px 0 36px;}
+
+  .medios-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:14px;}
+  .medio-card{border:1px solid var(--line);border-radius:var(--radius);padding:22px;background:#fff;display:flex;flex-direction:column;gap:10px;}
+  .medio-card .ico{
+    width:34px;height:34px;border-radius:9px;background:var(--blue-pale);color:var(--blue);
+    display:flex;align-items:center;justify-content:center;margin-bottom:4px;
+  }
+  .medio-card h3{margin:0;font-size:15px;}
+  .medio-card .acct{border-top:1px solid var(--line);padding-top:10px;margin-top:2px;font-size:13.5px;}
+  .medio-card .acct b{display:block;font-size:13.5px;}
+  .medio-card .acct .num{color:var(--ink-soft);font-size:13px;}
+  .medio-card p{margin:0;color:var(--ink-soft);font-size:13.5px;line-height:1.5;}
+  .medio-card .cta-inline{margin-top:auto;padding-top:8px;}
+
+  .notify-banner{
+    display:flex;align-items:center;justify-content:space-between;gap:20px;
+    background:var(--teal-pale);border:1px solid #cdece3;border-radius:var(--radius);
+    padding:20px 24px;margin:26px 0 44px;
+  }
+  .notify-banner h4{margin:0 0 4px;font-size:15.5px;}
+  .notify-banner p{margin:0;color:var(--ink-soft);font-size:13.5px;}
+
+  .latest-list{border-top:1px solid var(--line);}
+  .latest-row{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 2px;border-bottom:1px solid var(--line);
+  }
+  .latest-row .who{font-weight:700;font-size:14.5px;}
+  .latest-row .meta{color:var(--ink-faint);font-size:12.5px;margin-top:2px;}
+  .latest-row .what{text-align:right;font-size:14px;}
+  .latest-row .what .tag{display:block;color:var(--ink-faint);font-size:12px;margin-top:2px;}
+
+  /* patrocinadores públicos */
+  .sponsor-strip{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:40px;}
+  .sponsor-chip{
+    display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:999px;
+    padding:8px 16px 8px 8px;background:#fff;
+  }
+  .sponsor-chip .logo{
+    width:30px;height:30px;border-radius:8px;background:var(--bg-soft);
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:var(--ink-soft);
+  }
+  .sponsor-chip b{font-size:13.5px;}
+
+  .project-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;}
+  .project-card{border:1px solid var(--line);border-radius:var(--radius);background:#fff;overflow:hidden;}
+  .ba-wrap{display:grid;grid-template-columns:1fr 1fr;}
+  .ba-cell{position:relative;aspect-ratio:4/3;background:linear-gradient(135deg,#eef2f2,#e2e8e6);}
+  .ba-cell.after{background:linear-gradient(135deg,#e8f6f1,#cdeee2);}
+  .ba-tag{
+    position:absolute;top:8px;left:8px;background:rgba(18,24,27,.72);color:#fff;
+    font-size:10.5px;font-weight:700;letter-spacing:.3px;padding:3px 8px;border-radius:6px;
+  }
+  .ba-icon{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#9fb0ac;}
+  .project-body{padding:18px 20px 20px;}
+  .project-body h3{margin:0 0 6px;font-size:16px;}
+  .project-body p{margin:0 0 12px;color:var(--ink-soft);font-size:13.5px;line-height:1.5;}
+  .project-progress{margin-bottom:10px;}
+  .project-progress .bar{height:6px;border-radius:99px;background:var(--bg-soft);overflow:hidden;}
+  .project-progress .fill{height:100%;background:var(--teal);}
+  .project-progress .cap{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-faint);margin-top:5px;}
+  .sponsor-of{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-soft);}
+  .badge-status{font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:99px;}
+  .badge-status.activo{background:var(--info-bg);color:var(--info);}
+  .badge-status.finalizado{background:var(--teal-pale);color:var(--teal-dark);}
+
+  /* ============ ADMIN ============ */
+  #admin-view{display:flex;min-height:100vh;background:var(--bg-soft);}
+  .sidebar{
+    width:76px;background:linear-gradient(180deg,var(--teal-light),var(--teal-dark));
+    display:flex;flex-direction:column;align-items:center;padding:18px 0;gap:6px;flex-shrink:0;
+    position:sticky;top:0;height:100vh;
+  }
+  .sidebar .burger{color:#fff;opacity:.9;margin-bottom:22px;}
+  .side-btn{
+    width:46px;height:46px;border-radius:12px;border:none;background:transparent;color:#fff;
+    display:flex;align-items:center;justify-content:center;opacity:.78;
+  }
+  .side-btn.active{background:rgba(255,255,255,.22);opacity:1;}
+  .side-btn:hover{opacity:1;}
+  .side-spacer{flex:1;}
+
+  .admin-main{flex:1;min-width:0;}
+  .admin-topbar{
+    display:flex;align-items:center;padding:20px 32px;
+    border-bottom:1px solid var(--line);background:#fff;
+  }
+  .admin-topbar h1{font-size:19px;margin:0;}
+  .admin-avatar{
+    margin-left:auto;width:34px;height:34px;border-radius:50%;background:var(--ink);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;
+  }
+  .admin-body{padding:26px 32px 60px;}
+  .admin-body > .lede{color:var(--ink-soft);font-size:14px;margin:0 0 20px;}
+  .admin-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+  .select-pill{
+    border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 12px;
+    font-size:13.5px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:6px;
+  }
+  .date-pill{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 12px;font-size:13.5px;color:var(--ink-soft);}
+  .toolbar-count{color:var(--ink-faint);font-size:13px;margin-left:2px;}
+  .toolbar-spacer{flex:1;}
+
+  .don-list{border-top:1px solid var(--line);}
+  .don-row{
+    display:flex;align-items:flex-start;gap:16px;padding:18px 4px;border-bottom:1px solid var(--line);
+    cursor:pointer;
+  }
+  .don-row:hover{background:#fbfbfc;}
+  .don-avatar{
+    width:38px;height:38px;border-radius:50%;background:var(--bg-soft);color:var(--ink-soft);
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0;
+  }
+  .don-main{flex:1;min-width:0;}
+  .don-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .don-name{font-weight:700;font-size:14.5px;}
+  .don-email{color:var(--ink-faint);font-size:12.5px;}
+  .don-line2{display:flex;align-items:center;gap:10px;margin-top:6px;flex-wrap:wrap;font-size:14px;}
+  .don-amount{font-weight:800;}
+  .don-tag{color:var(--ink-faint);font-size:12.5px;display:flex;align-items:center;gap:4px;}
+  .don-msg{color:var(--ink-soft);font-size:13px;font-style:italic;margin-top:6px;}
+  .don-date{color:var(--ink-faint);font-size:12px;margin-top:6px;}
+  .don-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0;}
+
+  .badge{font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:99px;white-space:nowrap;}
+  .badge.confirmada{background:var(--teal-pale);color:var(--teal-dark);}
+  .badge.pendiente{background:var(--amber-bg);color:var(--amber);}
+  .badge.coordinacion{background:var(--info-bg);color:var(--info);}
+  .badge.rechazada{background:var(--rose-bg);color:var(--rose);}
+
+  .empty{
+    border:1.5px dashed var(--line);border-radius:var(--radius);padding:60px 20px;text-align:center;
+    color:var(--ink-faint);font-size:14px;
+  }
+
+  /* grids for sponsors/projects admin */
+  .card-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  .admin-card{border:1px solid var(--line);border-radius:var(--radius);background:#fff;padding:20px;}
+  .admin-card .logo-sq{
+    width:44px;height:44px;border-radius:11px;background:var(--bg-soft);color:var(--ink-soft);
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;margin-bottom:12px;
+  }
+  .admin-card h4{margin:0 0 3px;font-size:15px;}
+  .admin-card .sub{color:var(--ink-faint);font-size:12.5px;margin-bottom:14px;}
+  .admin-card .stats-line{display:flex;justify-content:space-between;align-items:center;padding-top:12px;border-top:1px solid var(--line);}
+  .admin-card .stats-line .n{font-weight:800;font-size:15px;}
+  .admin-card .stats-line .l{color:var(--ink-faint);font-size:12px;}
+
+  .proj-admin-card{border:1px solid var(--line);border-radius:var(--radius);background:#fff;overflow:hidden;}
+  .proj-admin-card .top{display:flex;gap:0;height:96px;}
+  .proj-admin-card .top .ba-cell{aspect-ratio:auto;height:100%;}
+  .proj-admin-card .body{padding:16px 18px;}
+  .proj-admin-card .row1{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+  .proj-admin-card h4{margin:0;font-size:15px;}
+  .proj-admin-card .desc{color:var(--ink-soft);font-size:13px;line-height:1.5;margin:0 0 10px;}
+  .proj-admin-card .foot{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:var(--ink-faint);}
+
+  /* ---------- modal / drawer ---------- */
+  .overlay{
+    position:fixed;inset:0;background:rgba(18,24,27,.42);z-index:200;
+    display:flex;justify-content:flex-end;
+  }
+  .overlay.center{align-items:center;justify-content:center;}
+  .drawer{
+    width:440px;max-width:92vw;background:#fff;height:100%;overflow-y:auto;
+    box-shadow:-12px 0 40px rgba(0,0,0,.12);
+    animation:slideIn .18s ease-out;
+  }
+  @keyframes slideIn{from{transform:translateX(24px);opacity:.4;} to{transform:translateX(0);opacity:1;}}
+  .modal-card{
+    width:480px;max-width:92vw;background:#fff;border-radius:16px;max-height:88vh;overflow-y:auto;
+    box-shadow:0 20px 60px rgba(0,0,0,.25);
+    animation:pop .15s ease-out;
+  }
+  @keyframes pop{from{transform:scale(.97);opacity:0;} to{transform:scale(1);opacity:1;}}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;padding:20px 22px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff;}
+  .modal-head h3{margin:0;font-size:16.5px;}
+  .modal-close{border:none;background:var(--bg-soft);width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--ink-soft);}
+  .modal-body{padding:22px;}
+  .modal-foot{display:flex;justify-content:flex-end;gap:10px;padding:16px 22px;border-top:1px solid var(--line);position:sticky;bottom:0;background:#fff;}
+
+  .field{margin-bottom:16px;}
+  .field label{display:block;font-size:12.5px;font-weight:700;color:var(--ink-soft);margin-bottom:6px;}
+  .field .input,.field select,.field textarea{
+    width:100%;border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--ink);
+    background:#fff;
+  }
+  .field textarea{resize:vertical;min-height:70px;font-family:inherit;}
+  .field .hint{color:var(--ink-faint);font-size:11.5px;margin-top:5px;}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+  .seg{display:flex;border:1.5px solid var(--line);border-radius:10px;overflow:hidden;}
+  .seg button{
+    flex:1;border:none;background:#fff;padding:10px;font-size:13.5px;font-weight:700;color:var(--ink-soft);
+    border-right:1.5px solid var(--line);
+  }
+  .seg button:last-child{border-right:none;}
+  .seg button.active{background:var(--teal-pale);color:var(--teal-dark);}
+
+  .upload-zone{
+    border:1.5px dashed var(--line);border-radius:10px;padding:18px;text-align:center;color:var(--ink-faint);
+    font-size:12.5px;display:flex;flex-direction:column;align-items:center;gap:6px;
+  }
+  .upload-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+  .upload-grid .upload-zone{padding:16px 8px;}
+  .upload-grid .lbl{font-weight:700;color:var(--ink-soft);}
+
+  .checkbox-row{display:flex;align-items:flex-start;gap:9px;font-size:13.5px;color:var(--ink);margin-bottom:14px;}
+  .checkbox-row input{margin-top:2px;}
+  .radio-row{display:flex;gap:16px;margin-top:6px;}
+  .radio-row label{display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:500;color:var(--ink);}
+
+  .whatsapp-box{
+    background:var(--teal-pale);border:1px solid #cdece3;border-radius:12px;padding:18px;text-align:center;
+  }
+  .whatsapp-box .ico{
+    width:44px;height:44px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;
+    margin:0 auto 12px;color:var(--teal-dark);
+  }
+  .whatsapp-box p{margin:0 0 16px;font-size:13.5px;color:var(--ink-soft);line-height:1.5;}
+
+  .detail-block{margin-bottom:22px;}
+  .detail-block .k{font-size:11.5px;font-weight:800;letter-spacing:.2px;color:var(--ink-faint);margin-bottom:6px;}
+  .detail-block .v{font-size:14.5px;}
+  .comprobante-preview{
+    border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;align-items:center;gap:10px;
+    background:var(--bg-soft);font-size:13px;color:var(--ink-soft);
+  }
+  .comprobante-preview .ic{color:var(--teal-dark);}
+
+  @media(max-width:920px){
+    .stat-row,.medios-row{grid-template-columns:1fr;}
+    .project-grid,.card-grid{grid-template-columns:1fr;}
+    .pub-page{padding:26px 18px 60px;}
+    .pub-nav{padding:14px 18px;}
+    .pub-nav-links{gap:16px;font-size:13px;}
+    .admin-body{padding:20px 16px 60px;}
+    .field-row{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<div class="demo-bar">
+  <span class="label">Vista de la maqueta:</span>
+  <div class="demo-toggle">
+    <button id="btn-role-public" class="active" onclick="setRole('public')">Sitio público</button>
+    <button id="btn-role-admin" onclick="setRole('admin')">Panel administrativo</button>
+  </div>
+  <span class="demo-note">Prototipo navegable — sin datos reales</span>
+</div>
+
+<!-- ======================= PUBLIC ======================= -->
+<div id="public-view">
+  <div class="pub-nav">
+    <div class="pub-logo"><div class="mark"></div>ASOCIACIÓN<br>MERAKI</div>
+    <div class="pub-nav-links">
+      <a>Mascotas</a>
+      <a class="active">Donaciones</a>
+      <a>Finales Felices</a>
+    </div>
+    <div class="pub-avatar">AM</div>
+  </div>
+
+  <!-- ---- módulo único: Donaciones ---- -->
+  <div class="pub-page">
+    <div class="pub-hero">
+      <div>
+        <h1>Dona y ayuda a nuestros peludos</h1>
+        <p>Cada aporte, en efectivo, transferencia o especie, ayuda a cubrir alimentación, medicinas y cuidados de los animales que esperan un hogar.</p>
+      </div>
+      <button class="btn btn-blue" onclick="openModal('notify')">Notificar mi donación</button>
+    </div>
+
+    <div class="pub-tabs">
+      <button id="ptab-apoyar" class="active" onclick="setPublicSection('apoyar')">Cómo apoyar</button>
+      <button id="ptab-donantes" onclick="setPublicSection('donantes')">Nuestros donantes</button>
+      <button id="ptab-patrocinadores" onclick="setPublicSection('patrocinadores')">Patrocinadores y proyectos</button>
+    </div>
+
+    <!-- Sección 1: Cómo apoyar -->
+    <div id="pub-sec-apoyar" class="pub-section">
+      <div class="section-label">Medios de donación</div>
+      <div class="medios-row">
+        <div class="medio-card">
+          <div class="ico"><span data-icon="bank" data-size=""></span></div>
+          <h3>Transferencia o depósito</h3>
+          <div class="acct"><b>Banrural — Cuenta de Ahorro</b><div class="num">No. 1234 5678 9012 34 · A nombre de MERAKI</div></div>
+          <div class="acct"><b>BI — Cuenta Monetaria</b><div class="num">No. 1234 2372 3985 79 · A nombre de MERAKI</div></div>
+          <div class="cta-inline"><button class="btn btn-outline btn-sm" onclick="openModal('notify')">Ya deposité, notificar</button></div>
+        </div>
+        <div class="medio-card">
+          <div class="ico"><span data-icon="cash" data-size=""></span></div>
+          <h3>Efectivo</h3>
+          <p>Coordina con nosotros para entregar tu donativo en efectivo, en el horario que te convenga.</p>
+          <div class="cta-inline"><button class="btn btn-outline btn-sm" onclick="openModal('whatsapp')"><span data-icon="whatsapp" data-size="14"></span> Escribir por WhatsApp</button></div>
+        </div>
+        <div class="medio-card">
+          <div class="ico"><span data-icon="box" data-size=""></span></div>
+          <h3>En especie</h3>
+          <p>Alimento, medicinas o insumos. Coordinamos contigo la entrega o el punto de recolección.</p>
+          <div class="cta-inline"><button class="btn btn-outline btn-sm" onclick="openModal('whatsapp')"><span data-icon="whatsapp" data-size="14"></span> Coordinar donación</button></div>
+        </div>
+      </div>
+
+      <div class="section-label">¿Qué necesitamos ahora mismo?</div>
+      <div class="needs-row">
+        <div class="need-chip"><span data-icon="box" data-size="14"></span> Alimento concentrado para gato</div>
+        <div class="need-chip"><span data-icon="box" data-size="14"></span> Antipulgas y desparasitantes</div>
+        <div class="need-chip"><span data-icon="box" data-size="14"></span> Cobijas y toallas</div>
+        <div class="need-chip"><span data-icon="box" data-size="14"></span> Arena sanitaria</div>
+      </div>
+
+      <div class="notify-banner">
+        <div>
+          <h4>¿Ya hiciste tu depósito o transferencia?</h4>
+          <p>Notifícanos el monto y, si quieres, adjunta tu comprobante — así confirmamos tu donación más rápido.</p>
+        </div>
+        <button class="btn btn-teal" onclick="openModal('notify')">Notificar donación</button>
+      </div>
+    </div>
+
+    <!-- Sección 2: Nuestros donantes -->
+    <div id="pub-sec-donantes" class="pub-section hidden">
+      <div class="stat-row">
+        <div class="stat-card"><div class="num">Q1,000</div><div class="cap">Recaudado este mes</div></div>
+        <div class="stat-card"><div class="num">Q14,200</div><div class="cap">Recaudado histórico</div></div>
+        <div class="stat-card"><div class="num">6</div><div class="cap">Donaciones en especie</div></div>
+      </div>
+      <div class="stat-foot">Conteo de donaciones confirmadas. Por seguridad no publicamos montos individuales ni el detalle de donantes salvo autorización expresa.</div>
+
+      <div class="section-label">Últimas donaciones</div>
+      <div class="latest-list" id="latest-list"></div>
+    </div>
+
+    <!-- Sección 3: Patrocinadores y proyectos -->
+    <div id="pub-sec-patrocinadores" class="pub-section hidden">
+      <div class="section-label">Patrocinadores</div>
+      <div class="sponsor-strip" id="sponsor-strip"></div>
+
+      <div class="section-label">Proyectos</div>
+      <div class="project-grid" id="project-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================= ADMIN ======================= -->
+<div id="admin-view" class="hidden">
+  <div class="sidebar">
+    <div class="burger"><span data-icon="menu" data-size="20"></span></div>
+    <button class="side-btn" title="Mascotas"><span data-icon="paw" data-size="20"></span></button>
+    <button class="side-btn" title="Solicitudes"><span data-icon="heart" data-size="20"></span></button>
+    <button class="side-btn active" id="side-donaciones" title="Donaciones" onclick="setAdminPage('donaciones')"><span data-icon="wallet" data-size="20"></span></button>
+    <button class="side-btn" id="side-patrocinadores" title="Patrocinadores" onclick="setAdminPage('patrocinadores')"><span data-icon="building" data-size="20"></span></button>
+    <button class="side-btn" id="side-proyectos" title="Proyectos" onclick="setAdminPage('proyectos')"><span data-icon="image" data-size="20"></span></button>
+    <button class="side-btn" title="Usuarios"><span data-icon="users" data-size="20"></span></button>
+    <div class="side-spacer"></div>
+    <button class="side-btn" title="Salir"><span data-icon="logout" data-size="20"></span></button>
+  </div>
+
+  <div class="admin-main">
+    <div class="admin-topbar">
+      <h1 id="admin-title">Donaciones</h1>
+      <div class="admin-avatar">AM</div>
+    </div>
+
+    <!-- ---- Admin: Donaciones ---- -->
+    <div id="admin-page-donaciones" class="admin-body">
+      <p class="lede">Gestiona las donaciones registradas por adoptantes, donantes y patrocinadores.</p>
+      <div class="admin-toolbar">
+        <div class="select-pill">Todo tipo <span data-icon="chevron" data-size="12"></span></div>
+        <div class="select-pill">Todo estado <span data-icon="chevron" data-size="12"></span></div>
+        <div class="select-pill">Todo origen <span data-icon="chevron" data-size="12"></span></div>
+        <div class="select-pill">Todo proyecto <span data-icon="chevron" data-size="12"></span></div>
+        <input class="date-pill" type="date">
+        <input class="date-pill" type="date">
+        <span class="toolbar-count" id="admin-don-count"></span>
+        <div class="toolbar-spacer"></div>
+        <button class="btn btn-teal btn-sm" onclick="openModal('registrar')"><span data-icon="plus" data-size="14"></span> Registrar donación</button>
+      </div>
+      <div class="don-list" id="admin-don-list"></div>
+    </div>
+
+    <!-- ---- Admin: Patrocinadores ---- -->
+    <div id="admin-page-patrocinadores" class="admin-body hidden">
+      <p class="lede">Gestiona las empresas y negocios que apoyan a la asociación.</p>
+      <div class="admin-toolbar">
+        <div class="toolbar-spacer"></div>
+        <button class="btn btn-teal btn-sm" onclick="openModal('patrocinador')"><span data-icon="plus" data-size="14"></span> Nuevo patrocinador</button>
+      </div>
+      <div class="card-grid" id="admin-sponsor-grid"></div>
+    </div>
+
+    <!-- ---- Admin: Proyectos ---- -->
+    <div id="admin-page-proyectos" class="admin-body hidden">
+      <p class="lede">Gestiona los proyectos financiados con material o trabajo donado, y su galería de antes/después.</p>
+      <div class="admin-toolbar">
+        <div class="select-pill">Todo estado <span data-icon="chevron" data-size="12"></span></div>
+        <div class="toolbar-spacer"></div>
+        <button class="btn btn-teal btn-sm" onclick="openModal('proyecto')"><span data-icon="plus" data-size="14"></span> Nuevo proyecto</button>
+      </div>
+      <div class="card-grid" id="admin-project-grid"></div>
+    </div>
+  </div>
+</div>
+
+<div id="overlay-root"></div>
+
+<script>
+/* ---------------- icon helper ---------------- */
+function icon(name,size){
+  size=size||18;
+  const P='<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">';
+  const map={
+    menu:P+'<line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="14" y2="17"/></svg>',
+    paw:P+'<circle cx="7" cy="9" r="2"/><circle cx="12" cy="6" r="2"/><circle cx="17" cy="9" r="2"/><path d="M8 15c-1.5 1-2 2.3-2 3.4C6 20 7.3 21 9 21c1.2 0 1.8-.6 3-.6s1.8.6 3 .6c1.7 0 3-1 3-2.6 0-1.1-.5-2.4-2-3.4-1.4-1-2.6-1.5-4-1.5s-2.6.5-4 1.5z"/></svg>',
+    heart:P+'<path d="M12 21s-7-4.6-9.5-9C.8 8.4 2 4.5 5.6 4.5c2 0 3.4 1.1 4.4 2.6C11 5.6 12.4 4.5 14.4 4.5 18 4.5 19.2 8.4 21.5 12c-2.5 4.4-9.5 9-9.5 9z"/></svg>',
+    wallet:P+'<rect x="2.5" y="6" width="19" height="13" rx="2.5"/><path d="M2.5 10h19"/><circle cx="17" cy="14" r="1.2" fill="currentColor" stroke="none"/></svg>',
+    building:P+'<rect x="4" y="3" width="10" height="18" rx="1"/><path d="M14 8h6v13h-6"/><path d="M7 7h1M7 11h1M7 15h1"/></svg>',
+    image:P+'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M21 16.5l-5.5-5.5-9 9"/></svg>',
+    users:P+'<circle cx="9" cy="8" r="3.2"/><path d="M2.5 20c0-3.6 3-6 6.5-6s6.5 2.4 6.5 6"/><path d="M16.5 4.5c1.7.5 3 2 3 4s-1.3 3.5-3 4"/><path d="M20 14c1.8.6 3 2.3 3 4.5"/></svg>',
+    logout:P+'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>',
+    bank:P+'<path d="M3 10l9-6 9 6"/><path d="M4 10v9M9 10v9M15 10v9M20 10v9"/><path d="M2.5 21h19"/></svg>',
+    cash:P+'<circle cx="12" cy="12" r="9.2"/><circle cx="12" cy="12" r="3"/></svg>',
+    box:P+'<path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v9l9 5 9-5V8"/><path d="M12 13v9"/></svg>',
+    whatsapp:P+'<path d="M20 12a8 8 0 1 1-3.7-6.7"/><path d="M20.5 3.5L17 8"/><path d="M8.5 9.5c.3 2.3 2.7 4.7 5 5 .9.1 1.6-.5 1.8-1.1l.4-1-2.2-1-1 1.1c-1-.5-1.8-1.3-2.3-2.3l1.1-1-1-2.2-1 .4c-.6.2-1 .9-.8 1.7z" fill="currentColor" stroke="none"/></svg>',
+    chevron:P+'<polyline points="6 9 12 15 18 9"/></svg>',
+    plus:P+'<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+    x:P+'<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+    upload:P+'<path d="M12 16V4"/><polyline points="7 9 12 4 17 9"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>',
+    check:P+'<polyline points="20 6 9 17 4 12"/></svg>',
+    file:P+'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
+    photo:P+'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M21 16.5l-5.5-5.5-9 9"/></svg>'
+  };
+  return map[name]||'';
+}
+
+/* ---------------- mock data ---------------- */
+const donations=[
+  {id:1,nombre:'Victor',email:'vl40509@gmail.com',tipo:'especie',item:'2 arrobas de alimento para gato',estado:'confirmada',publico:true,anonimo:false,fecha:'25 jul 2026',origen:'individual',mensaje:'Espero que ayude en algo'},
+  {id:2,nombre:'Donante anónimo',email:'—',tipo:'monetaria',montoDecl:1000,montoConf:1000,cuenta:'Banrural · ...901234',estado:'confirmada',publico:true,anonimo:true,fecha:'23 jul 2026',origen:'individual',mensaje:'Para que los animalitos sean felices'},
+  {id:3,nombre:'María Reyes',email:'maria@example.com',tipo:'monetaria',montoDecl:250,montoConf:null,cuenta:'BI · ...792385',estado:'pendiente',publico:false,anonimo:false,fecha:'30 ago 2026',origen:'individual',comprobante:true},
+  {id:4,nombre:'Ferretería El Pilar',email:'contacto@elpilar.gt',tipo:'especie',item:'40 láminas de zinc y 15 sacos de cemento',estado:'coordinacion',publico:true,anonimo:false,fecha:'28 ago 2026',origen:'patrocinador',proyecto:'Reconstrucción del albergue'},
+  {id:5,nombre:'Constructora Alfa',email:'proyectos@alfa.gt',tipo:'especie',item:'Mano de obra y block para muro perimetral',estado:'confirmada',publico:true,anonimo:false,fecha:'10 ago 2026',origen:'patrocinador',proyecto:'Reconstrucción del albergue'},
+  {id:6,nombre:'Josué Marroquín',email:'josue.m@example.com',tipo:'monetaria',montoDecl:500,montoConf:null,cuenta:'Banrural · ...901234',estado:'rechazada',publico:false,anonimo:false,fecha:'18 ago 2026',origen:'individual',motivo:'No se identificó el depósito en el estado de cuenta'}
+];
+const sponsors=[
+  {nombre:'Constructora Alfa',web:'constructoraalfa.gt',proyectos:1},
+  {nombre:'Ferretería El Pilar',web:'ferreteriaelpilar.com',proyectos:1},
+  {nombre:'Veterinaria San Roque',web:'vetsanroque.gt',proyectos:0}
+];
+const projects=[
+  {nombre:'Reconstrucción del albergue',estado:'activo',desc:'Reparación del techo y muro perimetral dañados por las lluvias de este año.',meta:'Q8,000 en materiales',progreso:65,patrocinador:'Constructora Alfa · Ferretería El Pilar'},
+  {nombre:'Ampliación de caniles',estado:'finalizado',desc:'Construcción de 6 caniles adicionales para reducir el hacinamiento del refugio.',patrocinador:'Veterinaria San Roque'}
+];
+
+const statusLabel={confirmada:'Confirmada',pendiente:'Pendiente',coordinacion:'En coordinación',rechazada:'Rechazada'};
+
+/* ---------------- render: public latest list ---------------- */
+function renderLatest(){
+  const el=document.getElementById('latest-list');
+  el.innerHTML=donations.filter(d=>d.publico).map(d=>{
+    const who=d.anonimo?'Donante anónimo':d.nombre;
+    const what=d.tipo==='monetaria'?('Q'+(d.montoConf||d.montoDecl).toLocaleString()):d.item;
+    const tag=d.origen==='patrocinador'?'Patrocinador · '+d.proyecto:(d.tipo==='monetaria'?'Monetaria':'En especie');
+    return '<div class="latest-row"><div><div class="who">'+who+'</div><div class="meta">'+d.fecha+'</div></div>'
+      +'<div class="what">'+what+'<span class="tag">'+tag+'</span></div></div>';
+  }).join('');
+}
+
+/* ---------------- render: public sponsors + projects ---------------- */
+function renderSponsorStrip(){
+  document.getElementById('sponsor-strip').innerHTML=sponsors.map(s=>
+    '<div class="sponsor-chip"><div class="logo">'+initials(s.nombre)+'</div><b>'+s.nombre+'</b></div>'
+  ).join('');
+}
+function renderProjectGrid(){
+  document.getElementById('project-grid').innerHTML=projects.map(p=>{
+    const progress=p.progreso?(
+      '<div class="project-progress"><div class="bar"><div class="fill" style="width:'+p.progreso+'%"></div></div>'
+      +'<div class="cap"><span>'+p.progreso+'% avanzado</span><span>Meta: '+p.meta+'</span></div></div>'
+    ):'';
+    return '<div class="project-card">'
+      +'<div class="ba-wrap">'
+        +'<div class="ba-cell"><span class="ba-tag">ANTES</span><div class="ba-icon">'+icon('photo',26)+'</div></div>'
+        +'<div class="ba-cell after"><span class="ba-tag">DESPUÉS</span><div class="ba-icon">'+icon('photo',26)+'</div></div>'
+      +'</div>'
+      +'<div class="project-body">'
+        +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">'
+          +'<h3>'+p.nombre+'</h3><span class="badge-status '+p.estado+'">'+(p.estado==='activo'?'En curso':'Finalizado')+'</span>'
+        +'</div>'
+        +'<p>'+p.desc+'</p>'
+        +progress
+        +'<div class="sponsor-of">'+icon('building',13)+'&nbsp;'+p.patrocinador+'</div>'
+      +'</div></div>';
+  }).join('');
+}
+
+/* ---------------- render: admin donation list ---------------- */
+function renderAdminDonations(){
+  const list=document.getElementById('admin-don-list');
+  document.getElementById('admin-don-count').textContent=donations.length+' resultados';
+  list.innerHTML=donations.map(d=>{
+    const amountOrItem=d.tipo==='monetaria'
+      ? '<span class="don-amount">Q'+d.montoDecl.toLocaleString()+'</span>'+(d.montoConf && d.montoConf!==d.montoDecl?' <span class="don-tag">(confirmado Q'+d.montoConf.toLocaleString()+')</span>':'')
+      : '<span class="don-amount">'+d.item+'</span>';
+    const originTag=d.origen==='patrocinador'?'<span class="don-tag">'+icon('building',12)+'&nbsp;Patrocinador · '+d.proyecto+'</span>':'<span class="don-tag">'+icon('paw',12)+'&nbsp;Individual</span>';
+    const typeTag='<span class="don-tag">'+(d.tipo==='monetaria'?'Monetaria':'En especie')+'</span>';
+    const visTag='<span class="don-tag">'+icon('check',12)+'&nbsp;'+(d.publico?(d.anonimo?'Pública (anónima)':'Pública'):'Privada')+'</span>';
+    return '<div class="don-row" onclick="openDetail('+d.id+')">'
+      +'<div class="don-avatar">'+initials(d.nombre)+'</div>'
+      +'<div class="don-main">'
+        +'<div class="don-top"><span class="don-name">'+d.nombre+'</span><span class="don-email">'+d.email+'</span></div>'
+        +'<div class="don-line2">'+amountOrItem+typeTag+originTag+visTag+'</div>'
+        +(d.mensaje?'<div class="don-msg">“'+d.mensaje+'”</div>':'')
+        +'<div class="don-date">Registrada el '+d.fecha+'</div>'
+      +'</div>'
+      +'<div class="don-right"><span class="badge '+d.estado+'">'+statusLabel[d.estado]+'</span></div>'
+    +'</div>';
+  }).join('');
+}
+
+/* ---------------- render: admin sponsors ---------------- */
+function renderAdminSponsors(){
+  document.getElementById('admin-sponsor-grid').innerHTML=sponsors.map(s=>
+    '<div class="admin-card">'
+    +'<div class="logo-sq">'+initials(s.nombre)+'</div>'
+    +'<h4>'+s.nombre+'</h4><div class="sub">'+s.web+'</div>'
+    +'<div class="stats-line"><div><span class="n">'+s.proyectos+'</span> <span class="l">proyecto'+(s.proyectos===1?'':'s')+' apoyado'+(s.proyectos===1?'':'s')+'</span></div>'
+    +'<button class="btn btn-outline btn-sm" onclick="openModal(\'patrocinador\')">Editar</button></div>'
+    +'</div>'
+  ).join('');
+}
+
+/* ---------------- render: admin projects ---------------- */
+function renderAdminProjects(){
+  document.getElementById('admin-project-grid').innerHTML=projects.map(p=>
+    '<div class="proj-admin-card">'
+    +'<div class="top"><div class="ba-cell" style="flex:1;"><div class="ba-icon">'+icon('photo',18)+'</div></div>'
+      +'<div class="ba-cell after" style="flex:1;"><div class="ba-icon">'+icon('photo',18)+'</div></div></div>'
+    +'<div class="body"><div class="row1"><h4>'+p.nombre+'</h4><span class="badge-status '+p.estado+'">'+(p.estado==='activo'?'Activo':'Finalizado')+'</span></div>'
+    +'<p class="desc">'+p.desc+'</p>'
+    +'<div class="foot"><span>'+p.patrocinador+'</span><button class="btn btn-outline btn-sm" onclick="openModal(\'proyecto\')">Editar</button></div>'
+    +'</div></div>'
+  ).join('');
+}
+
+function initials(name){
+  return name.split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+}
+
+/* ---------------- role / page switching ---------------- */
+function setRole(role){
+  document.getElementById('public-view').classList.toggle('hidden',role!=='public');
+  document.getElementById('admin-view').classList.toggle('hidden',role!=='admin');
+  document.getElementById('btn-role-public').classList.toggle('active',role==='public');
+  document.getElementById('btn-role-admin').classList.toggle('active',role==='admin');
+}
+function setPublicSection(section){
+  ['apoyar','donantes','patrocinadores'].forEach(s=>{
+    document.getElementById('pub-sec-'+s).classList.toggle('hidden',s!==section);
+    document.getElementById('ptab-'+s).classList.toggle('active',s===section);
+  });
+}
+function setAdminPage(page){
+  ['donaciones','patrocinadores','proyectos'].forEach(p=>{
+    document.getElementById('admin-page-'+p).classList.toggle('hidden',p!==page);
+    document.getElementById('side-'+p).classList.toggle('active',p===page);
+  });
+  const titles={donaciones:'Donaciones',patrocinadores:'Patrocinadores',proyectos:'Proyectos'};
+  document.getElementById('admin-title').textContent=titles[page];
+}
+
+/* ---------------- modals / drawer ---------------- */
+function closeOverlay(){ document.getElementById('overlay-root').innerHTML=''; }
+
+function openModal(kind){
+  const root=document.getElementById('overlay-root');
+  let content='';
+
+  if(kind==='notify'){
+    content=modalShell('Notificar mi donación',
+      '<div class="field"><label>Monto donado (Q)</label><input class="input" type="number" placeholder="Ej. 250"></div>'
+      +'<div class="field"><label>Cuenta a la que depositaste</label><select><option>Banrural · Cuenta de Ahorro</option><option>BI · Cuenta Monetaria</option></select></div>'
+      +'<div class="field"><label>Comprobante (opcional)</label><div class="upload-zone">'+icon('upload',20)+'Arrastra tu comprobante o haz clic para subirlo</div></div>'
+      +'<div class="field"><label>Mensaje (opcional)</label><textarea placeholder="Ej. Para que los animalitos sean felices"></textarea></div>'
+      +'<div class="checkbox-row"><input type="checkbox" checked><span>Mostrar esta donación en el listado público de transparencia</span></div>'
+      +'<div class="field"><label>¿Cómo quieres aparecer?</label><div class="radio-row"><label><input type="radio" name="vis" checked> Con mi nombre</label><label><input type="radio" name="vis"> De forma anónima</label></div></div>',
+      'Cancelar','Notificar donación'
+    );
+  } else if(kind==='whatsapp'){
+    content=modalShellPlain('Coordinar por WhatsApp',
+      '<div class="whatsapp-box"><div class="ico">'+icon('whatsapp',20)+'</div>'
+      +'<p>Para donaciones en efectivo o en especie, coordinamos contigo directamente el punto de entrega o recolección.</p>'
+      +'<button class="btn btn-teal" style="width:100%;justify-content:center;">'+icon('whatsapp',15)+' Escribir al +502 0000-0000</button></div>'
+    );
+  } else if(kind==='registrar'){
+    content=modalShell('Registrar donación manual',
+      '<div class="field"><label>Origen</label><div class="seg"><button class="active" onclick="segSwitch(this)">Individual</button><button onclick="segSwitch(this)">Patrocinador</button></div></div>'
+      +'<div class="field"><label>Tipo de donación</label><div class="seg"><button class="active" onclick="segSwitch(this)">Monetaria</button><button onclick="segSwitch(this)">En especie</button></div></div>'
+      +'<div class="field-row"><div class="field"><label>Monto (Q)</label><input class="input" type="number" placeholder="0.00"></div>'
+      +'<div class="field"><label>Cuenta (opcional)</label><select><option>Sin cuenta</option><option>Banrural</option><option>BI</option></select></div></div>'
+      +'<div class="field"><label>Proyecto asociado (opcional)</label><select><option>Ninguno — fondo general</option><option>Reconstrucción del albergue</option><option>Ampliación de caniles</option></select></div>'
+      +'<div class="field"><label>Comentario (opcional)</label><textarea placeholder="Notas internas sobre esta donación"></textarea></div>'
+      +'<div class="field"><label>Datos del donante (opcional, si se conocen)</label><input class="input" placeholder="Nombre" style="margin-bottom:8px;"></div>'
+      +'<div class="field-row"><div class="field"><input class="input" placeholder="Correo"></div><div class="field"><input class="input" placeholder="Teléfono"></div></div>'
+      +'<div class="checkbox-row"><input type="checkbox"><span>Mostrar en el listado público de transparencia</span></div>',
+      'Cancelar','Registrar donación'
+    );
+  } else if(kind==='patrocinador'){
+    content=modalShell('Nuevo patrocinador',
+      '<div class="field"><label>Nombre de la empresa</label><input class="input" placeholder="Ej. Constructora Alfa"></div>'
+      +'<div class="field"><label>Logotipo</label><div class="upload-zone">'+icon('upload',20)+'Subir logo (PNG o SVG, fondo transparente)</div></div>'
+      +'<div class="field-row"><div class="field"><label>Sitio web</label><input class="input" placeholder="empresa.com"></div>'
+      +'<div class="field"><label>Contacto</label><input class="input" placeholder="Nombre o correo"></div></div>',
+      'Cancelar','Guardar patrocinador'
+    );
+  } else if(kind==='proyecto'){
+    content=modalShell('Nuevo proyecto',
+      '<div class="field"><label>Nombre del proyecto</label><input class="input" placeholder="Ej. Reconstrucción del albergue"></div>'
+      +'<div class="field"><label>Descripción</label><textarea placeholder="¿Qué se va a hacer y por qué?"></textarea></div>'
+      +'<div class="field-row"><div class="field"><label>Estado</label><select><option>Activo</option><option>Finalizado</option></select></div>'
+      +'<div class="field"><label>Meta (opcional)</label><input class="input" placeholder="Ej. Q8,000 en materiales"></div></div>'
+      +'<div class="field"><label>Fotografías</label><div class="upload-grid">'
+        +'<div class="upload-zone"><span class="lbl">Antes</span>'+icon('upload',16)+'</div>'
+        +'<div class="upload-zone"><span class="lbl">Durante</span>'+icon('upload',16)+'</div>'
+        +'<div class="upload-zone"><span class="lbl">Después</span>'+icon('upload',16)+'</div>'
+      +'</div></div>',
+      'Cancelar','Guardar proyecto'
+    );
+  }
+  root.innerHTML='<div class="overlay center" onclick="if(event.target===this)closeOverlay()">'+content+'</div>';
+}
+
+function modalShell(title,bodyHtml,cancelLabel,submitLabel){
+  return '<div class="modal-card">'
+    +'<div class="modal-head"><h3>'+title+'</h3><button class="modal-close" onclick="closeOverlay()">'+icon('x',15)+'</button></div>'
+    +'<div class="modal-body">'+bodyHtml+'</div>'
+    +'<div class="modal-foot"><button class="btn btn-outline btn-sm" onclick="closeOverlay()">'+cancelLabel+'</button><button class="btn btn-teal btn-sm" onclick="closeOverlay()">'+submitLabel+'</button></div>'
+  +'</div>';
+}
+function modalShellPlain(title,bodyHtml){
+  return '<div class="modal-card" style="width:380px;">'
+    +'<div class="modal-head"><h3>'+title+'</h3><button class="modal-close" onclick="closeOverlay()">'+icon('x',15)+'</button></div>'
+    +'<div class="modal-body">'+bodyHtml+'</div>'
+  +'</div>';
+}
+function segSwitch(btn){
+  Array.from(btn.parentElement.children).forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+/* ---------------- donation detail drawer ---------------- */
+function openDetail(id){
+  const d=donations.find(x=>x.id===id);
+  const root=document.getElementById('overlay-root');
+  const isMoney=d.tipo==='monetaria';
+
+  let body='';
+  body+=detailBlock('Donante',d.nombre+(d.email!=='—'?'<br><span style="color:var(--ink-faint);font-size:12.5px;">'+d.email+'</span>':''));
+  body+=detailBlock('Origen',d.origen==='patrocinador'?'Patrocinador — '+d.proyecto:'Donante individual');
+  body+=detailBlock('Tipo',isMoney?'Monetaria':'En especie');
+  body+=isMoney
+    ? detailBlock('Monto declarado','Q'+d.montoDecl.toLocaleString()+(d.cuenta?' <span style="color:var(--ink-faint);font-size:12.5px;">→ '+d.cuenta+'</span>':''))
+    : detailBlock('Detalle del aporte',d.item);
+  if(d.comprobante){
+    body+='<div class="detail-block"><div class="k">COMPROBANTE</div><div class="comprobante-preview">'+icon('file',18)+' comprobante_deposito.jpg</div></div>';
+  }
+  if(d.mensaje) body+=detailBlock('Mensaje del donante','“'+d.mensaje+'”');
+  if(d.motivo) body+=detailBlock('Motivo de rechazo',d.motivo);
+  body+=detailBlock('Visibilidad',d.publico?(d.anonimo?'Pública, mostrada como anónima':'Pública, con nombre'):'No autorizada para mostrar');
+  body+=detailBlock('Fecha',d.fecha);
+
+  let actions='';
+  if(d.estado==='pendiente'||d.estado==='coordinacion'){
+    actions='<div class="field" style="margin-top:4px;"><label>Monto confirmado (Q)</label><input class="input" type="number" placeholder="'+(isMoney?d.montoDecl:'')+'"></div>'
+      +'<div style="display:flex;gap:10px;margin-top:6px;">'
+      +'<button class="btn btn-rose-outline btn-sm" style="flex:1;justify-content:center;" onclick="closeOverlay()">Rechazar</button>'
+      +'<button class="btn btn-teal btn-sm" style="flex:1;justify-content:center;" onclick="closeOverlay()">Confirmar donación</button>'
+      +'</div>';
+  }
+
+  root.innerHTML='<div class="overlay" onclick="if(event.target===this)closeOverlay()">'
+    +'<div class="drawer">'
+      +'<div class="modal-head"><h3>Detalle de donación</h3><button class="modal-close" onclick="closeOverlay()">'+icon('x',15)+'</button></div>'
+      +'<div class="modal-body">'
+        +'<div style="margin-bottom:18px;"><span class="badge '+d.estado+'">'+statusLabel[d.estado]+'</span></div>'
+        +body
+        +actions
+      +'</div>'
+    +'</div>'
+  +'</div>';
+}
+function detailBlock(k,v){
+  return '<div class="detail-block"><div class="k">'+k.toUpperCase()+'</div><div class="v">'+v+'</div></div>';
+}
+
+/* ---------------- resolve static icon placeholders ---------------- */
+document.querySelectorAll('[data-icon]').forEach(el=>{
+  const name=el.getAttribute('data-icon');
+  const size=parseInt(el.getAttribute('data-size'))||18;
+  el.outerHTML=icon(name,size);
+});
+
+/* ---------------- init ---------------- */
+renderLatest();
+renderSponsorStrip();
+renderProjectGrid();
+renderAdminDonations();
+renderAdminSponsors();
+renderAdminProjects();
+</script>
+</body>
+</html>

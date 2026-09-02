@@ -209,6 +209,7 @@ model donation {
   amount                          Decimal?               @db.Decimal(10, 2)
   item_description                String?
   bank_account_id                 Int?
+  reference_number                String?                @db.VarChar(50)
   status                          String                 @db.VarChar(50)
   is_public                       Boolean                @default(false)
   is_anonymous                    Boolean                @default(false)
