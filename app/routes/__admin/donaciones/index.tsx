@@ -1,501 +1,883 @@
-import { donation_type_donation, Prisma } from "@prisma/client";
 import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
-import { useFetcher, useLoaderData, useSearchParams } from "@remix-run/react";
-import { useEffect, useState } from "react";
-import { LuPlus } from "react-icons/lu";
-import { FaTimes } from "react-icons/fa";
-import { toast } from "sonner";
+import {
+  useLoaderData,
+  useNavigation,
+  useSearchParams,
+} from "@remix-run/react";
+import { useState } from "react";
+import { LuPlus, LuSettings } from "react-icons/lu";
+import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { PrimaryButton } from "~/components/Button/primary";
-import { DonationCard } from "~/components/Card/DonationCard";
+import { SecondaryButton } from "~/components/Button/secondary";
+import { DONATION_STATUSES, DonationRow } from "~/components/Card/DonationRow";
 import { Select } from "~/components/Input/Select";
 import Pagination from "~/components/Pagination";
+import { DonationDetailDrawer } from "~/components/Panel/DonationDetailDrawer";
 import { DonationPanel } from "~/components/Panel/DonationPanel";
-import { PermissionSession } from "~/services/auth/login.service";
+import { DonationSettingsDrawer } from "~/components/Panel/DonationSettingsDrawer";
+import { DataEmptyState, DataErrorState } from "~/components/State/DataStates";
+import { Prisma } from "@prisma/client";
 import {
+  AdminDonationBankAccount,
+  createDonationBankAccountDb,
+  getDonationBankAccountDb,
+  listDonationBankAccountDb,
+  listDonationBankAccountsAdminDb,
+  updateDonationBankAccountDb,
+} from "~/services/db/donationBankAccount.service";
+import {
+  AdminDonation,
   countDonationsDb,
   createDonationDb,
-  DonationWithRelations,
+  getDonationDb,
   listDonationsAdminDb,
-  updateDonationDb,
+  reviewDonationDb,
+  REVIEWABLE_DONATION_STATUSES,
 } from "~/services/db/donation.service";
-import { listDonationBankAccountDb } from "~/services/db/donationBankAccount.service";
+import {
+  AdminNeededSupply,
+  createNeededSupplyDb,
+  getNeededSupplyDb,
+  listNeededSuppliesAdminDb,
+  updateNeededSupplyDb,
+} from "~/services/db/needSupplies.service";
+import {
+  createSponsorDb,
+  getSponsorDb,
+  listActiveSponsorDb,
+} from "~/services/db/sponsor.service";
+import {
+  getProyectoDb,
+  listProjectOptionsDb,
+} from "~/services/db/project.service";
 import { getSession } from "~/services/sessions/sessions.service";
+import {
+  sanitizeAmount,
+  sanitizeEmail,
+  sanitizeLimit,
+  sanitizePhone,
+  sanitizeText,
+} from "~/utils/sanitize";
 import { validatePermission } from "~/utils/common";
+import { PermissionSession } from "~/services/auth/login.service";
+
+const DONATIONS_PER_PAGE = 25;
+
+/* Identificadores del enum account_type_donationBankAccount de Prisma (el
+   cliente devuelve el identificador, no el valor @map). */
+const BANK_ACCOUNT_TYPES = [
+  "Monetaria",
+  "Ahorro",
+  "Pr_stamo",
+  "Tarjeta_de_cr_dito",
+] as const;
+type BankAccountType = (typeof BANK_ACCOUNT_TYPES)[number];
 
 export const meta = () => {
   return [{ title: "DONACIONES" }];
 };
 
-const DONATION_MODULE_ID = 13;
-
-/*==============================| Loader Function |==============================*/
+/*==============================| Loader |==============================*/
 export const loader: LoaderFunction = async ({ request }) => {
-  const cookie = request.headers.get("cookie");
-  const session = await getSession(cookie);
+  const session = await getSession(request.headers.get("cookie"));
+  const permissions: PermissionSession[] = session.get("permissions");
 
-  // Verificamos que tenga permiso de Leer "donaciones";
-  //const validateRequest = validatePermission(session, DONATION_MODULE_ID, "Leer");
-  //if (validateRequest) throw validateRequest;
+  const validateRequest = validatePermission(session, 15, "Leer");
+  if (validateRequest) throw validateRequest;
 
-  // Obtenemos los parametros de la url
-  const url = new URL(request.url);
-  const searchParams = url.searchParams;
+  // Verificamos que tenga el permiso de creación y edición
+  const allowedToCreate = !!permissions.find(
+    (p) => p.module_id === 15 && p.action === "Crear",
+  );
 
-  // Información de paginación
-  const page = Number(searchParams.get("page") || "1");
-  const limit = Number(searchParams.get("limit") || "20");
+  const allowedToUpdate = !!permissions.find(
+    (p) => p.module_id === 15 && p.action === "Actualizar",
+  );
 
-  // Información de filtros
-  const type = searchParams.get("type") || undefined;
-  const status = searchParams.get("status") || undefined;
-  const from = searchParams.get("from") || undefined;
-  const to = searchParams.get("to") || undefined;
+  const params = new URL(request.url).searchParams;
+  const type = params.get("type") || undefined;
+  const status = params.get("status") || undefined;
+  const origin = params.get("origin") || undefined;
+  const project = params.get("project") || undefined;
+  const from = params.get("from") || undefined;
+  const to = params.get("to") || undefined;
+  const page = Math.max(1, Number(params.get("page")) || 1);
 
-  // Filtro para la llamada de lista de donaciones
-  const whereListDonations: Prisma.donationWhereInput = {
-    donation_type: type ? (type as donation_type_donation) : undefined,
-    status: status || undefined,
-    submitted_at: {
-      gte: from ? new Date(from) : undefined,
-      lte: to ? new Date(`${to}T23:59:59`) : undefined,
-    },
-  };
+  // El filtrado va en la propia query, no en memoria.
+  const where: Prisma.donationWhereInput = {};
+  if (type === "Monetaria" || type === "Especie") where.donation_type = type;
+  if (status) where.status = status;
+  if (origin === "patrocinador") where.patrocinador_id = { not: null };
+  else if (origin === "individual") where.patrocinador_id = null;
 
-  const [donationsRes, totalDonationsRes, bankAccountsRes] = await Promise.all([
-    listDonationsAdminDb(whereListDonations, (page - 1) * limit, limit),
-    countDonationsDb(whereListDonations),
-    listDonationBankAccountDb({ active: true }),
+  const projectId = sanitizeLimit(project, { max: 1_000_000 });
+  if (projectId !== undefined) where.proyecto_id = projectId;
+
+  if (from || to) {
+    const range: Prisma.DateTimeFilter = {};
+    if (from) range.gte = new Date(from);
+    if (to) {
+      const end = new Date(to);
+      end.setHours(23, 59, 59, 999);
+      range.lte = end;
+    }
+    where.submitted_at = range;
+  }
+
+  const [
+    suppliesRes,
+    bankAccountsRes,
+    donationsRes,
+    countRes,
+    projectOptsRes,
+    sponsorOptsRes,
+  ] = await Promise.all([
+    listNeededSuppliesAdminDb(),
+    listDonationBankAccountsAdminDb(),
+    listDonationsAdminDb(
+      where,
+      (page - 1) * DONATIONS_PER_PAGE,
+      DONATIONS_PER_PAGE,
+    ),
+    countDonationsDb(where),
+    listProjectOptionsDb(),
+    listActiveSponsorDb(),
   ]);
 
   if (
+    !suppliesRes.success ||
+    !bankAccountsRes.success ||
     !donationsRes.success ||
-    !totalDonationsRes.success ||
-    !bankAccountsRes.success
+    !countRes.success ||
+    !projectOptsRes.success ||
+    !sponsorOptsRes.success
   ) {
-    return json({ errorMsg: "Ocurrió un error al cargar la página" });
+    return json({
+      donations: [],
+      total: 0,
+      page: 1,
+      totalPages: 1,
+      projectOptions: [],
+      patrocinadorOptions: [],
+      bankAccountOptions: [],
+      insumos: [],
+      bankAccounts: [],
+      errorMsg: "Ocurrió un error al cargar las donaciones",
+      allowedToCreate,
+      allowedToUpdate,
+    });
   }
 
-  // Obtenemos los permisos
-  const permissions: PermissionSession[] = session.get("permissions") || [];
+  // Opciones para el modal "Registrar donación": solo patrocinadores y cuentas
+  // activas (registrar contra uno inactivo lo rechazaría el servidor).
+  const bankAccountOptions = bankAccountsRes.data
+    .filter((account) => account.active)
+    .map((account) => ({
+      id: account.id,
+      label: `${account.bank_name} · No. …${account.account_number.slice(-4)}`,
+    }));
 
   return json({
     donations: donationsRes.data,
-    totalDonations: totalDonationsRes.data,
-    totalPages: Math.ceil(totalDonationsRes.data / limit),
+    total: countRes.data,
+    page,
+    totalPages: Math.max(1, Math.ceil(countRes.data / DONATIONS_PER_PAGE)),
+    projectOptions: projectOptsRes.data,
+    patrocinadorOptions: sponsorOptsRes.data.map((p) => ({
+      id: p.id,
+      name: p.name,
+    })),
+    bankAccountOptions,
+    insumos: suppliesRes.data,
     bankAccounts: bankAccountsRes.data,
-    allowedToCreate: true /*!!permissions.find(
-      (p) => p.module_id === DONATION_MODULE_ID && p.action === "Crear",
-    )*/,
-    allowedToUpdate: true /*!!permissions.find(
-      (p) => p.module_id === DONATION_MODULE_ID && p.action === "Actualizar",
-    )*/,
+    allowedToCreate,
+    allowedToUpdate,
   });
 };
 
-/*==============================| Action Function |==============================*/
+type LoaderData = {
+  donations: AdminDonation[];
+  total: number;
+  page: number;
+  totalPages: number;
+  projectOptions: { id: number; name: string }[];
+  patrocinadorOptions: { id: number; name: string }[];
+  bankAccountOptions: { id: number; label: string }[];
+  insumos: AdminNeededSupply[];
+  bankAccounts: AdminDonationBankAccount[];
+  errorMsg?: string;
+  allowedToCreate: boolean;
+  allowedToUpdate: boolean;
+};
+
+/*==============================| Action |==============================*/
 export const action: ActionFunction = async ({ request }) => {
-  const cookie = request.headers.get("cookie");
-  const session = await getSession(cookie);
-  const userId = session.get("dbUserId");
+  const session = await getSession(request.headers.get("cookie"));
+  const reviewerId = Number(session.get("dbUserId")) || null;
 
   //=============| Datos del POST |==============================//
   const formData = await request.formData();
   const intent = formData.get("intent");
 
-  if (intent === "confirm") {
-    /*const validateRequest = validatePermission(
-      session,
-      DONATION_MODULE_ID,
-      "Actualizar",
-    );
-    if (validateRequest) throw validateRequest;*/
-
-    const id = String(formData.get("id"));
-
-    const updateRes = await updateDonationDb(id, {
-      status: "confirmada",
-      reviewed_by: userId,
-      updated_at: new Date(),
-    });
-
-    if (!updateRes.success) {
-      return json({ errorMsg: "Ocurrió un error al confirmar la donación" });
-    }
-
-    return json({ confirmed: true });
-  }
-
-  if (intent === "reject") {
-    const validateRequest = validatePermission(
-      session,
-      DONATION_MODULE_ID,
-      "Actualizar",
-    );
+  /* ── gestión: administración confirma o rechaza una donación ── */
+  if (intent === "confirm" || intent === "reject") {
+    const validateRequest = validatePermission(session, 15, "Actualizar");
     if (validateRequest) throw validateRequest;
 
-    const id = String(formData.get("id"));
-    const rejectionReason = String(
-      formData.get("rejection_reason") || "",
-    ).trim();
+    const donationId = sanitizeText(formData.get("donationId"), 40);
+    if (!donationId) {
+      return json({ errorMsg: "Falta identificar la donación." });
+    }
 
+    const donationRes = await getDonationDb({ id: donationId });
+    if (!donationRes.success || !donationRes.data) {
+      return json({ errorMsg: "No se encontró la donación." });
+    }
+    const donation = donationRes.data;
+
+    if (!REVIEWABLE_DONATION_STATUSES.includes(donation.status)) {
+      return json({
+        errorMsg: "Esta donación ya fue procesada; no admite cambios.",
+      });
+    }
+
+    const now = new Date();
+
+    if (intent === "confirm") {
+      // El monto confirmado solo aplica a donaciones monetarias y puede diferir
+      // del declarado. Si administración no ajusta el campo, se toma el monto
+      // declarado como confirmado.
+      let confirmedAmount: string | null = null;
+      if (donation.donation_type === "Monetaria") {
+        confirmedAmount =
+          sanitizeAmount(formData.get("confirmedAmount")) ??
+          sanitizeAmount(donation.declared_amount?.toString());
+        if (!confirmedAmount) {
+          return json({
+            errorMsg: "Indica un monto confirmado válido mayor a cero.",
+          });
+        }
+      }
+
+      const updated = await reviewDonationDb(donationId, {
+        status: "confirmada",
+        reviewed_by: reviewerId,
+        confirmed_amount: confirmedAmount,
+        updated_at: now,
+      });
+
+      if (!updated.success || updated.data === 0) {
+        return json({
+          errorMsg: "No se pudo confirmar la donación. Actualiza y reintenta.",
+        });
+      }
+      return json({ ok: true, intent: "confirm" });
+    }
+
+    // intent === "reject": el motivo se guarda en la columna existente
+    // rejection_reason (uso interno).
+    const rejectionReason = sanitizeText(formData.get("rejectionReason"), 500);
     if (!rejectionReason) {
-      return json({ errorMsg: "Debes indicar un motivo de rechazo" });
+      return json({ errorMsg: "Escribe el motivo del rechazo." });
     }
 
-    const updateRes = await updateDonationDb(id, {
+    const updated = await reviewDonationDb(donationId, {
       status: "rechazada",
+      reviewed_by: reviewerId,
       rejection_reason: rejectionReason,
-      reviewed_by: userId,
-      updated_at: new Date(),
+      updated_at: now,
     });
-
-    if (!updateRes.success) {
-      return json({ errorMsg: "Ocurrió un error al rechazar la donación" });
+    if (!updated.success || updated.data === 0) {
+      return json({
+        errorMsg: "No se pudo rechazar la donación. Actualiza y reintenta.",
+      });
     }
-
-    return json({ rejected: true });
+    return json({ ok: true, intent: "reject" });
   }
 
   if (intent === "create-manual") {
-    const validateRequest = validatePermission(
-      session,
-      DONATION_MODULE_ID,
-      "Crear",
-    );
+    const validateRequest = validatePermission(session, 15, "Crear");
     if (validateRequest) throw validateRequest;
 
-    const donationType = formData
-      .get("donation_type")
-      ?.toString() as donation_type_donation;
-    const amount = formData.get("amount")?.toString().trim();
-    const itemDescription = formData.get("item_description")?.toString().trim();
-    const bankAccountId = formData.get("bank_account_id")?.toString();
-    const referenceNumber = formData
-      .get("reference_number")
-      ?.toString()
-      .trim();
-    const comment = formData.get("comment")?.toString().trim();
-    const donorName = formData.get("donor_name")?.toString().trim();
-    const donorEmail = formData.get("donor_email")?.toString().trim();
-    const donorPhone = formData.get("donor_phone")?.toString().trim();
-    const isPublic = formData.get("is_public") === "on";
-    const isAnonymous = isPublic && formData.get("is_anonymous") === "on";
-
-    if (donationType === "Monetaria" && (!amount || Number(amount) <= 0)) {
-      return json({ errorMsg: "Indica un monto válido" });
+    const origin = formData.get("md-origin");
+    if (origin !== "individual" && origin !== "patrocinador") {
+      return json({ errorMsg: "Indica el origen de la donación." });
     }
 
-    if (donationType === "Especie" && !itemDescription) {
-      return json({ errorMsg: "Describe los artículos donados" });
+    const donationType = formData.get("md-type");
+    if (donationType !== "Monetaria" && donationType !== "Especie") {
+      return json({ errorMsg: "Indica el tipo de donación." });
     }
 
+    // Origen: exactamente uno de los dos.
+    let patrocinadorId: number | null = null;
+    let donorName: string | null = null;
+    let donorEmail: string | null = null;
+    let donorPhone: string | null = null;
+
+    if (origin === "patrocinador") {
+      const rawSponsorId = sanitizeLimit(formData.get("md-patrocinador"), {
+        max: 1_000_000,
+      });
+      if (rawSponsorId === undefined) {
+        return json({ errorMsg: "Selecciona el patrocinador." });
+      }
+      const sponsorRes = await getSponsorDb({
+        id: rawSponsorId,
+        active: true,
+      });
+      if (!sponsorRes.success || !sponsorRes.data) {
+        return json({ errorMsg: "El patrocinador seleccionado no es válido." });
+      }
+      patrocinadorId = rawSponsorId;
+      // Origen patrocinador ⇒ no se guardan datos de donante individual.
+    } else {
+      // Origen individual: los datos del donante son opcionales ("si se
+      // conocen"); patrocinador_id queda en null.
+      donorName = sanitizeText(formData.get("md-donor-name"), 100) || null;
+      donorEmail = sanitizeEmail(formData.get("md-donor-email"));
+      donorPhone = sanitizePhone(formData.get("md-donor-phone"));
+    }
+
+    // Monto (monetaria) o descripción del bien (especie): uno u otro, obligatorio.
+    let declaredAmount: string | null = null;
+    let itemDescription: string | null = null;
+    let bankAccountId: number | null = null;
+    let referenceNumber: string | null = null;
+
+    if (donationType === "Monetaria") {
+      const rawAmount = Number(formData.get("md-amount"));
+      if (Number.isFinite(rawAmount) && rawAmount > 9_999_999.99) {
+        return json({ errorMsg: "El monto es demasiado alto; verifícalo." });
+      }
+      declaredAmount = sanitizeAmount(formData.get("md-amount"));
+      if (!declaredAmount) {
+        return json({ errorMsg: "Indica un monto válido mayor a cero." });
+      }
+
+      // Cuenta bancaria + referencia: opcionales; si se indica cuenta, debe
+      // existir y estar activa.
+      const rawBankId = sanitizeLimit(formData.get("md-bank"), {
+        max: 1_000_000,
+      });
+      if (rawBankId !== undefined) {
+        const accRes = await listDonationBankAccountDb({
+          id: rawBankId,
+          active: true,
+        });
+        if (!accRes.success || accRes.data.length === 0) {
+          return json({ errorMsg: "La cuenta seleccionada no es válida." });
+        }
+        bankAccountId = rawBankId;
+        referenceNumber =
+          sanitizeText(formData.get("md-reference"), 50) || null;
+      }
+    } else {
+      itemDescription = sanitizeText(formData.get("md-item"), 500) || null;
+      if (!itemDescription) {
+        return json({ errorMsg: "Describe el bien donado." });
+      }
+    }
+
+    // Proyecto asociado: si se indica, debe existir.
+    let proyectoId: number | null = null;
+    const rawProyectoId = sanitizeLimit(formData.get("md-project"), {
+      max: 1_000_000,
+    });
+    if (rawProyectoId !== undefined) {
+      const projRes = await getProyectoDb({ id: rawProyectoId });
+      if (!projRes.success || !projRes.data) {
+        return json({ errorMsg: "El proyecto seleccionado no es válido." });
+      }
+      proyectoId = rawProyectoId;
+    }
+
+    const isPublic = formData.get("md-public") === "on";
+    const isAnonymous = isPublic && formData.get("md-anonymous") === "on";
+    const comment = sanitizeText(formData.get("md-comment"), 1000) || null;
+
+    // Estado inicial "en coordinación": las donaciones que registra
+    // administración se coordinan por un canal externo y quedan pendientes de
+    // concretar/confirmar la entrega. El monto confirmado se fija
+    // después con el intent "confirm".
+    const now = new Date();
     const createRes = await createDonationDb({
-      donor_name: donorName || undefined,
-      donor_email: donorEmail || undefined,
-      donor_phone: donorPhone || undefined,
+      user_id: null,
+      donor_name: donorName,
+      donor_email: donorEmail,
+      donor_phone: donorPhone,
+      patrocinador_id: patrocinadorId,
+      proyecto_id: proyectoId,
       donation_type: donationType,
-      amount: donationType === "Monetaria" ? Number(amount) : undefined,
-      item_description:
-        donationType === "Especie" ? itemDescription : undefined,
-      bank_account_id: bankAccountId ? Number(bankAccountId) : undefined,
-      reference_number: bankAccountId ? referenceNumber || undefined : undefined,
-      comment: comment || undefined,
+      declared_amount: declaredAmount,
+      item_description: itemDescription,
+      bank_account_id: bankAccountId,
+      reference_number: referenceNumber,
+      status: "coordinacion",
       is_public: isPublic,
       is_anonymous: isAnonymous,
-      status: "confirmada",
-      reviewed_by: userId,
-      submitted_at: new Date(),
-      updated_at: new Date(),
+      comment,
+      submitted_at: now,
+      updated_at: now,
     });
 
     if (!createRes.success) {
-      return json({ errorMsg: "Ocurrió un error al registrar la donación" });
+      return json({ errorMsg: "Ocurrió un error al registrar la donación." });
     }
 
-    return json({ created: true });
+    return json({ ok: true, intent: "create-manual" });
   }
 
-  return json({ errorMsg: "Ocurrió un error al cargar la página" });
+  const catalogEditorId = Number(session.get("dbUserId"));
+  if (!catalogEditorId) {
+    return json({ errorMsg: "No se pudo identificar al usuario." });
+  }
+
+  if (intent === "create-patrocinador") {
+    const validateRequest = validatePermission(session, 13, "Crear");
+    if (validateRequest) throw validateRequest;
+
+    const name = sanitizeText(formData.get("name"), 100);
+    if (!name) {
+      return json({ errorMsg: "Escribe el nombre del patrocinador." });
+    }
+    const res = await createSponsorDb({
+      name,
+      active: true,
+      creator_id: catalogEditorId,
+      updater_id: catalogEditorId,
+    });
+    if (!res.success) {
+      return json({ errorMsg: "No se pudo crear el patrocinador." });
+    }
+    return json({
+      newPatrocinador: { id: res.data.id, name: res.data.name },
+    });
+  }
+
+  /* ──────────────────────| insumos necesitados |────────────────────── */
+  if (intent === "insumo-create") {
+    const validateRequest = validatePermission(session, 15, "Crear");
+    if (validateRequest) throw validateRequest;
+
+    const description = sanitizeText(formData.get("description"), 150);
+    if (!description) {
+      return json({ errorMsg: "Escribe la descripción del insumo." });
+    }
+    const res = await createNeededSupplyDb({
+      description,
+      active: true,
+      creator_id: catalogEditorId,
+      updater_id: catalogEditorId,
+    });
+    if (!res.success) {
+      return json({ errorMsg: "No se pudo registrar el insumo." });
+    }
+    return json({ ok: true, intent: "insumo-create" });
+  }
+
+  if (intent === "insumo-update") {
+    const validateRequest = validatePermission(session, 15, "Actualizar");
+    if (validateRequest) throw validateRequest;
+
+    const insumoId = sanitizeLimit(formData.get("insumoId"), {
+      max: 1_000_000,
+    });
+    if (insumoId === undefined) {
+      return json({ errorMsg: "Falta identificar el insumo." });
+    }
+    const currentRes = await getNeededSupplyDb({ id: insumoId });
+    if (!currentRes.success || !currentRes.data) {
+      return json({ errorMsg: "No se encontró el insumo." });
+    }
+
+    const description = sanitizeText(formData.get("description"), 150);
+    if (!description) {
+      return json({ errorMsg: "Escribe la descripción del insumo." });
+    }
+
+    const res = await updateNeededSupplyDb(insumoId, {
+      description,
+      updater_id: catalogEditorId,
+      update_date: new Date(),
+    });
+    if (!res.success) {
+      return json({ errorMsg: "No se pudo actualizar el insumo." });
+    }
+    return json({ ok: true, intent: "insumo-update" });
+  }
+
+  // "Quitar" = desactivar (reversible); "Reactivar" = volver a activar. No se
+  // borra la fila. El estado deseado llega explícito para ser idempotente,
+  // igual que bank-account-toggle.
+  if (intent === "insumo-toggle") {
+    const validateRequest = validatePermission(session, 15, "Actualizar");
+    if (validateRequest) throw validateRequest;
+
+    const insumoId = sanitizeLimit(formData.get("insumoId"), {
+      max: 1_000_000,
+    });
+    if (insumoId === undefined) {
+      return json({ errorMsg: "Falta identificar el insumo." });
+    }
+    const currentRes = await getNeededSupplyDb({ id: insumoId });
+    if (!currentRes.success || !currentRes.data) {
+      return json({ errorMsg: "No se encontró el insumo." });
+    }
+    const active = formData.get("active") === "true";
+    const res = await updateNeededSupplyDb(insumoId, {
+      active,
+      updater_id: catalogEditorId,
+      update_date: new Date(),
+    });
+    if (!res.success) {
+      return json({ errorMsg: "No se pudo cambiar el estado del insumo." });
+    }
+    return json({ ok: true, intent: "insumo-toggle" });
+  }
+
+  /* ────────────────────| cuentas bancarias de donación |──────────────────── */
+  if (intent === "bank-account-create" || intent === "bank-account-update") {
+    const bankName = sanitizeText(formData.get("bankName"), 100);
+    const accountNumber = sanitizeText(formData.get("accountNumber"), 50);
+    const accountHolder =
+      sanitizeText(formData.get("accountHolder"), 100) || null;
+    const accountTypeRaw = formData.get("accountType");
+    const accountType = BANK_ACCOUNT_TYPES.includes(
+      accountTypeRaw as BankAccountType,
+    )
+      ? (accountTypeRaw as BankAccountType)
+      : null;
+
+    if (!bankName) return json({ errorMsg: "Escribe el nombre del banco." });
+    if (!accountType) {
+      return json({ errorMsg: "Selecciona el tipo de cuenta." });
+    }
+    if (!accountNumber) {
+      return json({ errorMsg: "Escribe el número de cuenta." });
+    }
+
+    if (intent === "bank-account-create") {
+      const validateRequest = validatePermission(session, 15, "Crear");
+      if (validateRequest) throw validateRequest;
+
+      const res = await createDonationBankAccountDb({
+        bank_name: bankName,
+        account_type: accountType,
+        account_number: accountNumber,
+        account_holder: accountHolder,
+        active: true,
+        creator_id: catalogEditorId,
+        updater_id: catalogEditorId,
+      });
+      if (!res.success) {
+        return json({ errorMsg: "No se pudo registrar la cuenta." });
+      }
+      return json({ ok: true, intent: "bank-account-create" });
+    }
+
+    const validateRequest = validatePermission(session, 15, "Actualizar");
+    if (validateRequest) throw validateRequest;
+
+    const bankAccountId = sanitizeLimit(formData.get("bankAccountId"), {
+      max: 1_000_000,
+    });
+    if (bankAccountId === undefined) {
+      return json({ errorMsg: "Falta identificar la cuenta." });
+    }
+    const currentRes = await getDonationBankAccountDb({ id: bankAccountId });
+    if (!currentRes.success || !currentRes.data) {
+      return json({ errorMsg: "No se encontró la cuenta." });
+    }
+    const res = await updateDonationBankAccountDb(bankAccountId, {
+      bank_name: bankName,
+      account_type: accountType,
+      account_number: accountNumber,
+      account_holder: accountHolder,
+      updater_id: catalogEditorId,
+      update_date: new Date(),
+    });
+    if (!res.success) {
+      return json({ errorMsg: "No se pudo actualizar la cuenta." });
+    }
+    return json({ ok: true, intent: "bank-account-update" });
+  }
+
+  if (intent === "bank-account-toggle") {
+    const validateRequest = validatePermission(session, 15, "Actualizar");
+    if (validateRequest) throw validateRequest;
+
+    const bankAccountId = sanitizeLimit(formData.get("bankAccountId"), {
+      max: 1_000_000,
+    });
+    if (bankAccountId === undefined) {
+      return json({ errorMsg: "Falta identificar la cuenta." });
+    }
+    const currentRes = await getDonationBankAccountDb({ id: bankAccountId });
+    if (!currentRes.success || !currentRes.data) {
+      return json({ errorMsg: "No se encontró la cuenta." });
+    }
+    // El estado deseado llega explícito para que la acción sea idempotente y no
+    // dependa de leer-y-alternar.
+    const active = formData.get("active") === "true";
+    const res = await updateDonationBankAccountDb(bankAccountId, {
+      active,
+      updater_id: catalogEditorId,
+      update_date: new Date(),
+    });
+    if (!res.success) {
+      return json({ errorMsg: "No se pudo cambiar el estado de la cuenta." });
+    }
+    return json({ ok: true, intent: "bank-account-toggle" });
+  }
+
+  return json({ errorMsg: "Acción no reconocida." }, { status: 400 });
 };
 
+const FILTER_KEYS = [
+  "type",
+  "status",
+  "origin",
+  "project",
+  "from",
+  "to",
+] as const;
+
 /*==============================| Component |==============================*/
-export default function () {
+export default function AdminDonacionesPage() {
   const {
     donations,
-    totalDonations,
+    total,
+    page,
     totalPages,
+    projectOptions,
+    patrocinadorOptions,
+    bankAccountOptions,
+    insumos,
     bankAccounts,
+    errorMsg,
     allowedToCreate,
     allowedToUpdate,
-  } = useLoaderData() as unknown as {
-    donations: DonationWithRelations[];
-    totalDonations: number;
-    totalPages: number;
-    bankAccounts: any[];
-    allowedToCreate: boolean;
-    allowedToUpdate: boolean;
-  };
-
+  } = useLoaderData<LoaderData>();
   const [searchParams, setSearchParams] = useSearchParams();
-  const fetcher = useFetcher();
-  const isProcessing = fetcher.state !== "idle";
+  const navigation = useNavigation();
 
-  // Filtros
-  const hasActiveFilters = Boolean(searchParams.toString());
-  const page = Number(searchParams.get("page") || "1");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [manualFormOpen, setManualFormOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
-  // Banderas
-  const [panelOpen, setPanelOpen] = useState(false);
-  const [processingId, setProcessingId] = useState<string | null>(null);
-  const [rejectingId, setRejectingId] = useState<string | null>(null);
-  const [rejectionReason, setRejectionReason] = useState("");
+  // El listado se refresca solo tras confirmar/rechazar (revalidación de
+  // Remix), así que `selectedId` siempre se resuelve contra los datos frescos.
+  const selectedDonation = donations.find((d) => d.id === selectedId) ?? null;
 
-  /*------------------------------SETEO DE DATOS PROVENIENTES DEL POST------------------------------*/
-  useEffect(() => {
-    if (fetcher.data?.errorMsg) {
-      toast.error(fetcher.data.errorMsg);
-      setProcessingId(null);
-    }
+  const isListLoading =
+    navigation.state === "loading" &&
+    navigation.location?.pathname === "/donaciones";
+  const hasActiveFilters = FILTER_KEYS.some((k) => searchParams.get(k));
 
-    if (fetcher.data?.confirmed) {
-      toast.success("Donación confirmada correctamente");
-      setProcessingId(null);
-    }
-
-    if (fetcher.data?.rejected) {
-      toast.success("Donación rechazada correctamente");
-      setProcessingId(null);
-      setRejectingId(null);
-      setRejectionReason("");
-    }
-
-    if (fetcher.data?.created) {
-      toast.success("Donación registrada correctamente");
-    }
-  }, [fetcher.data]);
-
-  /*------------------------------FUNCIONES------------------------------*/
-  function updateParam(key: string, value: string) {
+  // Filtros y paginación viven en la URL (searchParams); cambiarlos navega y
+  // el loader vuelve a consultar con el nuevo `where`.
+  const updateParam = (key: string, value: string) => {
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);
         if (value) next.set(key, value);
         else next.delete(key);
-        next.delete("page");
+        if (key !== "page") next.delete("page");
         return next;
       },
       { preventScrollReset: true },
     );
-  }
-
-  function goToPage(next: number) {
-    setSearchParams(
-      (prev) => {
-        const params = new URLSearchParams(prev);
-        params.set("page", String(next));
-        return params;
-      },
-      { preventScrollReset: false },
-    );
-  }
-
-  function handleConfirm(id: string) {
-    setProcessingId(id);
-    const fd = new FormData();
-    fd.set("intent", "confirm");
-    fd.set("id", id);
-    fetcher.submit(fd, { method: "post" });
-  }
-
-  function handleOpenReject(id: string) {
-    setRejectingId(id);
-    setRejectionReason("");
-  }
-
-  function handleConfirmReject() {
-    if (!rejectionReason.trim()) {
-      toast.error("Debes indicar un motivo de rechazo");
-      return;
-    }
-    if (!rejectingId) return;
-
-    setProcessingId(rejectingId);
-    const fd = new FormData();
-    fd.set("intent", "reject");
-    fd.set("id", rejectingId);
-    fd.set("rejection_reason", rejectionReason);
-    fetcher.submit(fd, { method: "post" });
-  }
-
-  // Si esta vacia la lista
-  function EmptyState({ hasFilters }: { hasFilters: boolean }) {
-    return (
-      <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-[#E4E0D6] py-16 text-center">
-        <p className="font-medium text-[#1F1D1A]">
-          {hasFilters
-            ? "Ningún resultado con estos filtros"
-            : "Todavía no hay donaciones registradas"}
-        </p>
-        <p className="max-w-xs text-sm text-[#8A8577]">
-          {hasFilters
-            ? "Ajusta o limpia los filtros para ver más resultados."
-            : "Las donaciones registradas desde /donacion aparecerán aquí."}
-        </p>
-      </div>
-    );
-  }
+  };
 
   return (
-    <div className="w-full h-full p-5 flex flex-col gap-y-5 overflow-y-auto">
-      <div className="flex flex-wrap items-center justify-between gap-6 md:gap-3">
-        <h1 className="order-1 md:hidden text-xl font-bold">Donaciones</h1>
-        <h2 className="hidden md:block order-3 md:order-1 text-gray-400">
-          Gestiona las donaciones registradas por adoptantes y donantes.
-        </h2>
-        {allowedToCreate && (
-          <PrimaryButton
-            className="order-2 md:order-2"
-            label="Registrar donación manual"
-            Icon={LuPlus}
-            onClick={() => setPanelOpen(true)}
-          />
+    <div className="flex h-full w-full flex-col gap-y-5 overflow-y-auto p-5">
+      {/* ── Encabezado ── */}
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="md:hidden text-xl font-bold text-gray-800">
+            Donaciones
+          </h1>
+          <p className="text-sm text-gray-400">
+            Gestiona las donaciones registradas por adoptantes, donantes y
+            patrocinadores.
+          </p>
+        </div>
+        {(allowedToCreate || allowedToUpdate) && (
+          <div className="flex flex-wrap items-center gap-3">
+            {(allowedToCreate || allowedToUpdate) && (
+              <SecondaryButton
+                label="Medios e insumos"
+                Icon={LuSettings}
+                onClick={() => setSettingsOpen(true)}
+              />
+            )}
+            {allowedToCreate && (
+              <PrimaryButton
+                label="Registrar donación"
+                Icon={LuPlus}
+                onClick={() => setManualFormOpen(true)}
+              />
+            )}
+          </div>
         )}
       </div>
 
-      <div className="flex flex-col gap-6 md:gap-3 pb-3 md:flex-row md:items-center">
-        <div className="grid grid-cols-2 md:flex md:items-center gap-x-6 gap-y-4">
-          <Select
-            id="type"
-            name="type"
-            className="w-full md:w-auto"
-            value={searchParams.get("type") ?? ""}
-            onChange={(e) => updateParam("type", e.target.value)}
+      {/* ── Barra de filtros ── */}
+      <div className="grid grid-cols-2 gap-y-2 gap-x-2 md:flex md:flex-wrap items-center gap-3">
+        <Select
+          aria-label="Filtrar por tipo de donación"
+          className="w-full sm:w-auto"
+          value={searchParams.get("type") ?? ""}
+          onChange={(e) => updateParam("type", e.target.value)}
+        >
+          <option value="">Todo tipo</option>
+          <option value="Monetaria">Monetaria</option>
+          <option value="Especie">En especie</option>
+        </Select>
+
+        <Select
+          aria-label="Filtrar por estado"
+          className="w-full sm:w-auto"
+          value={searchParams.get("status") ?? ""}
+          onChange={(e) => updateParam("status", e.target.value)}
+        >
+          <option value="">Todo estado</option>
+          {DONATION_STATUSES.map((s) => (
+            <option key={s.value} value={s.value}>
+              {s.label}
+            </option>
+          ))}
+        </Select>
+
+        <Select
+          aria-label="Filtrar por origen"
+          className="w-full sm:w-auto"
+          value={searchParams.get("origin") ?? ""}
+          onChange={(e) => updateParam("origin", e.target.value)}
+        >
+          <option value="">Todo origen</option>
+          <option value="individual">Individual</option>
+          <option value="patrocinador">Patrocinador</option>
+        </Select>
+
+        <Select
+          aria-label="Filtrar por proyecto"
+          className="w-full sm:w-auto"
+          value={searchParams.get("project") ?? ""}
+          onChange={(e) => updateParam("project", e.target.value)}
+        >
+          <option value="">Todo proyecto</option>
+          {projectOptions.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
+        </Select>
+
+        <input
+          type="date"
+          aria-label="Desde la fecha"
+          value={searchParams.get("from") ?? ""}
+          onChange={(e) => updateParam("from", e.target.value)}
+          className="rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-600"
+        />
+        <input
+          type="date"
+          aria-label="Hasta la fecha"
+          value={searchParams.get("to") ?? ""}
+          onChange={(e) => updateParam("to", e.target.value)}
+          className="rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-600"
+        />
+
+        {hasActiveFilters && (
+          <button
+            type="button"
+            onClick={() => setSearchParams({}, { preventScrollReset: true })}
+            className="px-2 py-1 text-sm text-medium-turquoise-meraki hover:underline"
           >
-            <option value="">Todo tipo</option>
-            <option value="Monetaria">Monetaria</option>
-            <option value="Especie">En especie</option>
-          </Select>
-          <Select
-            id="status"
-            name="status"
-            className="w-full md:w-auto"
-            value={searchParams.get("status") ?? ""}
-            onChange={(e) => updateParam("status", e.target.value)}
-          >
-            <option value="">Todo estado</option>
-            <option value="pendiente">Pendiente</option>
-            <option value="confirmada">Confirmada</option>
-            <option value="rechazada">Rechazada</option>
-          </Select>
-          <input
-            type="date"
-            value={searchParams.get("from") ?? ""}
-            onChange={(e) => updateParam("from", e.target.value)}
-            className="rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-600"
-          />
-          <input
-            type="date"
-            value={searchParams.get("to") ?? ""}
-            onChange={(e) => updateParam("to", e.target.value)}
-            className="rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-gray-600"
-          />
-          {hasActiveFilters && (
-            <div className="md:ml-auto flex justify-center items-center">
-              <button
-                className="text-sm px-3 py-1 text-emerald-600 hover:text-emerald-700"
-                onClick={() =>
-                  setSearchParams({}, { preventScrollReset: true })
-                }
-              >
-                Limpiar
-              </button>
-            </div>
-          )}
-          <span className="col-span-2 px-1 md:px-0 text-sm text-gray-400 whitespace-nowrap">
-            {totalDonations} {totalDonations === 1 ? "resultado" : "resultados"}
-          </span>
-        </div>
+            Limpiar
+          </button>
+        )}
+
+        <span
+          className={`${
+            hasActiveFilters ? "" : "col-span-2"
+          } text-center md:ml-auto whitespace-nowrap text-sm text-gray-400`}
+        >
+          {total} {total === 1 ? "resultado" : "resultados"}
+        </span>
       </div>
 
-      <Pagination
-        currentPage={page}
-        totalPages={totalPages}
-        onChangePage={goToPage}
-      />
-
-      {donations.length === 0 ? (
-        <EmptyState hasFilters={hasActiveFilters} />
-      ) : (
-        <div className="flex flex-col gap-3">
-          {donations.map((donation) => (
-            <DonationCard
-              key={donation.id}
-              donation={donation}
-              allowedToUpdate={allowedToUpdate}
-              isProcessing={isProcessing && processingId === donation.id}
-              onConfirm={handleConfirm}
-              onReject={handleOpenReject}
-            />
-          ))}
+      {/* ── Listado ── */}
+      {errorMsg ? (
+        <DataErrorState message="No pudimos cargar el listado de donaciones. Revisa tu conexión y vuelve a intentarlo." />
+      ) : isListLoading ? (
+        <div className="flex items-center justify-center py-16 text-gray-400">
+          <AiOutlineLoading3Quarters className="h-10 w-10 animate-spin text-medium-turquoise-meraki" />
         </div>
+      ) : donations.length === 0 ? (
+        hasActiveFilters ? (
+          <DataEmptyState
+            title="Ninguna donación con estos filtros"
+            message="Ajusta o limpia los filtros para ver más donaciones."
+          />
+        ) : (
+          <DataEmptyState
+            title="Todavía no hay donaciones registradas"
+            message="Las donaciones que los donantes notifiquen y las que registres manualmente aparecerán aquí."
+            action={
+              allowedToCreate
+                ? {
+                    label: "Registrar la primera donación",
+                    onClick: () => setManualFormOpen(true),
+                  }
+                : undefined
+            }
+          />
+        )
+      ) : (
+        <>
+          <ul className="flex flex-col gap-3">
+            {donations.map((donation) => (
+              <DonationRow
+                key={donation.id}
+                donation={donation}
+                onSelect={(d) => setSelectedId(d.id)}
+              />
+            ))}
+          </ul>
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onChangePage={(next) => updateParam("page", String(next))}
+          />
+        </>
       )}
 
-      <Pagination
-        currentPage={page}
-        totalPages={totalPages}
-        onChangePage={goToPage}
+      <DonationDetailDrawer
+        donation={selectedDonation}
+        allowedToUpdate={allowedToUpdate}
+        onClose={() => setSelectedId(null)}
       />
 
-      <DonationPanel
-        open={panelOpen}
-        onClose={() => setPanelOpen(false)}
-        bankAccounts={bankAccounts}
-      />
+      {manualFormOpen && (
+        <DonationPanel
+          onClose={() => setManualFormOpen(false)}
+          patrocinadores={patrocinadorOptions}
+          projects={projectOptions}
+          bankAccounts={bankAccountOptions}
+        />
+      )}
 
-      {/* ── Modal de rechazo ── */}
-      {rejectingId && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-lg w-full max-w-md p-6 flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold text-gray-800">
-                Rechazar donación
-              </h3>
-              <button
-                onClick={() => setRejectingId(null)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <FaTimes className="w-4 h-4" />
-              </button>
-            </div>
-
-            <p className="text-sm text-gray-500">
-              Indica el motivo del rechazo. Este texto es de uso interno.
-            </p>
-            <textarea
-              value={rejectionReason}
-              onChange={(e) => setRejectionReason(e.target.value)}
-              rows={4}
-              placeholder="Ej. No se pudo verificar el depósito..."
-              className="w-full rounded-xl border border-gray-200 p-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#F2768C]/30 resize-none"
-            />
-
-            <div className="flex gap-3 justify-end mt-2">
-              <button
-                onClick={() => setRejectingId(null)}
-                className="px-4 py-2 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50"
-              >
-                Cancelar
-              </button>
-              <button
-                disabled={isProcessing || !rejectionReason.trim()}
-                onClick={handleConfirmReject}
-                className="px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all disabled:opacity-50 bg-[#F2768C] hover:bg-[#F2768C]/90"
-              >
-                {isProcessing ? "Procesando..." : "Confirmar rechazo"}
-              </button>
-            </div>
-          </div>
-        </div>
+      {settingsOpen && (
+        <DonationSettingsDrawer
+          onClose={() => setSettingsOpen(false)}
+          bankAccounts={bankAccounts}
+          insumos={insumos}
+          allowedToCreate={allowedToCreate}
+          allowedToUpdate={allowedToUpdate}
+        />
       )}
     </div>
   );

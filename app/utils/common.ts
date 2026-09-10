@@ -41,6 +41,17 @@ export const LOG_COLORS = {
  * @param birth Fecha de nacimiento
  * @returns {string} Edad en letras
  */
+/** Iniciales (hasta 2) de un nombre, para avatares/placeholders sin logo. */
+export function getInitials(name: string): string {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0])
+    .join("")
+    .toUpperCase();
+}
+
 export function calculateAge(birth: Date | string): string {
   const now = new Date();
   const birthdate = new Date(birth);

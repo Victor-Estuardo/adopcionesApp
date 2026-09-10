@@ -4,15 +4,17 @@ import { IconType } from "react-icons";
 import { BsClipboard2Heart } from "react-icons/bs";
 import { FaPaw, FaUsers } from "react-icons/fa";
 import { IoIosLogOut } from "react-icons/io";
-import { LuClipboardList } from "react-icons/lu";
+import { LuBuilding, LuClipboardList, LuImage } from "react-icons/lu";
 import { MdDashboard, MdMenuOpen } from "react-icons/md";
 import { ModuleSession } from "~/services/db/module.service";
+import { BiSolidDonateHeart } from "react-icons/bi";
 
 interface AdminSidebarProps {
   modules: ModuleSession[];
   collapsed: boolean;
   mobileOpen: boolean;
   onToggleCollapse: () => void;
+  onCollapse: () => void;
   onCloseMobile: () => void;
 }
 
@@ -20,6 +22,7 @@ export default ({
   modules,
   collapsed,
   onToggleCollapse,
+  onCollapse,
   mobileOpen,
   onCloseMobile,
 }: AdminSidebarProps) => {
@@ -33,7 +36,10 @@ export default ({
       FaPaw: FaPaw,
       BsClipboard2Heart: BsClipboard2Heart,
       LuClipboardList: LuClipboardList,
+      LuBuilding: LuBuilding,
+      LuImage: LuImage,
       FaUsers: FaUsers,
+      BiSolidDonateHeart: BiSolidDonateHeart,
     }),
     [],
   );
@@ -72,6 +78,7 @@ export default ({
             <NavLink
               key={module.key}
               to={module.key}
+              onClick={onCollapse}
               className={({ isActive }) =>
                 `w-[90%] py-2 ${
                   !collapsed
@@ -87,6 +94,7 @@ export default ({
         })}
         <NavLink
           to={"/logout"}
+          onClick={onCollapse}
           className={`w-[90%] mt-auto py-2 border-t border-gray-100 ${
             !collapsed ? "flex items-center gap-x-3 px-3" : "px-2"
           }`}
@@ -125,6 +133,7 @@ export default ({
                 <NavLink
                   key={`movil_${route.key}`}
                   to={route.key}
+                  onClick={onCloseMobile}
                   className={({ isActive }) =>
                     `w-full flex gap-x-3 px-3 py-2 rounded-3xl  ${
                       isActive ? "bg-medium-turquoise-meraki text-white" : ""
@@ -139,6 +148,7 @@ export default ({
           </div>
           <NavLink
             to={"/logout"}
+            onClick={onCloseMobile}
             className="w-full mt-auto py-3 border-t border-gray-100 flex items-center gap-x-3 px-6"
           >
             <IoIosLogOut className="w-6 h-6" />

@@ -4,6 +4,14 @@ import {
   UploadApiResponse,
 } from "cloudinary";
 import { config } from "~/config";
+import {
+  DONATION_RECEIPT_MAX_MB,
+  DONATION_RECEIPT_MIME_TYPES,
+  PATROCINADOR_LOGO_MAX_MB,
+  PATROCINADOR_LOGO_MIME_TYPES,
+  PROYECTO_FOTO_MAX_MB,
+  PROYECTO_FOTO_MIME_TYPES,
+} from "./fileConstraints";
 
 cloudinary.config({
   cloud_name: config.cloudinaryCloudName,
@@ -98,6 +106,174 @@ export async function uploadProfileImage(
   } catch (error) {
     console.error("Error al subir foto de perfil a Cloudinary:", error);
     return { success: false, error: "Ocurrió un error al subir la imagen" };
+  }
+}
+
+/*==============================| Comprobante de donación |==============================*/
+/**
+ * Sube el comprobante de una donación notificada por un donante. Acepta imagen
+ * o PDF (`resource_type: "auto"`); no aplica transformaciones para no degradar
+ * un documento que puede necesitar leerse tal cual. Cada donación tiene a lo
+ * sumo un comprobante, así que se usa un public_id fijo con overwrite.
+ */
+export async function uploadDonationReceipt(
+  file: File,
+  donationId: string,
+): Promise<UploadResult> {
+  if (!file || file.size === 0) {
+    return { success: false, error: "No se recibió ningún archivo" };
+  }
+  if (!DONATION_RECEIPT_MIME_TYPES.includes(file.type)) {
+    return {
+      success: false,
+      error: "Formato no permitido. Usa JPG, PNG, WEBP o PDF",
+    };
+  }
+  if (file.size > DONATION_RECEIPT_MAX_MB * 1024 * 1024) {
+    return {
+      success: false,
+      error: `El comprobante no debe superar los ${DONATION_RECEIPT_MAX_MB}MB`,
+    };
+  }
+
+  try {
+    const buffer = Buffer.from(await file.arrayBuffer());
+
+    const result = await uploadBuffer(buffer, {
+      folder: `donation-receipts/${donationId}`,
+      public_id: "receipt",
+      overwrite: true,
+      invalidate: true,
+      resource_type: "auto",
+    });
+
+    return {
+      success: true,
+      data: {
+        secure_url: result.secure_url,
+        public_id: result.public_id,
+        version: result.version,
+      },
+    };
+  } catch (error) {
+    console.error(
+      "Error al subir comprobante de donación a Cloudinary:",
+      error,
+    );
+    return {
+      success: false,
+      error: "Ocurrió un error al subir el comprobante",
+    };
+  }
+}
+
+/*==============================| Logotipo de patrocinador |==============================*/
+/**
+ * Sube el logotipo de un patrocinador. Un patrocinador tiene un solo logo, así
+ * que se usa un public_id fijo con overwrite. Sin recorte a "fill" (un logo no
+ * se debe recortar); solo se limita el tamaño.
+ */
+export async function uploadSponsorLogo(
+  file: File,
+  patrocinadorId: string | number,
+): Promise<UploadResult> {
+  if (!file || file.size === 0) {
+    return { success: false, error: "No se recibió ningún archivo" };
+  }
+  if (!PATROCINADOR_LOGO_MIME_TYPES.includes(file.type)) {
+    return {
+      success: false,
+      error: "Formato no permitido. Usa PNG, SVG, WEBP o JPG",
+    };
+  }
+  if (file.size > PATROCINADOR_LOGO_MAX_MB * 1024 * 1024) {
+    return {
+      success: false,
+      error: `El logotipo no debe superar los ${PATROCINADOR_LOGO_MAX_MB}MB`,
+    };
+  }
+
+  try {
+    const buffer = Buffer.from(await file.arrayBuffer());
+
+    const result = await uploadBuffer(buffer, {
+      folder: `patrocinador/${patrocinadorId}`,
+      public_id: "logo",
+      overwrite: true,
+      invalidate: true,
+      resource_type: "image",
+    });
+
+    return {
+      success: true,
+      data: {
+        secure_url: result.secure_url,
+        public_id: result.public_id,
+        version: result.version,
+      },
+    };
+  } catch (error) {
+    console.error(
+      "Error al subir logotipo de patrocinador a Cloudinary:",
+      error,
+    );
+    return { success: false, error: "Ocurrió un error al subir el logotipo" };
+  }
+}
+
+/*==============================| Fotos de proyecto (antes/durante/después) |==============================*/
+/**
+ * Sube la foto de una etapa (antes/durante/después) de un proyecto. Usa un
+ * public_id determinista por (proyecto, etapa) con overwrite: así "reemplazar"
+ * la foto de una etapa pisa el mismo asset y no hay que limpiar el anterior.
+ * @param categorySlug "antes" | "durante" | "despues"
+ */
+export async function uploadProjectPhoto(
+  file: File,
+  proyectoId: string | number,
+  categorySlug: string,
+): Promise<UploadResult> {
+  if (!file || file.size === 0) {
+    return { success: false, error: "No se recibió ningún archivo" };
+  }
+  if (!PROYECTO_FOTO_MIME_TYPES.includes(file.type)) {
+    return {
+      success: false,
+      error: "Formato no permitido. Usa JPG, PNG o WEBP",
+    };
+  }
+  if (file.size > PROYECTO_FOTO_MAX_MB * 1024 * 1024) {
+    return {
+      success: false,
+      error: `La foto no debe superar los ${PROYECTO_FOTO_MAX_MB}MB`,
+    };
+  }
+
+  try {
+    const buffer = Buffer.from(await file.arrayBuffer());
+
+    const result = await uploadBuffer(buffer, {
+      folder: `proyecto/${proyectoId}`,
+      public_id: categorySlug,
+      overwrite: true,
+      invalidate: true,
+      transformation: [
+        { width: 1600, crop: "limit" },
+        { quality: "auto", fetch_format: "auto" },
+      ],
+    });
+
+    return {
+      success: true,
+      data: {
+        secure_url: result.secure_url,
+        public_id: result.public_id,
+        version: result.version,
+      },
+    };
+  } catch (error) {
+    console.error("Error al subir foto de proyecto a Cloudinary:", error);
+    return { success: false, error: "Ocurrió un error al subir la foto" };
   }
 }
 

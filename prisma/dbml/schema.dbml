@@ -93,6 +93,8 @@ Table user {
   donation_donation_user_idTouser donation [not null]
   donationBankAccount_donationBankAccount_creator_idTouser donationBankAccount [not null]
   donationBankAccount_donationBankAccount_updater_idTouser donationBankAccount [not null]
+  needSupplies_needSupplies_creator_idTouser needSupplies [not null]
+  needSupplies_needSupplies_updater_idTouser needSupplies [not null]
   passwordResetToken passwordResetToken [not null]
   pet_pet_creator_idTouser pet [not null]
   pet_pet_updater_idTouser pet [not null]
@@ -100,7 +102,13 @@ Table user {
   petSpecies_petSpecies_updater_idTouser petSpecies [not null]
   pet_images_pet_images_creator_idTouser pet_images [not null]
   pet_images_pet_images_updater_idTouser pet_images [not null]
+  project_project_creator_idTouser project [not null]
+  project_project_updater_idTouser project [not null]
+  project_photo_project_photo_creator_idTouser project_photo [not null]
+  project_photo_project_photo_updater_idTouser project_photo [not null]
   savedPet savedPet [not null]
+  sponsor_sponsor_creator_idTouser sponsor [not null]
+  sponsor_sponsor_updater_idTouser sponsor [not null]
   role role [not null]
 }
 
@@ -194,10 +202,9 @@ Table donation {
   donor_email String
   donor_phone String
   donation_type donation_type_donation [not null]
-  amount Decimal
+  declared_amount Decimal
   item_description String
   bank_account_id Int
-  reference_number String
   status String [not null]
   is_public Boolean [not null, default: false]
   is_anonymous Boolean [not null, default: false]
@@ -206,7 +213,14 @@ Table donation {
   rejection_reason String
   reviewed_by Int
   comment String
+  reference_number String
+  confirmed_amount Decimal
+  patrocinador_id Int
+  proyecto_id Int
+  receipt_url String
   donationBankAccount donationBankAccount
+  patrocinador sponsor
+  proyecto project
   user_donation_reviewed_byTouser user
   user_donation_user_idTouser user
 }
@@ -225,6 +239,65 @@ Table donationBankAccount {
   donation donation [not null]
   user_donationBankAccount_creator_idTouser user [not null]
   user_donationBankAccount_updater_idTouser user [not null]
+}
+
+Table needSupplies {
+  id Int [pk, increment]
+  description String [not null]
+  active Boolean [not null, default: true]
+  creation_date DateTime [default: `now()`, not null]
+  creator_id Int [not null]
+  update_date DateTime [default: `now()`, not null]
+  updater_id Int [not null]
+  user_needSupplies_creator_idTouser user [not null]
+  user_needSupplies_updater_idTouser user [not null]
+}
+
+Table project {
+  id Int [pk, increment]
+  name String [not null]
+  description String [not null]
+  goal String
+  status status_proyecto [not null, default: 'Activo']
+  creation_date DateTime [default: `now()`, not null]
+  creator_id Int [not null]
+  update_date DateTime [default: `now()`, not null]
+  updater_id Int [not null]
+  progress Int
+  donation donation [not null]
+  user_project_creator_idTouser user [not null]
+  user_project_updater_idTouser user [not null]
+  project_photo project_photo [not null]
+}
+
+Table project_photo {
+  id Int [pk, increment]
+  proyecto_id Int [not null]
+  url String [not null]
+  category category_proyectoFoto [not null]
+  creation_date DateTime [default: `now()`, not null]
+  creator_id Int [not null]
+  update_date DateTime [default: `now()`, not null]
+  updater_id Int [not null]
+  user_project_photo_creator_idTouser user [not null]
+  project project [not null]
+  user_project_photo_updater_idTouser user [not null]
+}
+
+Table sponsor {
+  id Int [pk, increment]
+  name String [not null]
+  logo_url String
+  website String
+  contact String
+  active Boolean [not null, default: true]
+  creation_date DateTime [default: `now()`, not null]
+  creator_id Int [not null]
+  update_date DateTime [default: `now()`, not null]
+  updater_id Int [not null]
+  donation donation [not null]
+  user_sponsor_creator_idTouser user [not null]
+  user_sponsor_updater_idTouser user [not null]
 }
 
 Enum nav_audience_module {
@@ -262,6 +335,17 @@ Enum account_type_donationBankAccount {
 Enum donation_type_donation {
   Monetaria
   Especie
+}
+
+Enum status_proyecto {
+  Activo
+  Finalizado
+}
+
+Enum category_proyectoFoto {
+  Antes
+  Durante
+  Despu_s
 }
 
 Enum status_pet {
@@ -315,6 +399,10 @@ Ref: savedPet.user_id > user.id
 
 Ref: donation.bank_account_id > donationBankAccount.id [delete: No Action]
 
+Ref: donation.patrocinador_id > sponsor.id [delete: No Action]
+
+Ref: donation.proyecto_id > project.id [delete: No Action]
+
 Ref: donation.reviewed_by > user.id [delete: No Action]
 
 Ref: donation.user_id > user.id [delete: No Action]
@@ -322,3 +410,21 @@ Ref: donation.user_id > user.id [delete: No Action]
 Ref: donationBankAccount.creator_id > user.id [delete: No Action]
 
 Ref: donationBankAccount.updater_id > user.id [delete: No Action]
+
+Ref: needSupplies.creator_id > user.id [delete: No Action]
+
+Ref: needSupplies.updater_id > user.id [delete: No Action]
+
+Ref: project.creator_id > user.id [delete: No Action]
+
+Ref: project.updater_id > user.id [delete: No Action]
+
+Ref: project_photo.creator_id > user.id [delete: No Action]
+
+Ref: project_photo.proyecto_id > project.id [delete: No Action]
+
+Ref: project_photo.updater_id > user.id [delete: No Action]
+
+Ref: sponsor.creator_id > user.id [delete: No Action]
+
+Ref: sponsor.updater_id > user.id [delete: No Action]

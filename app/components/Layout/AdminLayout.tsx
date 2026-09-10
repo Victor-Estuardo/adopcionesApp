@@ -21,6 +21,7 @@ export default ({ modules, initials, profile, children }: AdminLayoutProps) => {
         collapsed={collapsed}
         mobileOpen={mobileOpen}
         onToggleCollapse={() => setCollapsed((prev) => !prev)}
+        onCollapse={() => setCollapsed(true)}
         onCloseMobile={() => setMobileOpen(false)}
       />
       <div className="flex-1 flex flex-col min-w-0">

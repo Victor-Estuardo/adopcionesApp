@@ -105,6 +105,8 @@ model user {
   donation_donation_user_idTouser                          donation[]            @relation("donation_user_idTouser")
   donationBankAccount_donationBankAccount_creator_idTouser donationBankAccount[] @relation("donationBankAccount_creator_idTouser")
   donationBankAccount_donationBankAccount_updater_idTouser donationBankAccount[] @relation("donationBankAccount_updater_idTouser")
+  needSupplies_needSupplies_creator_idTouser               needSupplies[]        @relation("needSupplies_creator_idTouser")
+  needSupplies_needSupplies_updater_idTouser               needSupplies[]        @relation("needSupplies_updater_idTouser")
   passwordResetToken                                       passwordResetToken[]
   pet_pet_creator_idTouser                                 pet[]                 @relation("pet_creator_idTouser")
   pet_pet_updater_idTouser                                 pet[]                 @relation("pet_updater_idTouser")
@@ -112,7 +114,13 @@ model user {
   petSpecies_petSpecies_updater_idTouser                   petSpecies[]          @relation("petSpecies_updater_idTouser")
   pet_images_pet_images_creator_idTouser                   pet_images[]          @relation("pet_images_creator_idTouser")
   pet_images_pet_images_updater_idTouser                   pet_images[]          @relation("pet_images_updater_idTouser")
+  project_project_creator_idTouser                         project[]             @relation("project_creator_idTouser")
+  project_project_updater_idTouser                         project[]             @relation("project_updater_idTouser")
+  project_photo_project_photo_creator_idTouser             project_photo[]       @relation("project_photo_creator_idTouser")
+  project_photo_project_photo_updater_idTouser             project_photo[]       @relation("project_photo_updater_idTouser")
   savedPet                                                 savedPet[]
+  sponsor_sponsor_creator_idTouser                         sponsor[]             @relation("sponsor_creator_idTouser")
+  sponsor_sponsor_updater_idTouser                         sponsor[]             @relation("sponsor_updater_idTouser")
   role                                                     role                  @relation(fields: [role_id], references: [id], onUpdate: Restrict, map: "user_rol_fk")
 }
 
@@ -206,10 +214,9 @@ model donation {
   donor_email                     String?                @db.VarChar(100)
   donor_phone                     String?                @db.VarChar(25)
   donation_type                   donation_type_donation
-  amount                          Decimal?               @db.Decimal(10, 2)
+  declared_amount                 Decimal?               @db.Decimal(10, 2)
   item_description                String?
   bank_account_id                 Int?
-  reference_number                String?                @db.VarChar(50)
   status                          String                 @db.VarChar(50)
   is_public                       Boolean                @default(false)
   is_anonymous                    Boolean                @default(false)
@@ -218,7 +225,14 @@ model donation {
   rejection_reason                String?
   reviewed_by                     Int?
   comment                         String?
+  reference_number                String?                @db.VarChar(50)
+  confirmed_amount                Decimal?               @db.Decimal(10, 2)
+  patrocinador_id                 Int?
+  proyecto_id                     Int?
+  receipt_url                     String?                @db.VarChar(255)
   donationBankAccount             donationBankAccount?   @relation(fields: [bank_account_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_bankaccount_donation")
+  patrocinador                    sponsor?               @relation(fields: [patrocinador_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_patrocinador_donation")
+  proyecto                        project?               @relation(fields: [proyecto_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_proyecto_donation")
   user_donation_reviewed_byTouser user?                  @relation("donation_reviewed_byTouser", fields: [reviewed_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_reviewer_donation")
   user_donation_user_idTouser     user?                  @relation("donation_user_idTouser", fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_user_donation")
 }
@@ -237,6 +251,65 @@ model donationBankAccount {
   donation                                  donation[]
   user_donationBankAccount_creator_idTouser user                             @relation("donationBankAccount_creator_idTouser", fields: [creator_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_creator_donationBankAccount")
   user_donationBankAccount_updater_idTouser user                             @relation("donationBankAccount_updater_idTouser", fields: [updater_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_updater_donationBankAccount")
+}
+
+model needSupplies {
+  id                                 Int      @id(map: "insumoNecesitado_pkey") @default(autoincrement())
+  description                        String   @db.VarChar(150)
+  active                             Boolean  @default(true)
+  creation_date                      DateTime @default(now()) @db.Timestamp(6)
+  creator_id                         Int
+  update_date                        DateTime @default(now()) @db.Timestamp(6)
+  updater_id                         Int
+  user_needSupplies_creator_idTouser user     @relation("needSupplies_creator_idTouser", fields: [creator_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_creator_insumoNecesitado")
+  user_needSupplies_updater_idTouser user     @relation("needSupplies_updater_idTouser", fields: [updater_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_updater_insumoNecesitado")
+}
+
+model project {
+  id                            Int             @id(map: "proyecto_pkey") @default(autoincrement())
+  name                          String          @db.VarChar(150)
+  description                   String
+  goal                          String?         @db.VarChar(150)
+  status                        status_proyecto @default(Activo)
+  creation_date                 DateTime        @default(now()) @db.Timestamp(6)
+  creator_id                    Int
+  update_date                   DateTime        @default(now()) @db.Timestamp(6)
+  updater_id                    Int
+  progress                      Int?
+  donation                      donation[]
+  user_project_creator_idTouser user            @relation("project_creator_idTouser", fields: [creator_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_creator_proyecto")
+  user_project_updater_idTouser user            @relation("project_updater_idTouser", fields: [updater_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_updater_proyecto")
+  project_photo                 project_photo[]
+}
+
+model project_photo {
+  id                                  Int                   @id(map: "proyectoFoto_pkey") @default(autoincrement())
+  proyecto_id                         Int
+  url                                 String                @db.VarChar(255)
+  category                            category_proyectoFoto
+  creation_date                       DateTime              @default(now()) @db.Timestamp(6)
+  creator_id                          Int
+  update_date                         DateTime              @default(now()) @db.Timestamp(6)
+  updater_id                          Int
+  user_project_photo_creator_idTouser user                  @relation("project_photo_creator_idTouser", fields: [creator_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_creator_proyectoFoto")
+  project                             project               @relation(fields: [proyecto_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_proyecto_proyectoFoto")
+  user_project_photo_updater_idTouser user                  @relation("project_photo_updater_idTouser", fields: [updater_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_updater_proyectoFoto")
+}
+
+model sponsor {
+  id                            Int        @id(map: "patrocinador_pkey") @default(autoincrement())
+  name                          String     @db.VarChar(100)
+  logo_url                      String?    @db.VarChar(255)
+  website                       String?    @db.VarChar(150)
+  contact                       String?    @db.VarChar(150)
+  active                        Boolean    @default(true)
+  creation_date                 DateTime   @default(now()) @db.Timestamp(6)
+  creator_id                    Int
+  update_date                   DateTime   @default(now()) @db.Timestamp(6)
+  updater_id                    Int
+  donation                      donation[]
+  user_sponsor_creator_idTouser user       @relation("sponsor_creator_idTouser", fields: [creator_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_creator_patrocinador")
+  user_sponsor_updater_idTouser user       @relation("sponsor_updater_idTouser", fields: [updater_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_updater_patrocinador")
 }
 
 enum nav_audience_module {
@@ -274,6 +347,17 @@ enum account_type_donationBankAccount {
 enum donation_type_donation {
   Monetaria
   Especie
+}
+
+enum status_proyecto {
+  Activo
+  Finalizado
+}
+
+enum category_proyectoFoto {
+  Antes
+  Durante
+  Despu_s @map("Después")
 }
 
 enum status_pet {

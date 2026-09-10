@@ -25,7 +25,7 @@ export function SecondaryButton({
     <button
       className={`${
         Icon ? "flex items-center gap-x-2" : ""
-      } border px-6 py-2 rounded-full ${width} ${color} ${textColor} ${borderColor}`}
+      } border px-4 md:px-6 py-2 rounded-full ${width} ${color} ${textColor} ${borderColor} text-sm md:text-base`}
       onClick={onClick}
       disabled={disabled}
     >

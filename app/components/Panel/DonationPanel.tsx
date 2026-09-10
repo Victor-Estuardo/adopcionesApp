@@ -1,236 +1,441 @@
-import { donation_type_donation, donationBankAccount } from "@prisma/client";
 import { useFetcher } from "@remix-run/react";
-import { useEffect, useRef, useState } from "react";
-import Input from "../Input";
-import { Select } from "../Input/Select";
+import { useEffect, useId, useRef, useState } from "react";
+import { FaTimes } from "react-icons/fa";
+import { toast } from "sonner";
+import { Field } from "~/components/Form/Field";
+import Input from "~/components/Input";
+import { PatrocinadorCombobox } from "~/components/Input/PatrocinadorCombobox";
+import { Select } from "~/components/Input/Select";
+import { Textarea } from "~/components/Input/Textarea";
+import { useFocusTrap } from "~/hooks/useFocusTrap";
 
-interface DonationPanelProps {
-  open: boolean;
-  onClose: () => void;
-  bankAccounts: donationBankAccount[];
+interface NamedOption {
+  id: number;
+  name: string;
 }
 
-/**
- * Panel lateral (slide-over) para registrar manualmente una donación recibida
- * fuera del sistema. Usa un fetcher en vez de navegar, así el listado y sus
- * filtros de fondo no se pierden. Envía a la acción de la ruta de listado con
- * `intent: "create-manual"`.
- */
+interface BankOption {
+  id: number;
+  label: string;
+}
+
+interface DonationPanelProps {
+  onClose: () => void;
+  patrocinadores: NamedOption[];
+  projects: NamedOption[];
+  bankAccounts: BankOption[];
+}
+
+type Origin = "individual" | "patrocinador";
+type DonationType = "Monetaria" | "Especie";
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+type Errors = {
+  patrocinador?: string;
+  amount?: string;
+  item?: string;
+  donorEmail?: string;
+  donorPhone?: string;
+};
+
 export function DonationPanel({
-  open,
   onClose,
+  patrocinadores,
+  projects,
   bankAccounts,
 }: DonationPanelProps) {
-  const fetcher = useFetcher();
+  const containerRef = useFocusTrap<HTMLDivElement>(true, onClose);
+  const formId = useId();
+  const fetcher = useFetcher<{ ok?: boolean; errorMsg?: string }>();
+  const isSubmitting = fetcher.state !== "idle";
   const wasSubmitting = useRef(false);
 
-  const [donationType, setDonationType] =
-    useState<donation_type_donation>("Monetaria");
+  const [origin, setOrigin] = useState<Origin>("individual");
+  const [donationType, setDonationType] = useState<DonationType>("Monetaria");
   const [bankAccountId, setBankAccountId] = useState("");
   const [isPublic, setIsPublic] = useState(false);
+  const [errors, setErrors] = useState<Errors>({});
 
-  // Reinicia el formulario cada vez que se abre el panel
-  useEffect(() => {
-    if (open) {
-      setDonationType("Monetaria");
-      setBankAccountId("");
-      setIsPublic(false);
-    }
-  }, [open]);
+  const isMoney = donationType === "Monetaria";
+  const serverError = fetcher.data?.errorMsg;
 
+  const clearError = (key: keyof Errors) =>
+    setErrors((prev) => {
+      if (!prev[key]) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+
+  // Al terminar: éxito → aviso + cerrar (el listado se revalida solo);
+  // error → aviso y se deja el modal abierto.
   useEffect(() => {
     if (fetcher.state === "submitting") wasSubmitting.current = true;
     if (fetcher.state === "idle" && wasSubmitting.current) {
       wasSubmitting.current = false;
-      onClose();
+      if (fetcher.data?.ok) {
+        toast.success("Donación registrada.");
+        onClose();
+      }
+      // El error del servidor se muestra dentro del formulario (alerta arriba),
+      // no como toast: queda visible mientras se corrige.
     }
   }, [fetcher.state]);
 
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const next: Errors = {};
+
+    if (origin === "patrocinador" && !formData.get("md-patrocinador")) {
+      next.patrocinador = "Selecciona el patrocinador.";
+    }
+    if (donationType === "Monetaria") {
+      const amount = Number(formData.get("md-amount"));
+      if (!Number.isFinite(amount) || amount <= 0) {
+        next.amount = "Indica un monto mayor a cero.";
+      } else if (amount > 9_999_999.99) {
+        next.amount = "El monto es demasiado alto; verifícalo.";
+      }
+    } else if (!String(formData.get("md-item") ?? "").trim()) {
+      next.item = "Describe el bien donado.";
+    }
+
+    // Datos del donante (origen individual): opcionales, pero si se escriben
+    // deben tener formato válido.
+    if (origin === "individual") {
+      const email = String(formData.get("md-donor-email") ?? "").trim();
+      const phone = String(formData.get("md-donor-phone") ?? "").trim();
+      if (email && !EMAIL_RE.test(email)) {
+        next.donorEmail = "El correo no tiene un formato válido.";
+      }
+      if (phone && (phone.match(/\d/g) ?? []).length < 6) {
+        next.donorPhone = "El teléfono no parece válido.";
+      }
+    }
+
+    setErrors(next);
+    if (Object.keys(next).length > 0) return;
+
+    fetcher.submit(formData, { method: "post" });
+  };
+
   return (
-    <>
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4">
       <div
-        className={`fixed inset-0 z-40 bg-[#1F1D1A]/30 transition-opacity ${
-          open ? "opacity-100" : "pointer-events-none opacity-0"
-        }`}
+        className="absolute inset-0 bg-[#1F1D1A]/40"
         onClick={onClose}
         aria-hidden
       />
 
-      <aside
-        className={`fixed right-0 top-0 z-50 h-full w-full max-w-md transform overflow-y-auto bg-white shadow-xl transition-transform duration-300 ${
-          open ? "translate-x-0" : "translate-x-full"
-        }`}
+      <div
+        ref={containerRef}
         role="dialog"
         aria-modal="true"
-        aria-label="Registrar donación manual"
+        aria-labelledby="registrar-donacion-title"
+        tabIndex={-1}
+        className="relative flex max-h-[92vh] w-full flex-col rounded-t-2xl bg-white shadow-xl animate-modal-pop focus:outline-none sm:max-h-[88vh] sm:max-w-lg sm:rounded-2xl"
       >
-        <div className="flex items-center justify-between border-b border-[#EAE6DC] px-5 py-4">
-          <h2 className="font-semibold">Registrar donación manual</h2>
+        {/* ── Encabezado ── */}
+        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+          <h2
+            id="registrar-donacion-title"
+            className="text-base font-bold text-gray-800"
+          >
+            Registrar donación manual
+          </h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-[#8A8577] hover:bg-[#F4F2EC]"
             aria-label="Cerrar"
+            className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-medium-turquoise-meraki/40"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M6 6l12 12M18 6L6 18"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-              />
-            </svg>
+            <FaTimes className="h-4 w-4" />
           </button>
         </div>
 
-        <fetcher.Form method="post" className="flex flex-col gap-4 p-5">
+        {/* ── Cuerpo ── */}
+        <fetcher.Form
+          id={formId}
+          method="post"
+          className="flex flex-1 flex-col gap-4 overflow-y-auto px-5 py-5"
+          onSubmit={handleSubmit}
+          noValidate
+        >
           <input type="hidden" name="intent" value="create-manual" />
 
-          <Field label="Tipo de donación">
-            <div className="flex gap-2">
-              {(["Monetaria", "Especie"] as donation_type_donation[]).map(
-                (opt) => (
-                  <label
-                    key={opt}
-                    className={`flex-1 flex items-center justify-center gap-2 rounded-lg border px-3 py-2 cursor-pointer text-sm ${
-                      donationType === opt
-                        ? "border-medium-turquoise-meraki bg-medium-turquoise-meraki/10 text-medium-turquoise-meraki font-medium"
-                        : "border-gray-200 text-gray-600 hover:bg-gray-50"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="donation_type"
-                      value={opt}
-                      checked={donationType === opt}
-                      onChange={() => setDonationType(opt)}
-                      className="accent-medium-turquoise-meraki"
-                    />
-                    {opt === "Monetaria" ? "Monetaria" : "En especie"}
-                  </label>
-                ),
-              )}
-            </div>
-          </Field>
+          {serverError && (
+            <p
+              role="alert"
+              className="rounded-lg border border-pink-meraki/30 bg-pink-meraki/5 px-3 py-2 text-sm text-pink-meraki"
+            >
+              {serverError}
+            </p>
+          )}
 
-          {donationType === "Monetaria" ? (
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Monto (Q)">
-                <Input type="number" name="amount" min="1" step="0.01" required />
+          <Segmented
+            legend="Origen"
+            name="md-origin"
+            value={origin}
+            onChange={(value) => {
+              setOrigin(value as Origin);
+              clearError("patrocinador");
+            }}
+            options={[
+              { value: "individual", label: "Individual" },
+              { value: "patrocinador", label: "Patrocinador" },
+            ]}
+          />
+
+          {origin === "patrocinador" && (
+            <PatrocinadorCombobox
+              patrocinadores={patrocinadores}
+              error={errors.patrocinador}
+              onValueChange={() => clearError("patrocinador")}
+            />
+          )}
+
+          <Segmented
+            legend="Tipo de donación"
+            name="md-type"
+            value={donationType}
+            onChange={(value) => {
+              setDonationType(value as DonationType);
+              setErrors({});
+            }}
+            options={[
+              { value: "Monetaria", label: "Monetaria" },
+              { value: "Especie", label: "En especie" },
+            ]}
+          />
+
+          {isMoney ? (
+            <>
+              <Field id="md-amount" label="Monto (Q)" error={errors.amount}>
+                <Input
+                  id="md-amount"
+                  name="md-amount"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  onChange={() => clearError("amount")}
+                />
               </Field>
-              <Field label="Cuenta (opcional)">
+
+              <Field
+                id="md-bank"
+                label="Cuenta"
+                optional
+                hint="Si el depósito entró a una cuenta de la asociación."
+              >
                 <Select
-                  name="bank_account_id"
+                  id="md-bank"
+                  name="md-bank"
                   className="w-full"
                   value={bankAccountId}
                   onChange={(e) => setBankAccountId(e.target.value)}
                 >
                   <option value="">Sin cuenta</option>
-                  {bankAccounts.map((acc) => (
-                    <option key={acc.id} value={acc.id}>
-                      {acc.bank_name} - {acc.account_number}
+                  {bankAccounts.map((account) => (
+                    <option key={account.id} value={account.id}>
+                      {account.label}
                     </option>
                   ))}
                 </Select>
               </Field>
+
               {bankAccountId && (
-                <Field label="Número de referencia (opcional)">
-                  <Input name="reference_number" maxLength={50} />
+                <Field id="md-reference" label="Número de referencia" optional>
+                  <Input
+                    id="md-reference"
+                    name="md-reference"
+                    maxLength={50}
+                    placeholder="Ej. 0123456789"
+                  />
                 </Field>
               )}
-            </div>
+            </>
           ) : (
-            <Field label="Descripción de los artículos">
-              <textarea
-                name="item_description"
+            <Field
+              id="md-item"
+              label="Descripción del bien donado"
+              error={errors.item}
+            >
+              <Textarea
+                id="md-item"
+                name="md-item"
                 rows={3}
-                required
-                className="w-full py-2 px-3 border border-gray-400 rounded-lg focus:outline-none focus:border-blue-500 resize-none"
+                placeholder="Ej. 40 láminas de zinc y 15 sacos de cemento"
+                onChange={() => clearError("item")}
               />
             </Field>
           )}
 
-          <Field label="Comentario (opcional)">
-            <textarea
-              name="comment"
-              rows={2}
-              className="w-full py-2 px-3 border border-gray-400 rounded-lg focus:outline-none focus:border-blue-500 resize-none"
-            />
+          <Field id="md-project" label="Proyecto asociado" optional>
+            <Select
+              id="md-project"
+              name="md-project"
+              defaultValue=""
+              className="w-full"
+            >
+              <option value="">Ninguno — fondo general</option>
+              {projects.map((project) => (
+                <option key={project.id} value={project.id}>
+                  {project.name}
+                </option>
+              ))}
+            </Select>
           </Field>
 
-          <div className="grid grid-cols-1 gap-3 border-t border-[#F0EDE5] pt-4">
-            <p className="text-xs font-medium text-[#8A8577]">
-              Datos del donante (opcional, si se conocen)
-            </p>
-            <Field label="Nombre">
-              <Input name="donor_name" maxLength={100} />
-            </Field>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Correo">
-                <Input type="email" name="donor_email" maxLength={100} />
-              </Field>
-              <Field label="Teléfono">
-                <Input name="donor_phone" maxLength={25} />
-              </Field>
-            </div>
-          </div>
+          <Field
+            id="md-comment"
+            label="Comentario"
+            optional
+            hint="Notas internas sobre esta donación."
+          >
+            <Textarea id="md-comment" name="md-comment" rows={2} />
+          </Field>
 
-          <div className="flex flex-col gap-2 border-t border-[#F0EDE5] pt-4">
-            <label className="flex items-center gap-2 text-sm text-[#3A362E]">
+          {origin === "individual" && (
+            <fieldset className="flex flex-col gap-3 rounded-lg border border-gray-100 p-3">
+              <legend className="px-1 text-xs font-semibold text-gray-500">
+                Datos del donante (opcional, si se conocen)
+              </legend>
+              <Field id="md-donor-name" label="Nombre" optional>
+                <Input
+                  id="md-donor-name"
+                  name="md-donor-name"
+                  maxLength={100}
+                />
+              </Field>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Field
+                  id="md-donor-email"
+                  label="Correo"
+                  optional
+                  error={errors.donorEmail}
+                >
+                  <Input
+                    id="md-donor-email"
+                    name="md-donor-email"
+                    type="email"
+                    maxLength={100}
+                    aria-invalid={Boolean(errors.donorEmail)}
+                    onChange={() => clearError("donorEmail")}
+                  />
+                </Field>
+                <Field
+                  id="md-donor-phone"
+                  label="Teléfono"
+                  optional
+                  error={errors.donorPhone}
+                >
+                  <Input
+                    id="md-donor-phone"
+                    name="md-donor-phone"
+                    maxLength={25}
+                    aria-invalid={Boolean(errors.donorPhone)}
+                    onChange={() => clearError("donorPhone")}
+                  />
+                </Field>
+              </div>
+            </fieldset>
+          )}
+
+          <div className="flex flex-col gap-2 border-t border-gray-100 pt-4">
+            <label className="flex items-center gap-2 text-sm text-gray-700">
               <input
                 type="checkbox"
-                name="is_public"
+                name="md-public"
                 checked={isPublic}
                 onChange={(e) => setIsPublic(e.target.checked)}
-                className="h-4 w-4 rounded border-[#E4E0D6] text-[#1F1D1A]"
+                className="h-4 w-4 rounded border-gray-300 accent-medium-turquoise-meraki"
               />
               Mostrar en el listado público de transparencia
             </label>
             {isPublic && (
-              <label className="flex items-center gap-2 text-sm text-[#3A362E] ml-6">
+              <label className="ml-6 flex items-center gap-2 text-sm text-gray-700">
                 <input
                   type="checkbox"
-                  name="is_anonymous"
-                  className="h-4 w-4 rounded border-[#E4E0D6] text-[#1F1D1A]"
+                  name="md-anonymous"
+                  className="h-4 w-4 rounded border-gray-300 accent-medium-turquoise-meraki"
                 />
                 Mostrar como donación anónima
               </label>
             )}
           </div>
-
-          <div className="mt-2 flex gap-2 border-t border-[#F0EDE5] pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 rounded-lg border border-medium-turquoise-meraki py-2 text-sm font-medium text-medium-turquoise-meraki hover:bg-medium-turquoise-meraki/10"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={fetcher.state !== "idle"}
-              className="flex-1 rounded-lg bg-medium-turquoise-meraki py-2 text-sm font-medium text-white hover:bg-medium-turquoise-meraki/80 disabled:opacity-60"
-            >
-              {fetcher.state !== "idle" ? "Guardando..." : "Registrar donación"}
-            </button>
-          </div>
         </fetcher.Form>
-      </aside>
-    </>
+
+        {/* ── Pie ── */}
+        <div className="flex gap-3 border-t border-gray-100 px-5 py-4">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isSubmitting}
+            className="flex-1 rounded-lg border border-gray-200 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 disabled:opacity-50"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            form={formId}
+            disabled={isSubmitting}
+            className="flex-1 rounded-lg bg-medium-turquoise-meraki py-2 text-sm font-semibold text-white hover:bg-medium-turquoise-meraki/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-medium-turquoise-meraki/40 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isSubmitting ? "Registrando…" : "Registrar donación"}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
-function Field({
-  label,
-  children,
+/*==============================| Subcomponentes |==============================*/
+/* Control segmentado (radio group) con label vía <fieldset>/<legend>. El radio
+   real queda oculto pero sigue siendo enfocable y navegable con flechas. */
+function Segmented({
+  legend,
+  name,
+  value,
+  onChange,
+  options,
 }: {
-  label: string;
-  children: React.ReactNode;
+  legend: string;
+  name: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: { value: string; label: string }[];
 }) {
   return (
-    <label className="flex flex-col gap-1 text-sm">
-      <span className="font-medium text-[#3A362E]">{label}</span>
-      {children}
-    </label>
+    <fieldset className="flex flex-col gap-1">
+      <legend className="text-sm font-medium text-gray-700">{legend}</legend>
+      <div className="flex gap-2">
+        {options.map((option) => {
+          const selected = value === option.value;
+          return (
+            <label
+              key={option.value}
+              className={`flex flex-1 cursor-pointer items-center justify-center rounded-lg border px-3 py-2 text-sm transition-colors focus-within:ring-2 focus-within:ring-medium-turquoise-meraki/40 ${
+                selected
+                  ? "border-medium-turquoise-meraki bg-medium-turquoise-meraki/10 font-medium text-medium-turquoise-meraki"
+                  : "border-gray-200 text-gray-600 hover:bg-gray-50"
+              }`}
+            >
+              <input
+                type="radio"
+                name={name}
+                value={option.value}
+                checked={selected}
+                onChange={() => onChange(option.value)}
+                className="sr-only"
+              />
+              {option.label}
+            </label>
+          );
+        })}
+      </div>
+    </fieldset>
   );
 }

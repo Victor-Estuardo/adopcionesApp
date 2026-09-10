@@ -6,3 +6,7 @@ node_modules
 .env.production
 /.vscode/settings.json
 /build
+
+# Mockups y respaldos locales (no se suben al repo)
+/mockup
+/prisma/backup
