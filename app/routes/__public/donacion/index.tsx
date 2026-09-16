@@ -53,6 +53,7 @@ import { uploadDonationReceipt } from "~/services/cloudinary/upload";
 import { getSession } from "~/services/sessions/sessions.service";
 import { getInitials } from "~/utils/common";
 import { buildDonationWhatsAppUrl } from "~/utils/whatsapp";
+import { enforceRateLimits, getClientIp } from "~/utils/rateLimit.server";
 import {
   sanitizeAmount,
   sanitizeEmail,
@@ -148,6 +149,20 @@ export const action: ActionFunction = async ({ request }) => {
 
   /* ── un donante notifica una donación monetaria ya hecha ── */
   if (intent === "notify") {
+    // Límite por IP para frenar el spam del formulario (donantes
+    // registrados e invitados comparten el mismo límite).
+    const rateLimitMsg = await enforceRateLimits([
+      {
+        action: "donacion-notify",
+        identifier: getClientIp(request),
+        limit: 5,
+        windowMs: 60 * 60 * 1000,
+      },
+    ]);
+    if (rateLimitMsg) {
+      return json({ errorMsg: rateLimitMsg }, { status: 429 });
+    }
+
     // Datos del donante: si está registrado se toman de su cuenta, no
     // del formulario; si es invitado, se exige nombre + un medio de contacto.
     let userId: number | null = null;
