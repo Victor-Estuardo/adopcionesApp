@@ -18,6 +18,7 @@ import {
 import { PrimaryButton } from "~/components/Button/primary";
 import { SecondaryButton } from "~/components/Button/secondary";
 import { NotifyDonationModal } from "~/components/Modal/NotifyDonationModal";
+import Tabs, { TabItem } from "~/components/Tabs";
 import {
   DonationMethod,
   listActiveDonationMethodsDb,
@@ -360,33 +361,13 @@ export default function () {
         </header>
 
         {/* ── Navegación por pestañas ── */}
-        <div
-          role="tablist"
-          aria-label="Secciones de donaciones"
-          className="flex gap-x-4 overflow-x-auto border-b border-gray-200 sm:gap-x-6 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        >
-          {TABS.map((tab) => {
-            const selected = tab.id === activeTab;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                role="tab"
-                id={`donacion-tab-${tab.id}`}
-                aria-selected={selected}
-                aria-controls={`donacion-panel-${tab.id}`}
-                onClick={() => setActiveTab(tab.id)}
-                className={`-mb-px shrink-0 whitespace-nowrap border-b-2 px-1 py-3 text-sm font-semibold transition-colors focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-meraki/40 ${
-                  selected
-                    ? "border-blue-meraki text-gray-900"
-                    : "border-transparent text-gray-500 hover:text-gray-800"
-                }`}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
+        <Tabs
+          tabs={TABS as unknown as TabItem[]}
+          activeId={activeTab}
+          onChange={(id) => setActiveTab(id as TabId)}
+          ariaLabel="Secciones de donaciones"
+          idPrefix="donacion"
+        />
 
         {/* ── Paneles ── */}
         {TABS.map(({ id }) => (
