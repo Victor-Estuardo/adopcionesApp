@@ -21,6 +21,25 @@ export type PetsCatalogStats = {
   porcentajeEsterilizados: number;
 };
 
+export type DonationStats = {
+  totalEnPeriodo: number;
+  porEstado: Record<string, number>;
+  porTipo: Record<string, number>;
+  montoConfirmado: number;
+  tasaConfirmacion: number;
+  tendencia: { fecha: string; total: number }[];
+};
+
+export type DonationOrigenStats = {
+  porOrigen: { origen: "individual" | "patrocinador"; total: number }[];
+  topProyectos: {
+    proyecto_id: number;
+    nombre: string;
+    totalDonaciones: number;
+    montoConfirmado: number;
+  }[];
+};
+
 export type TopSavedPet = {
   pet_id: number;
   name: string;
@@ -226,5 +245,150 @@ export const countSavedPetsInRangeDb = async (
     return prisma.savedPet.count({
       where: { saved_at: { gte: dateFrom, lte: dateTo } },
     });
+  });
+};
+
+/*==================================================| DONACIONES |==================================================*/
+/**
+ * Función para obtener estadísticas de donaciones en un rango de fechas.
+ * Lectura nueva e independiente de `donation.service.ts`: no reemplaza ni
+ * modifica la lógica existente de creación/revisión de donaciones.
+ * @param dateFrom Fecha de inicio del periodo
+ * @param dateTo Fecha de fin del periodo
+ * @returns Estadísticas agregadas de donaciones
+ */
+export const getDonationStatsDb = async (
+  dateFrom: Date,
+  dateTo: Date,
+): Promise<PrismaUtilResponse<DonationStats>> => {
+  return await handlePosiblePrismaError(async () => {
+    const donations = await prisma.donation.findMany({
+      where: { submitted_at: { gte: dateFrom, lte: dateTo } },
+      select: {
+        status: true,
+        donation_type: true,
+        confirmed_amount: true,
+        submitted_at: true,
+      },
+      orderBy: { submitted_at: "asc" },
+    });
+
+    const porEstado: Record<string, number> = {
+      pendiente: 0,
+      coordinacion: 0,
+      confirmada: 0,
+      rechazada: 0,
+    };
+
+    const porTipo: Record<string, number> = {
+      Monetaria: 0,
+      Especie: 0,
+    };
+
+    let montoConfirmado = 0;
+    const tendenciaMap = new Map<string, number>();
+
+    for (const donation of donations) {
+      porEstado[donation.status] = (porEstado[donation.status] ?? 0) + 1;
+      porTipo[donation.donation_type] =
+        (porTipo[donation.donation_type] ?? 0) + 1;
+
+      if (donation.status === "confirmada" && donation.confirmed_amount) {
+        montoConfirmado += donation.confirmed_amount.toNumber();
+      }
+
+      const dayKey = donation.submitted_at.toISOString().slice(0, 10);
+      tendenciaMap.set(dayKey, (tendenciaMap.get(dayKey) ?? 0) + 1);
+    }
+
+    const confirmadas = porEstado["confirmada"] ?? 0;
+    const rechazadas = porEstado["rechazada"] ?? 0;
+    const totalDecididas = confirmadas + rechazadas;
+
+    return {
+      totalEnPeriodo: donations.length,
+      porEstado,
+      porTipo,
+      montoConfirmado,
+      tasaConfirmacion:
+        totalDecididas > 0 ? (confirmadas / totalDecididas) * 100 : 0,
+      tendencia: Array.from(tendenciaMap.entries())
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([fecha, total]) => ({ fecha, total })),
+    };
+  });
+};
+
+/**
+ * Función para obtener el desglose de donaciones por origen (individual vs.
+ * patrocinador) y el top de proyectos por cantidad y monto confirmado de
+ * donaciones asociadas, dentro de un rango de fechas.
+ * @param dateFrom Fecha de inicio del periodo
+ * @param dateTo Fecha de fin del periodo
+ * @returns Desglose por origen y ranking de los 5 proyectos con más donaciones
+ */
+export const getDonationOrigenStatsDb = async (
+  dateFrom: Date,
+  dateTo: Date,
+): Promise<PrismaUtilResponse<DonationOrigenStats>> => {
+  return await handlePosiblePrismaError(async () => {
+    const donations = await prisma.donation.findMany({
+      where: { submitted_at: { gte: dateFrom, lte: dateTo } },
+      select: {
+        patrocinador_id: true,
+        proyecto_id: true,
+        status: true,
+        confirmed_amount: true,
+      },
+    });
+
+    let individual = 0;
+    let patrocinador = 0;
+    const porProyecto = new Map<
+      number,
+      { totalDonaciones: number; montoConfirmado: number }
+    >();
+
+    for (const donation of donations) {
+      if (donation.patrocinador_id != null) {
+        patrocinador++;
+      } else {
+        individual++;
+      }
+
+      if (donation.proyecto_id != null) {
+        const acc = porProyecto.get(donation.proyecto_id) ?? {
+          totalDonaciones: 0,
+          montoConfirmado: 0,
+        };
+        acc.totalDonaciones += 1;
+        if (donation.status === "confirmada" && donation.confirmed_amount) {
+          acc.montoConfirmado += donation.confirmed_amount.toNumber();
+        }
+        porProyecto.set(donation.proyecto_id, acc);
+      }
+    }
+
+    const topProyectoEntries = Array.from(porProyecto.entries())
+      .sort(([, a], [, b]) => b.totalDonaciones - a.totalDonaciones)
+      .slice(0, 5);
+
+    const proyectos = await prisma.project.findMany({
+      where: { id: { in: topProyectoEntries.map(([id]) => id) } },
+      select: { id: true, name: true },
+    });
+
+    return {
+      porOrigen: [
+        { origen: "individual", total: individual },
+        { origen: "patrocinador", total: patrocinador },
+      ],
+      topProyectos: topProyectoEntries.map(([proyecto_id, data]) => ({
+        proyecto_id,
+        nombre: proyectos.find((p) => p.id === proyecto_id)?.name ?? "N/D",
+        totalDonaciones: data.totalDonaciones,
+        montoConfirmado: data.montoConfirmado,
+      })),
+    };
   });
 };
