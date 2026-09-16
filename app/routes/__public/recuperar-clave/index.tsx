@@ -19,6 +19,7 @@ import {
 } from "~/services/db/passwordResetToken.service";
 import { generateSecureToken, hashText } from "~/utils/crypto.server";
 import { getSession } from "~/services/sessions/sessions.service";
+import { enforceRateLimits, getClientIp } from "~/utils/rateLimit.server";
 
 export const meta = () => {
   return [{ title: "Recuperar Contraseña" }];
@@ -44,6 +45,26 @@ export const action: ActionFunction = async ({ request }) => {
 
   if (!email) {
     return json({ errorMsg: "El correo es requerido." }, { status: 400 });
+  }
+
+  // Límite por correo (evita bombardear la bandeja de una persona) y por IP
+  // (evita que alguien recorra muchos correos desde el mismo origen).
+  const rateLimitMsg = await enforceRateLimits([
+    {
+      action: "recuperar-clave",
+      identifier: email.toLowerCase(),
+      limit: 3,
+      windowMs: 60 * 60 * 1000,
+    },
+    {
+      action: "recuperar-clave",
+      identifier: getClientIp(request),
+      limit: 10,
+      windowMs: 60 * 60 * 1000,
+    },
+  ]);
+  if (rateLimitMsg) {
+    return json({ errorMsg: rateLimitMsg }, { status: 429 });
   }
 
   const userInfoRes = await getUserDb({ email });

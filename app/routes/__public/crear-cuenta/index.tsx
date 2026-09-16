@@ -15,6 +15,7 @@ import { createUserDb } from "~/services/db/user.service";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { sendVerificationEmail } from "~/services/mail/resend.service";
 import { LuMail, LuCircleCheck, LuClock, LuCircleAlert } from "react-icons/lu";
+import { enforceRateLimits, getClientIp } from "~/utils/rateLimit.server";
 
 export const meta = () => {
   return [{ title: "Crear cuenta" }];
@@ -49,6 +50,19 @@ export const action: ActionFunction = async ({ request }) => {
     }
 
     const { email, firstName, lastName, password } = data;
+
+    // Límite por IP para frenar registros masivos automatizados.
+    const rateLimitMsg = await enforceRateLimits([
+      {
+        action: "crear-cuenta",
+        identifier: getClientIp(request),
+        limit: 5,
+        windowMs: 60 * 60 * 1000,
+      },
+    ]);
+    if (rateLimitMsg) {
+      return json({ errorMsg: rateLimitMsg }, { status: 429 });
+    }
 
     // Hash de la contrtaseña
     const hashPass = await hashText(password);

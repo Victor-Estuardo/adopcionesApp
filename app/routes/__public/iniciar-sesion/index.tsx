@@ -23,6 +23,7 @@ import { loginWebApp } from "~/services/auth/login.service";
 import { sendVerificationEmail } from "~/services/mail/resend.service";
 import { getUserDb } from "~/services/db/user.service";
 import { ModuleSession } from "~/services/db/module.service";
+import { enforceRateLimits, getClientIp } from "~/utils/rateLimit.server";
 
 export const meta = () => {
   return [{ title: "Iniciar sesión" }];
@@ -56,6 +57,27 @@ export const action: ActionFunction = async ({ request }) => {
     } = JSON.parse(payload as string);
 
     const { email, password } = data;
+
+    // Límite por IP (fuerza bruta distribuida) y por correo (ataque
+    // dirigido a una cuenta desde varias IPs) a la vez; no se distingue
+    // cuál falló en el mensaje, para no dar pistas de enumeración.
+    const rateLimitMsg = await enforceRateLimits([
+      {
+        action: "login",
+        identifier: getClientIp(request),
+        limit: 20,
+        windowMs: 15 * 60 * 1000,
+      },
+      {
+        action: "login",
+        identifier: email.toLowerCase(),
+        limit: 5,
+        windowMs: 15 * 60 * 1000,
+      },
+    ]);
+    if (rateLimitMsg) {
+      return json({ errorMsg: rateLimitMsg }, { status: 429 });
+    }
 
     // Verificamos y creamos la sesión
     const loginRes = await loginWebApp(email, password, session);

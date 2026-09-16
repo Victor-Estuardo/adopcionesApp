@@ -325,6 +325,19 @@ model session {
   @@index([expires_at])
 }
 
+// Contador de ventana fija para limitar la tasa de intentos en rutas
+// sensibles (login, recuperar clave, crear cuenta, notificar donación).
+// `key` identifica la ventana (p. ej. "login:ip:1.2.3.4" o
+// "login:email:foo@bar.com"); el incremento se hace con un UPSERT atómico
+// (INSERT ... ON CONFLICT) desde rateLimit.service.ts, no con
+// read-modify-write en la app, para no crear una condición de carrera justo
+// en el mecanismo pensado para soportar ráfagas de requests.
+model rateLimitBucket {
+  key          String   @id @db.VarChar(150)
+  window_start DateTime @db.Timestamp(6)
+  count        Int      @default(1)
+}
+
 enum nav_audience_module {
   ALL
   AUTH_ONLY
