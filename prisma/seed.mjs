@@ -321,6 +321,12 @@ async function main() {
     icon: "BiSolidDonateHeart",
     order: 15,
   });
+  const estadisticasMod = await ensureAdminModule({
+    key: "/estadisticas",
+    name: "Estadísticas",
+    icon: "MdBarChart",
+    order: 16,
+  });
 
   /*── Resumen ────────────────────────────────────────────────────────────*/
   const [nBanks, nInsumos, nSponsors, nProjects, nPhotos, nDonations] =
@@ -344,6 +350,7 @@ async function main() {
   console.log(`Módulo admin "Patrocinadores" -> id ${patrocinadoresMod.id}`);
   console.log(`Módulo admin "Proyectos" -> id ${proyectosMod.id}`);
   console.log(`Módulo admin "Donaciones" -> id ${donacionesMod.id}`);
+  console.log(`Módulo admin "Estadísticas" -> id ${estadisticasMod.id}`);
 }
 
 main()
