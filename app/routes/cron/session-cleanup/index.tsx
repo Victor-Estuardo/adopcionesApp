@@ -1,12 +1,19 @@
 import { LoaderFunction, json } from "@remix-run/node";
 import { deleteExpiredSessionsDb } from "~/services/db/session.service";
+import { deleteStaleRateLimitBucketsDb } from "~/services/db/rateLimit.service";
+
+// Cualquier ventana de rate limit no tocada en más de un día ya no aporta
+// nada (todas las ventanas configuradas son de 15 min a 1 hora).
+const STALE_RATE_LIMIT_MS = 24 * 60 * 60 * 1000;
 
 /**
- * Resource route pensada para un cron diario (Vercel Cron Jobs, ver
- * vercel.json): borra las sesiones ya expiradas de la tabla `session`.
- * Es un respaldo del borrado perezoso de readSessionDataDb — cubre
- * sesiones abandonadas que nunca se vuelven a leer, así la tabla no crece
- * indefinidamente.
+ * Resource route de mantenimiento diario (Vercel Cron Jobs, ver
+ * vercel.json):
+ * - borra las sesiones ya expiradas de la tabla `session` (respaldo del
+ *   borrado perezoso de readSessionDataDb, cubre sesiones abandonadas que
+ *   nunca se vuelven a leer).
+ * - borra las ventanas de rate limit ya vencidas hace más de un día
+ *   (`rateLimitBucket`), que si no se acumularían para siempre.
  *
  * Protegida con CRON_SECRET: Vercel firma sus llamadas de cron con
  * `Authorization: Bearer <CRON_SECRET>`, así evitamos que cualquiera
@@ -18,10 +25,24 @@ export const loader: LoaderFunction = async ({ request }) => {
     return new Response("No autorizado", { status: 401 });
   }
 
-  const result = await deleteExpiredSessionsDb();
-  if (!result.success) {
-    return json({ errorMsg: result.error }, { status: 500 });
+  const [sessionsResult, rateLimitResult] = await Promise.all([
+    deleteExpiredSessionsDb(),
+    deleteStaleRateLimitBucketsDb(STALE_RATE_LIMIT_MS),
+  ]);
+
+  if (!sessionsResult.success || !rateLimitResult.success) {
+    return json(
+      {
+        errorMsg:
+          (!sessionsResult.success && sessionsResult.error) ||
+          (!rateLimitResult.success && rateLimitResult.error),
+      },
+      { status: 500 },
+    );
   }
 
-  return json({ deletedCount: result.data });
+  return json({
+    deletedSessions: sessionsResult.data,
+    deletedRateLimitBuckets: rateLimitResult.data,
+  });
 };
