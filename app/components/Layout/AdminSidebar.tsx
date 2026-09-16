@@ -5,7 +5,7 @@ import { BsClipboard2Heart } from "react-icons/bs";
 import { FaPaw, FaUsers } from "react-icons/fa";
 import { IoIosLogOut } from "react-icons/io";
 import { LuBuilding, LuClipboardList, LuImage } from "react-icons/lu";
-import { MdDashboard, MdMenuOpen } from "react-icons/md";
+import { MdBarChart, MdDashboard, MdMenuOpen } from "react-icons/md";
 import { ModuleSession } from "~/services/db/module.service";
 import { BiSolidDonateHeart } from "react-icons/bi";
 
@@ -40,6 +40,7 @@ export default ({
       LuImage: LuImage,
       FaUsers: FaUsers,
       BiSolidDonateHeart: BiSolidDonateHeart,
+      MdBarChart: MdBarChart,
     }),
     [],
   );

@@ -3,6 +3,7 @@
 import { $Enums } from "@prisma/client";
 import { Session } from "@remix-run/node";
 import { PermissionSession } from "~/services/auth/login.service";
+import { ModuleSession } from "~/services/db/module.service";
 
 //Example: console.log('\x1b[33m%s\x1b[0m', stringToMakeYellow);  //yellow
 export const LOG_COLORS = {
@@ -183,4 +184,21 @@ export function validatePermission(
   }
 
   return null;
+}
+
+/*------------------------------------------------------------------------*/
+/**
+ * Función que obtiene la ruta del primer módulo administrativo disponible
+ * para la sesión (menor `order` entre los módulos de zona ADMIN_SIDEBAR).
+ * Se usa como destino para un usuario administrativo (login, ícono de
+ * perfil) en vez de una pantalla fija de "dashboard".
+ * @param modules Módulos disponibles para la sesión (ya filtrados por permiso)
+ * @returns Key de ruta del primer módulo admin, o `/mi-cuenta` si no hay ninguno
+ */
+export function getFirstAdminModuleRoute(modules: ModuleSession[]): string {
+  const adminModules = modules
+    .filter((m) => m.nav_zone === "ADMIN_SIDEBAR")
+    .sort((a, b) => a.order - b.order);
+
+  return adminModules[0]?.key ?? "/mi-cuenta";
 }

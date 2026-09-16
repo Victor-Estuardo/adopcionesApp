@@ -11,6 +11,7 @@ import { PiWarningCircle } from "react-icons/pi";
 import { toast } from "sonner";
 import { useFetcher, useNavigate, useSearchParams } from "@remix-run/react";
 import {
+  getFirstAdminModuleRoute,
   handleEmailValidation,
   handlePasswordValidation,
 } from "~/utils/common";
@@ -21,6 +22,7 @@ import {
 import { loginWebApp } from "~/services/auth/login.service";
 import { sendVerificationEmail } from "~/services/mail/resend.service";
 import { getUserDb } from "~/services/db/user.service";
+import { ModuleSession } from "~/services/db/module.service";
 
 export const meta = () => {
   return [{ title: "Iniciar sesión" }];
@@ -32,7 +34,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   const session = await getSession(cookie);
 
   if (session.get("dbUserId")) {
-    return redirect(session.get("adminstrative") ? "/admin" : "/mi-cuenta");
+    return redirect(session.get("administrative") ? "/admin" : "/mi-cuenta");
   }
 
   return json({});
@@ -70,11 +72,13 @@ export const action: ActionFunction = async ({ request }) => {
     // verificamos i hay una ruta a redireccionar en especifico
     const url = new URL(request.url);
     const search = url.searchParams;
+    const modules: ModuleSession[] = session.get("modules") || [];
 
     return redirect(
-      search.get("redirect") || loginRes?.administrative
-        ? "/dashboard"
-        : "/mi-cuenta",
+      search.get("redirect") ||
+        (loginRes?.administrative
+          ? getFirstAdminModuleRoute(modules)
+          : "/mi-cuenta"),
       {
         headers: {
           "Set-Cookie": await commitSession(session),

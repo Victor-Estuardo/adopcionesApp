@@ -108,19 +108,6 @@ export async function loginWebApp(
       action: p.action,
     }));
 
-  // Modulos disponibles al rol
-  /*const availableModules: $Enums.nav_audience_module[] = ["ALL"];
-
-  if (roleInfo?.its_administrative) {
-    availableModules.push("ADMIN_ONLY");
-  } else {
-    availableModules.push("AUTH_ONLY");
-  }
-
-  // Modulos disponibles por su rol
-  const allowedModulesRes = await listModulesForSessionDb({
-    nav_audience: { in: availableModules },
-  });*/
   const allowedModulesRes = await listModulesForSessionDb({
     OR: [
       {
