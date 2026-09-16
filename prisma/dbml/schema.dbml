@@ -300,6 +300,13 @@ Table sponsor {
   user_sponsor_updater_idTouser user [not null]
 }
 
+Table session {
+  id String [pk]
+  data Json [not null]
+  expires_at DateTime [not null]
+  created_at DateTime [default: `now()`, not null]
+}
+
 Enum nav_audience_module {
   ALL
   AUTH_ONLY

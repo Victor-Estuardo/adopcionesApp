@@ -312,6 +312,19 @@ model sponsor {
   user_sponsor_updater_idTouser user       @relation("sponsor_updater_idTouser", fields: [updater_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_updater_patrocinador")
 }
 
+// Respaldo en servidor de las sesiones de Remix (createSessionStorage): la
+// cookie del cliente solo lleva este id firmado, no los datos. Sustituye a
+// createCookieSessionStorage, cuyo payload (módulos + permisos) ya superaba
+// el límite de ~4096 bytes de los navegadores.
+model session {
+  id         String   @id(map: "pk_session") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  data       Json
+  expires_at DateTime @db.Timestamp(6)
+  created_at DateTime @default(now()) @db.Timestamp(6)
+
+  @@index([expires_at])
+}
+
 enum nav_audience_module {
   ALL
   AUTH_ONLY
