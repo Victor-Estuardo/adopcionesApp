@@ -307,6 +307,12 @@ Table session {
   created_at DateTime [default: `now()`, not null]
 }
 
+Table rateLimitBucket {
+  key String [pk]
+  window_start DateTime [not null]
+  count Int [not null, default: 1]
+}
+
 Enum nav_audience_module {
   ALL
   AUTH_ONLY
