@@ -3,6 +3,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { FaUserCircle } from "react-icons/fa";
 import { MdMenuOpen } from "react-icons/md";
 import { ModuleSession } from "~/services/db/module.service";
+import { getFirstAdminModuleRoute } from "~/utils/common";
 
 interface TopNavProps {
   modules?: ModuleSession[];
@@ -57,7 +58,9 @@ export default ({
 
   // Devolvemos un objeto
   const IconProfile = () => {
-    const route = administrative ? "/dashboard" : "/mi-cuenta";
+    const route = administrative
+      ? getFirstAdminModuleRoute(modules)
+      : "/mi-cuenta";
 
     if (profile) {
       return (
