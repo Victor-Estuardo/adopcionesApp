@@ -1,11 +1,12 @@
 import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
-import { useFetcher } from "@remix-run/react";
+import { useFetcher, useLoaderData } from "@remix-run/react";
 import { useEffect, useState } from "react";
 import { FaTimes } from "react-icons/fa";
 import { LuPlus } from "react-icons/lu";
 import { toast } from "sonner";
 import { PrimaryButton } from "~/components/Button/primary";
 import { Select } from "~/components/Input/Select";
+import { Modal } from "~/components/Modal/Modal";
 import { PermissionSession } from "~/services/auth/login.service";
 import {
   createPasswordResetTokenDb,
@@ -16,6 +17,7 @@ import {
   createUserDb,
   getUserDb,
   listUsersDb,
+  updateUserDb,
   UserWithRole,
 } from "~/services/db/user.service";
 import { sendSetPasswordEmail } from "~/services/mail/resend.service";
@@ -34,7 +36,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 
   const validateRequest = validatePermission(session, 12, "Leer");
   if (validateRequest) throw validateRequest;
-  return json({});
+  return json({ dbUserId: Number(session.get("dbUserId")) });
 };
 
 /*==============================| Action Function |==============================*/
@@ -202,6 +204,31 @@ export const action: ActionFunction = async ({ request }) => {
     return json({ resent: true });
   }
 
+  if (action === "toggle-active") {
+    const validateRequest = validatePermission(session, 12, "Actualizar");
+    if (validateRequest) throw validateRequest;
+
+    const { id, active }: { id: number; active: boolean } = JSON.parse(
+      (payload as string | null) || "{}",
+    );
+
+    const targetId = Number(id);
+    const currentUserId = Number(session.get("dbUserId"));
+
+    if (targetId === currentUserId) {
+      return json({ errorMsg: "No puedes desactivar tu propia cuenta." });
+    }
+
+    const updateRes = await updateUserDb(targetId, { active });
+    if (!updateRes.success) {
+      return json({
+        errorMsg: "Ocurrió un error al actualizar el estado del usuario",
+      });
+    }
+
+    return json({ updated_status: updateRes.data.id });
+  }
+
   return json({
     errorMsg: "Ocurrió un error al cargar la pagina",
   });
@@ -210,6 +237,7 @@ export const action: ActionFunction = async ({ request }) => {
 /*==============================| Component |==============================*/
 export default function () {
   // Hooks...
+  const { dbUserId } = useLoaderData<{ dbUserId: number }>();
   const fetcher = useFetcher();
 
   // Banderas
@@ -220,6 +248,7 @@ export default function () {
   // Usuarios y roles
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [roles, setRoles] = useState<RoleWithPermissions[]>([]);
+  const [toggleTarget, setToggleTarget] = useState<UserWithRole | null>(null);
 
   // Datos de nuevo usuario
   const [firstName, setFirstName] = useState("");
@@ -248,6 +277,7 @@ export default function () {
     if (fetcher.data?.errorMsg) {
       toast.error(fetcher.data.errorMsg);
       setPanelOpen(false);
+      setToggleTarget(null);
     }
 
     if (fetcher.data?.allowedCreate) {
@@ -270,9 +300,34 @@ export default function () {
     if (fetcher.data?.resent) {
       toast.success("Invitación enviada exitosamente");
     }
+
+    if (fetcher.data?.updated_status) {
+      const id = fetcher.data.updated_status;
+      toast.success("Estado actualizado correctamente");
+      setUsers((prev) =>
+        prev.map((row) =>
+          row.id === id ? { ...row, active: !row.active } : row,
+        ),
+      );
+      setToggleTarget(null);
+    }
   }, [fetcher.data]);
 
   /*------------------------------FUNCIONES------------------------------*/
+  const confirmToggleActive = () => {
+    if (!toggleTarget) return;
+    fetcher.submit(
+      {
+        action: "toggle-active",
+        payload: JSON.stringify({
+          id: toggleTarget.id,
+          active: !toggleTarget.active,
+        }),
+      },
+      { method: "post" },
+    );
+  };
+
   const handleCreate = () => {
     fetcher.submit(
       {
@@ -315,6 +370,7 @@ export default function () {
               <th className="px-5 py-3 font-medium">Rol</th>
               <th className="px-5 py-3 font-medium">Estado</th>
               <th className="px-5 py-3 font-medium">Invitación</th>
+              <th className="px-5 py-3 font-medium">Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -332,12 +388,16 @@ export default function () {
                 <td className="px-5 py-3.5">
                   <span
                     className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                      user.it_is_verified
+                      !user.active
+                        ? "bg-gray-100 text-gray-500"
+                        : user.it_is_verified
                         ? "bg-teal-50 text-teal-600"
                         : "bg-amber-50 text-amber-600"
                     }`}
                   >
-                    {user.it_is_verified
+                    {!user.active
+                      ? "Inactivo"
+                      : user.it_is_verified
                       ? "Activo"
                       : "Pendiente de verificación"}
                   </span>
@@ -358,12 +418,32 @@ export default function () {
                     </button>
                   )}
                 </td>
+                <td className="px-5 py-3.5">
+                  {user.id === dbUserId ? (
+                    <span
+                      className="text-xs text-gray-400"
+                      title="No puedes desactivar tu propia cuenta"
+                    >
+                      —
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => setToggleTarget(user)}
+                      disabled={isSubmitting}
+                      className={`text-xs font-medium hover:underline disabled:opacity-50 ${
+                        user.active ? "text-[#F2768C]" : "text-[#52C9BB]"
+                      }`}
+                    >
+                      {user.active ? "Desactivar" : "Activar"}
+                    </button>
+                  )}
+                </td>
               </tr>
             ))}
             {users.length === 0 && (
               <tr>
                 <td
-                  colSpan={4}
+                  colSpan={6}
                   className="px-5 py-10 text-center text-gray-400"
                 >
                   Todavía no hay usuarios administrativos registrados.
@@ -476,6 +556,49 @@ export default function () {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ── Modal de confirmación activar/desactivar ── */}
+      {toggleTarget && (
+        <Modal
+          open
+          onClose={() => setToggleTarget(null)}
+          title={toggleTarget.active ? "Desactivar usuario" : "Activar usuario"}
+          footer={
+            <>
+              <button
+                type="button"
+                onClick={() => setToggleTarget(null)}
+                disabled={isSubmitting}
+                className="flex-1 rounded-lg border border-gray-200 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={confirmToggleActive}
+                disabled={isSubmitting}
+                className={`flex-1 rounded-lg py-2 text-sm font-semibold text-white disabled:opacity-60 ${
+                  toggleTarget.active
+                    ? "bg-pink-meraki hover:bg-pink-meraki/90"
+                    : "bg-medium-turquoise-meraki hover:bg-medium-turquoise-meraki/90"
+                }`}
+              >
+                {isSubmitting
+                  ? "Guardando…"
+                  : toggleTarget.active
+                  ? "Desactivar"
+                  : "Activar"}
+              </button>
+            </>
+          }
+        >
+          <p className="text-sm text-gray-600">
+            {toggleTarget.active
+              ? `¿Desactivar a "${toggleTarget.first_name} ${toggleTarget.last_name}"? No podrá iniciar sesión hasta que se reactive su cuenta.`
+              : `¿Activar a "${toggleTarget.first_name} ${toggleTarget.last_name}"? Podrá volver a iniciar sesión con su contraseña actual.`}
+          </p>
+        </Modal>
       )}
     </div>
   );

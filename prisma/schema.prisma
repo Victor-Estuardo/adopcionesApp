@@ -97,6 +97,7 @@ model user {
   role_id                                                  Int
   registration_date                                        DateTime?             @default(now()) @db.Timestamp(6)
   it_is_verified                                           Boolean               @default(false)
+  active                                                   Boolean               @default(true)
   profile_public_id                                        String?               @unique(map: "user_unique")
   phone                                                    String?               @db.VarChar(25)
   profile_version                                          String?               @db.VarChar(100)

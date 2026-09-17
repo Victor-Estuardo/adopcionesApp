@@ -85,6 +85,7 @@ Table user {
   role_id Int [not null]
   registration_date DateTime [default: `now()`]
   it_is_verified Boolean [not null, default: false]
+  active Boolean [not null, default: true]
   profile_public_id String [unique]
   phone String
   profile_version String
