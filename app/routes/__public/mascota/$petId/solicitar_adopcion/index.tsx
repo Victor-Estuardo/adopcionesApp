@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { createcommitmentAgreementDb } from "~/services/db/commitmentAgreement.service";
 import { validatePermission } from "~/utils/common";
 import { getPetStatusConfig } from "~/utils/pet-helpers";
+import { enforceRateLimits, getClientIp } from "~/utils/rateLimit.server";
 
 export const meta = () => {
   return [{ title: "SOLICITUD DE ADOPCIÓN" }];
@@ -109,6 +110,25 @@ export const action: ActionFunction = async ({ request, params }) => {
 
   //=============| Datos del POST |==============================//
   const formData = await request.formData();
+
+  // Límite por IP y por usuario para frenar el spam de solicitudes falsas
+  const rateLimitMsg = await enforceRateLimits([
+    {
+      action: "solicitud-adopcion",
+      identifier: getClientIp(request),
+      limit: 5,
+      windowMs: 60 * 60 * 1000,
+    },
+    {
+      action: "solicitud-adopcion",
+      identifier: String(dbUserId),
+      limit: 5,
+      windowMs: 60 * 60 * 1000,
+    },
+  ]);
+  if (rateLimitMsg) {
+    return json({ errorMsg: rateLimitMsg }, { status: 429 });
+  }
 
   // Obtenemos el id de la mascota
   const { petId } = params;

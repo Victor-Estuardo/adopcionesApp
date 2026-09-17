@@ -49,6 +49,9 @@ export const action: ActionFunction = async ({ request }) => {
   const { action, payload } = Object.fromEntries(formData);
 
   if (action === "loadInformation") {
+    const validateRequest = validatePermission(session, 12, "Leer");
+    if (validateRequest) throw validateRequest;
+
     const [usersRes, rolesRes] = await Promise.all([
       listUsersDb(),
       listRolesDb({ its_administrative: true, active: true }),
@@ -160,6 +163,9 @@ export const action: ActionFunction = async ({ request }) => {
   }
 
   if (action === "resend-invite") {
+    const validateRequest = validatePermission(session, 12, "Crear");
+    if (validateRequest) throw validateRequest;
+
     const userId = Number(formData.get("user_id"));
 
     const userRes = await getUserDb({ id: userId });

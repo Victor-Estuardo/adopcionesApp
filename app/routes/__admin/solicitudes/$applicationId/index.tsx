@@ -96,6 +96,9 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 
 /*==============================| Action Function |==============================*/
 export const action: ActionFunction = async ({ request, params }) => {
+  const cookie = request.headers.get("cookie");
+  const session = await getSession(cookie);
+
   //=============| Datos del POST |==============================//
   const formData = await request.formData();
   const { action, payload } = Object.fromEntries(formData);
@@ -104,6 +107,9 @@ export const action: ActionFunction = async ({ request, params }) => {
   const { applicationId = "" } = params;
 
   if (action === "loadInformation") {
+    const validateRequest = validatePermission(session, 10, "Leer");
+    if (validateRequest) throw validateRequest;
+
     // Información de la solicitud
     const applicationRes = await getAdoptionApplicationAllInfoDb({
       id: applicationId || "-1000000000",
@@ -128,9 +134,6 @@ export const action: ActionFunction = async ({ request, params }) => {
       });
     }
 
-    const cookie = request.headers.get("cookie");
-    const session = await getSession(cookie);
-
     // Obtenemos los permisos
     const permissions: PermissionSession[] = session.get("permissions") || [];
 
@@ -145,6 +148,9 @@ export const action: ActionFunction = async ({ request, params }) => {
   }
 
   if (action === "approve") {
+    const validateRequest = validatePermission(session, 10, "Actualizar");
+    if (validateRequest) throw validateRequest;
+
     const updateRes = await updateAdoptionApplicationDb(applicationId, {
       status: "aprobada",
       updated_at: new Date(),
@@ -154,16 +160,15 @@ export const action: ActionFunction = async ({ request, params }) => {
       return json({ errorMsg: "Ocurrió un error al aprobar la solicitud" });
     }
 
-    await notifyAdopterDecision(
-      request,
-      updateRes.data.user_id,
-      applicationId,
-    );
+    await notifyAdopterDecision(request, updateRes.data.user_id, applicationId);
 
     return json({ confirmed: true, newStatus: "aprobada" });
   }
 
   if (action === "reject") {
+    const validateRequest = validatePermission(session, 10, "Actualizar");
+    if (validateRequest) throw validateRequest;
+
     const rejectionReason = String(
       formData.get("rejection_reason") || "",
     ).trim();
@@ -182,11 +187,7 @@ export const action: ActionFunction = async ({ request, params }) => {
       return json({ errorMsg: "Ocurrió un error al rechazar la solicitud" });
     }
 
-    await notifyAdopterDecision(
-      request,
-      updateRes.data.user_id,
-      applicationId,
-    );
+    await notifyAdopterDecision(request, updateRes.data.user_id, applicationId);
 
     return json({ deleted: true, newStatus: "rechazada" });
   }
