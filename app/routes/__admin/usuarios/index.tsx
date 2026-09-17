@@ -95,6 +95,18 @@ export const action: ActionFunction = async ({ request }) => {
       return json({ errorMsg: "Todos los campos marcados son obligatorios" });
     }
 
+    // Solo se permite asignar un rol administrativo activo — el mismo
+    // catálogo que ya se le muestra al admin en el selector de "Nuevo usuario".
+    const validRoleRes = await listRolesDb({
+      id: Number(role_id),
+      its_administrative: true,
+      active: true,
+    });
+
+    if (!validRoleRes.success || validRoleRes.data.length === 0) {
+      return json({ errorMsg: "El rol seleccionado no es válido" });
+    }
+
     // Contraseña temporal aleatoria: el usuario no puede iniciar sesión con esto,
     // debe definir la suya propia mediante el link que se le envía por correo.
     const randomPlaceholder = generateSecureToken();
