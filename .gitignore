@@ -11,3 +11,4 @@ node_modules
 /mockup
 /prisma/backup
 /auditoria_seguridad_rutas.md
+/auditoria_seguridad_owasp.md
