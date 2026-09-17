@@ -10,11 +10,16 @@ function createPrismaClient() {
     query: {
       $allOperations: async ({ operation, model, args, query }) => {
         const startTime = Date.now();
-        console.log(
-          `${LOG_COLORS.FgGreen}%s%s${LOG_COLORS.Reset}`,
-          `[PRISMA] ${model}.${operation} - Args: `,
-          JSON.stringify(args),
-        );
+
+        // Los `args` pueden incluir datos sensibles (PII, cuentas bancarias,
+        // datos de sesión) — solo se loguean fuera de producción.
+        if (process.env.NODE_ENV !== "production") {
+          console.log(
+            `${LOG_COLORS.FgGreen}%s%s${LOG_COLORS.Reset}`,
+            `[PRISMA] ${model}.${operation} - Args: `,
+            JSON.stringify(args),
+          );
+        }
 
         try {
           const result = await query(args);

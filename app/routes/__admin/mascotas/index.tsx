@@ -210,26 +210,31 @@ export const action: ActionFunction = async ({ request }) => {
     );
 
     // 3. Actualizar datos de la mascota + insertar nuevas imágenes en una transacción
-    await prisma.$transaction([
-      prisma.pet.update({
-        where: { id: petId },
-        data: { ...petData, update_date: new Date(), updater_id: userId },
-      }),
-      ...(uploaded.length
-        ? [
-            prisma.pet_images.createMany({
-              data: uploaded.map((img) => ({
-                pet_id: petId,
-                path: img.success ? img.data.public_id : "",
-                creation_date: new Date(),
-                update_date: new Date(),
-                creator_id: userId,
-                updater_id: userId,
-              })),
-            }),
-          ]
-        : []),
-    ]);
+    try {
+      await prisma.$transaction([
+        prisma.pet.update({
+          where: { id: petId },
+          data: { ...petData, update_date: new Date(), updater_id: userId },
+        }),
+        ...(uploaded.length
+          ? [
+              prisma.pet_images.createMany({
+                data: uploaded.map((img) => ({
+                  pet_id: petId,
+                  path: img.success ? img.data.public_id : "",
+                  creation_date: new Date(),
+                  update_date: new Date(),
+                  creator_id: userId,
+                  updater_id: userId,
+                })),
+              }),
+            ]
+          : []),
+      ]);
+    } catch (error) {
+      console.error("Error al actualizar la mascota:", error);
+      return json({ errorMsg: "Ocurrió un error al actualizar los datos" });
+    }
 
     return json({ update_pet: true });
   }
@@ -238,14 +243,21 @@ export const action: ActionFunction = async ({ request }) => {
     const validateRequest = validatePermission(session, 9, "Actualizar");
     if (validateRequest) throw validateRequest;
 
-    await prisma.pet.update({
-      where: { id: Number(formData.get("id")) },
-      data: {
-        status: formData.get("status") as status_pet,
-        update_date: new Date(),
-        updater_id: userId,
-      },
-    });
+    try {
+      await prisma.pet.update({
+        where: { id: Number(formData.get("id")) },
+        data: {
+          status: formData.get("status") as status_pet,
+          update_date: new Date(),
+          updater_id: userId,
+        },
+      });
+    } catch (error) {
+      console.error("Error al actualizar el estado de la mascota:", error);
+      return json({
+        errorMsg: "Ocurrió un error al actualizar el estado de la mascota",
+      });
+    }
 
     return json({ success: true });
   }

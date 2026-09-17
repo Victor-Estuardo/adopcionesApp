@@ -31,12 +31,16 @@ export const loader: LoaderFunction = async ({ request }) => {
   ]);
 
   if (!sessionsResult.success || !rateLimitResult.success) {
+    // El detalle real (mensaje de Prisma) se loguea en servidor; al
+    // cliente solo se le devuelve un mensaje genérico.
+    console.error(
+      "Error en el cron de limpieza:",
+      (!sessionsResult.success && sessionsResult.error) ||
+        (!rateLimitResult.success && rateLimitResult.error),
+    );
+
     return json(
-      {
-        errorMsg:
-          (!sessionsResult.success && sessionsResult.error) ||
-          (!rateLimitResult.success && rateLimitResult.error),
-      },
+      { errorMsg: "Ocurrió un error al ejecutar la limpieza" },
       { status: 500 },
     );
   }

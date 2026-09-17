@@ -14,6 +14,24 @@ import { renderToPipeableStream } from "react-dom/server";
 
 const ABORT_DELAY = 5_000;
 
+/**
+ * Headers de seguridad de bajo riesgo (no incluye CSP, que requiere probar
+ * cada dominio externo permitido antes de activarla). Se aplican a toda
+ * respuesta de documento completo (no a las respuestas JSON de loaders/actions
+ * vía fetcher, que Remix construye por fuera de este archivo).
+ */
+function setSecurityHeaders(responseHeaders: Headers) {
+  responseHeaders.set("X-Frame-Options", "DENY");
+  responseHeaders.set("X-Content-Type-Options", "nosniff");
+  responseHeaders.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  if (process.env.NODE_ENV === "production") {
+    responseHeaders.set(
+      "Strict-Transport-Security",
+      "max-age=63072000; includeSubDomains",
+    );
+  }
+}
+
 export default function handleRequest(
   request: Request,
   responseStatusCode: number,
@@ -56,6 +74,7 @@ function handleBotRequest(
           const body = new PassThrough();
 
           responseHeaders.set("Content-Type", "text/html");
+          setSecurityHeaders(responseHeaders);
 
           resolve(
             new Response(body, {
@@ -105,6 +124,7 @@ function handleBrowserRequest(
           const body = new PassThrough();
 
           responseHeaders.set("Content-Type", "text/html");
+          setSecurityHeaders(responseHeaders);
 
           resolve(
             new Response(body, {
