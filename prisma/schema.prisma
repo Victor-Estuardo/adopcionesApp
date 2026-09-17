@@ -109,6 +109,7 @@ model user {
   needSupplies_needSupplies_creator_idTouser               needSupplies[]        @relation("needSupplies_creator_idTouser")
   needSupplies_needSupplies_updater_idTouser               needSupplies[]        @relation("needSupplies_updater_idTouser")
   passwordResetToken                                       passwordResetToken[]
+  accountVerificationToken                                 accountVerificationToken[]
   pet_pet_creator_idTouser                                 pet[]                 @relation("pet_creator_idTouser")
   pet_pet_updater_idTouser                                 pet[]                 @relation("pet_updater_idTouser")
   petSpecies_petSpecies_creator_idTouser                   petSpecies[]          @relation("petSpecies_creator_idTouser")
@@ -152,6 +153,17 @@ model passwordResetToken {
   expires_at DateTime @db.Timestamp(6)
   created_at DateTime @db.Timestamp(6)
   user       user     @relation(fields: [user_id], references: [id], onUpdate: Restrict, map: "fk_user_passwordresettoken")
+}
+
+// Token de verificación de cuenta (reemplaza el JWT anterior): opaco,
+// hasheado, de un solo uso y revocable — mismo patrón que passwordResetToken.
+model accountVerificationToken {
+  id         String   @id(map: "accountverificationtoken_pk") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  token      String   @unique(map: "accountverificationtoken_unique")
+  user_id    Int
+  expires_at DateTime @db.Timestamp(6)
+  created_at DateTime @db.Timestamp(6)
+  user       user     @relation(fields: [user_id], references: [id], onUpdate: Restrict, map: "fk_user_accountverificationtoken")
 }
 
 model formQuestion {

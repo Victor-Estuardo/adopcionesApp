@@ -7,11 +7,16 @@ import { toast } from "sonner";
 import { useFetcher, useNavigate } from "@remix-run/react";
 import Input from "~/components/Input";
 import {
+  getDateGt,
   handleEmailValidation,
   handlePasswordValidation,
 } from "~/utils/common";
-import { hashText } from "~/utils/crypto.server";
-import { createUserDb } from "~/services/db/user.service";
+import { generateSecureToken, hashText } from "~/utils/crypto.server";
+import { createUserDb, getEssentialUserDb } from "~/services/db/user.service";
+import {
+  createAccountVerificationTokenDb,
+  deleteManyAccountVerificationTokenDb,
+} from "~/services/db/accountVerificationToken.service";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { sendVerificationEmail } from "~/services/mail/resend.service";
 import { LuMail, LuCircleCheck, LuClock, LuCircleAlert } from "react-icons/lu";
@@ -51,6 +56,14 @@ export const action: ActionFunction = async ({ request }) => {
 
     const { email, firstName, lastName, password } = data;
 
+    // Revalidamos en servidor lo que el formulario ya valida en cliente,
+    // por si llega un POST directo sin pasar por el JS del navegador.
+    const emailError = handleEmailValidation(email);
+    const passwordError = handlePasswordValidation(password, true);
+    if (emailError || passwordError) {
+      return json({ errorMsg: emailError || passwordError });
+    }
+
     // Límite por IP para frenar registros masivos automatizados.
     const rateLimitMsg = await enforceRateLimits([
       {
@@ -86,14 +99,19 @@ export const action: ActionFunction = async ({ request }) => {
     // Información del nuevo uuario
     const user = createUserRes.data;
 
-    await sendVerificationEmail(
-      {
-        id: user.id,
-        email: email,
-        name: firstName,
-      },
-      new URL(request.url).origin,
-    );
+    // Token de verificación de cuenta: opaco, hasheado y de un solo uso
+    // (se borra al usarse en /verificar-cuenta, ver validateAccountVerificationToken).
+    const verificationToken = generateSecureToken();
+    const hashedVerificationToken = await hashText(verificationToken);
+    await createAccountVerificationTokenDb({
+      user_id: user.id,
+      token: hashedVerificationToken,
+      expires_at: new Date(getDateGt().getTime() + 1000 * 60 * 60 * 8), // 8h
+      created_at: getDateGt(),
+    });
+
+    const verificationLink = `${new URL(request.url).origin}/verificar-cuenta?token=${verificationToken}`;
+    await sendVerificationEmail(email, verificationLink, firstName);
 
     return json({
       create_account: true,
@@ -104,8 +122,6 @@ export const action: ActionFunction = async ({ request }) => {
   if (action === "forwardEmail") {
     let data: {
       userId: number;
-      name: string;
-      email: string;
     } | null = null;
 
     if (typeof payload === "string") {
@@ -118,15 +134,57 @@ export const action: ActionFunction = async ({ request }) => {
           "Ocurrió un error al enviar el correo, por favor intente nuevamente.",
       });
 
-    const { userId, email, name } = data;
+    const { userId } = data;
 
-    await sendVerificationEmail(
+    // Límite por IP y por cuenta para frenar el abuso de este reenvío.
+    const rateLimitMsg = await enforceRateLimits([
       {
-        id: userId,
-        email: email,
-        name,
+        action: "crear-cuenta-forward",
+        identifier: getClientIp(request),
+        limit: 5,
+        windowMs: 60 * 60 * 1000,
       },
-      new URL(request.url).origin,
+      {
+        action: "crear-cuenta-forward",
+        identifier: String(userId),
+        limit: 5,
+        windowMs: 60 * 60 * 1000,
+      },
+    ]);
+    if (rateLimitMsg) {
+      return json({ errorMsg: rateLimitMsg }, { status: 429 });
+    }
+
+    // El correo/nombre se toman siempre de la cuenta en BD — nunca del
+    // cliente — para no permitir reenviar el link de verificación a una
+    // dirección arbitraria.
+    const userRes = await getEssentialUserDb({ id: Number(userId) });
+
+    if (!userRes.success || !userRes.data) {
+      return json({
+        errorMsg:
+          "Ocurrió un error al enviar el correo, por favor intente nuevamente.",
+      });
+    }
+
+    // Invalidamos cualquier token pendiente antes de emitir uno nuevo
+    // (igual patrón que "resend-invite" en usuarios/index.tsx).
+    await deleteManyAccountVerificationTokenDb({ user_id: Number(userId) });
+
+    const verificationToken = generateSecureToken();
+    const hashedVerificationToken = await hashText(verificationToken);
+    await createAccountVerificationTokenDb({
+      user_id: Number(userId),
+      token: hashedVerificationToken,
+      expires_at: new Date(getDateGt().getTime() + 1000 * 60 * 60 * 8), // 8h
+      created_at: getDateGt(),
+    });
+
+    const verificationLink = `${new URL(request.url).origin}/verificar-cuenta?token=${verificationToken}`;
+    await sendVerificationEmail(
+      userRes.data.email,
+      verificationLink,
+      userRes.data.first_name,
     );
 
     return json({

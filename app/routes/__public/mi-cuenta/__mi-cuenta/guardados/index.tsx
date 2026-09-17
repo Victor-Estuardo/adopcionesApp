@@ -102,9 +102,12 @@ export const action: ActionFunction = async ({ request }) => {
       });
     }
 
-    const deleteRes = await deleteSavedPetDb({ id: savedId });
+    const deleteRes = await deleteSavedPetDb({
+      id: savedId,
+      user_id: dbUserId,
+    });
 
-    if (!deleteRes.success) {
+    if (!deleteRes.success || deleteRes.data === 0) {
       return json({
         errorMsg: "Ocurrió un error al quitar de guardados",
       });

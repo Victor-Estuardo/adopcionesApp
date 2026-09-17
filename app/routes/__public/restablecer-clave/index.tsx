@@ -58,6 +58,13 @@ export const action: ActionFunction = async ({ request }) => {
 
     const { password, token } = data;
 
+    // Revalidamos en servidor lo que el formulario ya valida en cliente,
+    // por si llega un POST directo sin pasar por el JS del navegador.
+    const passwordError = handlePasswordValidation(password, true);
+    if (passwordError) {
+      return json({ errorMsg: passwordError });
+    }
+
     // Validar token
     const validation = await validatePasswordResetToken(token);
     if (!validation.valid || !validation.userId) {

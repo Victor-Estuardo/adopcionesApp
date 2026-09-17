@@ -1,4 +1,3 @@
-import { user } from "@prisma/client";
 import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
 import {
   useFetcher,
@@ -15,7 +14,12 @@ import {
   createPasswordResetTokenDb,
   deleteManyPasswordResetTokenDb,
 } from "~/services/db/passwordResetToken.service";
-import { getUserDb, updateUserDb } from "~/services/db/user.service";
+import {
+  getOwnProfileUserDb,
+  getUserDb,
+  OwnProfileUser,
+  updateUserDb,
+} from "~/services/db/user.service";
 import { sendPasswordResetEmail } from "~/services/mail/resend.service";
 import {
   commitSession,
@@ -24,6 +28,7 @@ import {
 import { getDateGt, validatePermission } from "~/utils/common";
 import { generateSecureToken, hashText } from "~/utils/crypto.server";
 import { resizeImage } from "~/utils/image";
+import { enforceRateLimits, getClientIp } from "~/utils/rateLimit.server";
 
 export const meta = () => {
   return [{ title: "EDITAR CUENTA" }];
@@ -58,7 +63,7 @@ export const action: ActionFunction = async ({ request }) => {
 
   if (action === "loadInformation") {
     // Obtenemos la información del usuario
-    const userInfoRes = await getUserDb({ id: dbUserId });
+    const userInfoRes = await getOwnProfileUserDb({ id: dbUserId });
 
     if (!userInfoRes.success) {
       return json({
@@ -154,6 +159,25 @@ export const action: ActionFunction = async ({ request }) => {
   }
 
   if (action === "requestPasswordChange") {
+    // Límite por cuenta e IP para frenar el abuso de este reenvío.
+    const rateLimitMsg = await enforceRateLimits([
+      {
+        action: "mi-cuenta-reset-password",
+        identifier: String(dbUserId),
+        limit: 5,
+        windowMs: 60 * 60 * 1000,
+      },
+      {
+        action: "mi-cuenta-reset-password",
+        identifier: getClientIp(request),
+        limit: 5,
+        windowMs: 60 * 60 * 1000,
+      },
+    ]);
+    if (rateLimitMsg) {
+      return json({ errorMsg: rateLimitMsg }, { status: 429 });
+    }
+
     // Obtenemos el usuario de la sesión (ya tenemos su id)
     const userInfoRes = await getUserDb({ id: dbUserId });
 
@@ -195,7 +219,7 @@ export default function () {
   const fetcher = useFetcher();
 
   // usuario
-  const [user, setUser] = useState<user | null>(null);
+  const [user, setUser] = useState<OwnProfileUser | null>(null);
   const initials = routeData.initials || "";
   const profile = routeData.profile;
 
@@ -237,7 +261,7 @@ export default function () {
     }
 
     if (fetcher.data?.user) {
-      const tempUser: user = fetcher.data?.user;
+      const tempUser: OwnProfileUser = fetcher.data?.user;
 
       setUser(tempUser);
       setFirstName(tempUser.first_name);

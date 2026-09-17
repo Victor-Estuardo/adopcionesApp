@@ -58,7 +58,11 @@ export function ErrorBoundary() {
   return (
     <ErrorBoundaryAlert
       title={`Error - app/routes${route}`}
-      description={error?.toString() ?? ""}
+      description={
+        process.env.NODE_ENV === "production"
+          ? "Ocurrió un error inesperado. Por favor, intenta de nuevo."
+          : error?.toString() ?? ""
+      }
     />
   );
 }

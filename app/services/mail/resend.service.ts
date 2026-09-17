@@ -1,13 +1,26 @@
 // app/utils/email.server.ts
 import { Resend } from "resend";
 import { config } from "~/config";
-import { generateVerificationToken } from "~/utils/jwt.server";
 
 const resend = new Resend(config.resendApiKey);
 
 // Email del remitente
 const EMAIL_FROM = process.env.EMAIL_FROM || "onboarding@resend.dev";
 const EMAIL_FROM_NAME = process.env.EMAIL_FROM_NAME || "Asociación Meraki";
+
+/**
+ * Escapa caracteres especiales de HTML. Se usa antes de interpolar
+ * cualquier dato (p. ej. el nombre del destinatario) en el HTML de un
+ * correo, para que no pueda inyectar markup/JS en el cliente de correo.
+ */
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
 export async function sendPasswordResetEmail(
   email: string,
@@ -115,10 +128,10 @@ function getPasswordResetEmailHtml(
         <div class="content">
           ${
             userName
-              ? `<p>Hola <strong>${userName}</strong>,</p>`
+              ? `<p>Hola <strong>${escapeHtml(userName)}</strong>,</p>`
               : "<p>Hola,</p>"
           }
-          
+
           <p>Recibimos una solicitud para restablecer la contraseña de tu cuenta. Para crear una nueva contraseña, haz clic en el botón de abajo:</p>
           
           <div style="text-align: center;">
@@ -175,16 +188,11 @@ function getPasswordResetEmailText(
 }
 
 export async function sendVerificationEmail(
-  user: { id: number; email: string; name: string },
-  baseUrl: string,
-) {
+  email: string,
+  verificationLink: string,
+  userName: string,
+): Promise<boolean> {
   try {
-    // Generar el token
-    const verificationToken = generateVerificationToken(user.id);
-
-    // Crear el enlace de verificación
-    const verificationLink = `${baseUrl}/verificar-cuenta?token=${verificationToken}`;
-
     // Crear el HTML del correo
     const htmlContent = `
       <!DOCTYPE html>
@@ -251,7 +259,7 @@ export async function sendVerificationEmail(
           </div>
           
           <div class="content">
-            <p>Hola <strong>${user.name}</strong>,</p>
+            <p>Hola <strong>${escapeHtml(userName)}</strong>,</p>
             
             <p>Gracias por registrarte. Para completar tu registro y activar tu cuenta, por favor verifica tu correo electrónico haciendo clic en el botón de abajo:</p>
             
@@ -280,8 +288,8 @@ export async function sendVerificationEmail(
 
     // Versión en texto plano (fallback)
     const textContent = `
-      Hola ${user.name},
-      
+      Hola ${userName},
+
       Gracias por registrarte en MERAKI.
       
       Para activar tu cuenta, por favor visita el siguiente enlace:
@@ -298,7 +306,7 @@ export async function sendVerificationEmail(
     // Enviar el correo con Resend
     const { data, error } = await resend.emails.send({
       from: `${EMAIL_FROM_NAME} <${EMAIL_FROM}>`,
-      to: [user.email],
+      to: [email],
       subject: "Verifica tu cuenta - Meraki",
       html: htmlContent,
       text: textContent,
@@ -306,13 +314,13 @@ export async function sendVerificationEmail(
 
     if (error) {
       console.error("Error al enviar correo de verificación:", error);
-      return { success: false };
+      return false;
     }
 
-    return { success: true, token: verificationToken };
+    return true;
   } catch (error) {
     console.error("No se pudo enviar el correo de verificación:", error);
-    return { success: false };
+    return false;
   }
 }
 
@@ -377,7 +385,7 @@ function getSetPasswordEmailHtml(
         <div class="content">
           ${
             userName
-              ? `<p>Hola <strong>${userName}</strong>,</p>`
+              ? `<p>Hola <strong>${escapeHtml(userName)}</strong>,</p>`
               : "<p>Hola,</p>"
           }
           <p>Se creó una cuenta administrativa para ti en el panel de Meraki. Para comenzar, define tu contraseña haciendo clic en el botón de abajo:</p>
@@ -481,7 +489,7 @@ function getApplicationDecisionEmailHtml(
         <div class="content">
           ${
             userName
-              ? `<p>Hola <strong>${userName}</strong>,</p>`
+              ? `<p>Hola <strong>${escapeHtml(userName)}</strong>,</p>`
               : "<p>Hola,</p>"
           }
           <p>Se tomó una decisión sobre tu solicitud de adopción. Para conocer el detalle, ingresa a tu cuenta y revisa el estado de tu solicitud:</p>

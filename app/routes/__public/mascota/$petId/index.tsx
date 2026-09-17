@@ -118,9 +118,10 @@ export const action: ActionFunction = async ({ request, params }) => {
     // Quitamos el guardado de la mascota
     const deleteResponse = await deleteSavedPetDb({
       id: saved_id,
+      user_id: dbUserId,
     });
 
-    if (!deleteResponse.success) {
+    if (!deleteResponse.success || deleteResponse.data === 0) {
       return json({
         errorMsg: "Ocurrió un error al quitar la mascota de los guardados",
       });
