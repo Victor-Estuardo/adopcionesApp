@@ -9,6 +9,20 @@ const resend = new Resend(config.resendApiKey);
 const EMAIL_FROM = process.env.EMAIL_FROM || "onboarding@resend.dev";
 const EMAIL_FROM_NAME = process.env.EMAIL_FROM_NAME || "Asociación Meraki";
 
+/**
+ * Escapa caracteres especiales de HTML. Se usa antes de interpolar
+ * cualquier dato (p. ej. el nombre del destinatario) en el HTML de un
+ * correo, para que no pueda inyectar markup/JS en el cliente de correo.
+ */
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 export async function sendPasswordResetEmail(
   email: string,
   resetUrl: string,
@@ -115,10 +129,10 @@ function getPasswordResetEmailHtml(
         <div class="content">
           ${
             userName
-              ? `<p>Hola <strong>${userName}</strong>,</p>`
+              ? `<p>Hola <strong>${escapeHtml(userName)}</strong>,</p>`
               : "<p>Hola,</p>"
           }
-          
+
           <p>Recibimos una solicitud para restablecer la contraseña de tu cuenta. Para crear una nueva contraseña, haz clic en el botón de abajo:</p>
           
           <div style="text-align: center;">
@@ -377,7 +391,7 @@ function getSetPasswordEmailHtml(
         <div class="content">
           ${
             userName
-              ? `<p>Hola <strong>${userName}</strong>,</p>`
+              ? `<p>Hola <strong>${escapeHtml(userName)}</strong>,</p>`
               : "<p>Hola,</p>"
           }
           <p>Se creó una cuenta administrativa para ti en el panel de Meraki. Para comenzar, define tu contraseña haciendo clic en el botón de abajo:</p>
@@ -481,7 +495,7 @@ function getApplicationDecisionEmailHtml(
         <div class="content">
           ${
             userName
-              ? `<p>Hola <strong>${userName}</strong>,</p>`
+              ? `<p>Hola <strong>${escapeHtml(userName)}</strong>,</p>`
               : "<p>Hola,</p>"
           }
           <p>Se tomó una decisión sobre tu solicitud de adopción. Para conocer el detalle, ingresa a tu cuenta y revisa el estado de tu solicitud:</p>

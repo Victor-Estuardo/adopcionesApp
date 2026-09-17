@@ -28,6 +28,7 @@ import {
 import { getDateGt, validatePermission } from "~/utils/common";
 import { generateSecureToken, hashText } from "~/utils/crypto.server";
 import { resizeImage } from "~/utils/image";
+import { enforceRateLimits, getClientIp } from "~/utils/rateLimit.server";
 
 export const meta = () => {
   return [{ title: "EDITAR CUENTA" }];
@@ -158,6 +159,25 @@ export const action: ActionFunction = async ({ request }) => {
   }
 
   if (action === "requestPasswordChange") {
+    // Límite por cuenta e IP para frenar el abuso de este reenvío.
+    const rateLimitMsg = await enforceRateLimits([
+      {
+        action: "mi-cuenta-reset-password",
+        identifier: String(dbUserId),
+        limit: 5,
+        windowMs: 60 * 60 * 1000,
+      },
+      {
+        action: "mi-cuenta-reset-password",
+        identifier: getClientIp(request),
+        limit: 5,
+        windowMs: 60 * 60 * 1000,
+      },
+    ]);
+    if (rateLimitMsg) {
+      return json({ errorMsg: rateLimitMsg }, { status: 429 });
+    }
+
     // Obtenemos el usuario de la sesión (ya tenemos su id)
     const userInfoRes = await getUserDb({ id: dbUserId });
 
