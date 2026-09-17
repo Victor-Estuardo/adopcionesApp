@@ -11,10 +11,12 @@ import { PiWarningCircle } from "react-icons/pi";
 import { toast } from "sonner";
 import { useFetcher, useNavigate, useSearchParams } from "@remix-run/react";
 import {
+  getDateGt,
   getFirstAdminModuleRoute,
   handleEmailValidation,
   handlePasswordValidation,
 } from "~/utils/common";
+import { generateSecureToken, hashText } from "~/utils/crypto.server";
 import {
   commitSession,
   getSession,
@@ -22,6 +24,10 @@ import {
 import { loginWebApp } from "~/services/auth/login.service";
 import { sendVerificationEmail } from "~/services/mail/resend.service";
 import { getUserDb } from "~/services/db/user.service";
+import {
+  createAccountVerificationTokenDb,
+  deleteManyAccountVerificationTokenDb,
+} from "~/services/db/accountVerificationToken.service";
 import { ModuleSession } from "~/services/db/module.service";
 import { enforceRateLimits, getClientIp } from "~/utils/rateLimit.server";
 
@@ -116,6 +122,25 @@ export const action: ActionFunction = async ({ request }) => {
 
     const { email } = data;
 
+    // Límite por IP y por correo para frenar el abuso de este reenvío.
+    const rateLimitMsg = await enforceRateLimits([
+      {
+        action: "iniciar-sesion-forward",
+        identifier: getClientIp(request),
+        limit: 5,
+        windowMs: 60 * 60 * 1000,
+      },
+      {
+        action: "iniciar-sesion-forward",
+        identifier: email.toLowerCase(),
+        limit: 5,
+        windowMs: 60 * 60 * 1000,
+      },
+    ]);
+    if (rateLimitMsg) {
+      return json({ errorMsg: rateLimitMsg }, { status: 429 });
+    }
+
     // Obtenemos el usuario por su correo
     const userInfoRes = await getUserDb({ email });
 
@@ -127,14 +152,21 @@ export const action: ActionFunction = async ({ request }) => {
 
     const user = userInfoRes.data;
 
-    await sendVerificationEmail(
-      {
-        id: user.id,
-        email: user.email,
-        name: user.first_name,
-      },
-      new URL(request.url).origin,
-    );
+    // Invalidamos cualquier token pendiente antes de emitir uno nuevo
+    // (igual patrón que "resend-invite" en usuarios/index.tsx).
+    await deleteManyAccountVerificationTokenDb({ user_id: user.id });
+
+    const verificationToken = generateSecureToken();
+    const hashedVerificationToken = await hashText(verificationToken);
+    await createAccountVerificationTokenDb({
+      user_id: user.id,
+      token: hashedVerificationToken,
+      expires_at: new Date(getDateGt().getTime() + 1000 * 60 * 60 * 8), // 8h
+      created_at: getDateGt(),
+    });
+
+    const verificationLink = `${new URL(request.url).origin}/verificar-cuenta?token=${verificationToken}`;
+    await sendVerificationEmail(user.email, verificationLink, user.first_name);
 
     return json({
       send_verification: true,

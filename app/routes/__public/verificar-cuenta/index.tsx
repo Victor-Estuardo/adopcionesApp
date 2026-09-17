@@ -3,7 +3,10 @@ import { useLoaderData, useNavigate } from "@remix-run/react";
 import { useEffect, useState } from "react";
 import { LuCircleCheck, LuCircleX } from "react-icons/lu";
 import { getUserDb, updateUserDb } from "~/services/db/user.service";
-import { verifyToken } from "~/utils/jwt.server";
+import {
+  deleteManyAccountVerificationTokenDb,
+  validateAccountVerificationToken,
+} from "~/services/db/accountVerificationToken.service";
 
 export const meta = () => {
   return [{ title: "Verificar cuenta" }];
@@ -23,24 +26,17 @@ export const loader: LoaderFunction = async ({ request }) => {
 
   try {
     // Verificar el token
-    const decoded = verifyToken(token);
+    const validation = await validateAccountVerificationToken(token);
 
-    if (!decoded || !decoded.userId) {
+    if (!validation.valid || !validation.userId) {
       return json({
         status: "error",
-        message: "Token inválido o expirado",
-      });
-    }
-
-    if (Date.now() > decoded.exp * 1000) {
-      return json({
-        status: "error",
-        message: "Token inválido o expirado",
+        message: validation.error || "Token inválido o expirado",
       });
     }
 
     // Obtener el usuario
-    const userRes = await getUserDb({ id: decoded.userId });
+    const userRes = await getUserDb({ id: validation.userId });
 
     if (!userRes.success || !userRes.data) {
       return json({
@@ -70,6 +66,9 @@ export const loader: LoaderFunction = async ({ request }) => {
         message: "Error al verificar la cuenta. Por favor, intenta nuevamente.",
       });
     }
+
+    // El token es de un solo uso: se borra al consumirse.
+    await deleteManyAccountVerificationTokenDb({ user_id: user.id });
 
     return json({
       status: "success",

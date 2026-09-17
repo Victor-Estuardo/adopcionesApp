@@ -97,6 +97,7 @@ Table user {
   needSupplies_needSupplies_creator_idTouser needSupplies [not null]
   needSupplies_needSupplies_updater_idTouser needSupplies [not null]
   passwordResetToken passwordResetToken [not null]
+  accountVerificationToken accountVerificationToken [not null]
   pet_pet_creator_idTouser pet [not null]
   pet_pet_updater_idTouser pet [not null]
   petSpecies_petSpecies_creator_idTouser petSpecies [not null]
@@ -134,6 +135,15 @@ Table permission_role {
 }
 
 Table passwordResetToken {
+  id String [pk]
+  token String [unique, not null]
+  user_id Int [not null]
+  expires_at DateTime [not null]
+  created_at DateTime [not null]
+  user user [not null]
+}
+
+Table accountVerificationToken {
   id String [pk]
   token String [unique, not null]
   user_id Int [not null]
@@ -396,6 +406,8 @@ Ref: permission_role.permission_id > permission.id
 Ref: permission_role.role_id > role.id
 
 Ref: passwordResetToken.user_id > user.id
+
+Ref: accountVerificationToken.user_id > user.id
 
 Ref: adoptionApplication.pet_id > pet.id
 
