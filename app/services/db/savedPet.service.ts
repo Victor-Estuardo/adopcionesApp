@@ -68,15 +68,19 @@ export const listSavedPetWithPetDb = async (
 
 /*==================================================| DELETE |==================================================*/
 /**
- * Función para eliminar información de guardado de una mascota
- * @param data Información de la mascota
- * @returns
+ * Función para eliminar información de guardado de una mascota. Usa
+ * `deleteMany` (en vez de `delete` por id) para poder exigir siempre el
+ * `user_id` del dueño junto al `id` — evita que un usuario borre el
+ * guardado de otro adivinando/reutilizando un id ajeno.
+ * @param where Filtro por id del guardado y user_id del dueño
+ * @returns cantidad de filas borradas (0 si el id no existe o no le pertenece)
  */
 export const deleteSavedPetDb = async (
-  where: Prisma.savedPetWhereUniqueInput,
-): Promise<PrismaUtilResponse<savedPet>> => {
+  where: Prisma.savedPetWhereInput,
+): Promise<PrismaUtilResponse<number>> => {
   return await handlePosiblePrismaError(async () => {
-    return prisma.savedPet.delete({ where });
+    const result = await prisma.savedPet.deleteMany({ where });
+    return result.count;
   });
 };
 

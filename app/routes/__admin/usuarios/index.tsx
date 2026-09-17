@@ -14,11 +14,11 @@ import {
 } from "~/services/db/passwordResetToken.service";
 import { listRolesDb, RoleWithPermissions } from "~/services/db/role.service";
 import {
+  AdminUserListItem,
   createUserDb,
   getUserDb,
   listUsersDb,
   updateUserDb,
-  UserWithRole,
 } from "~/services/db/user.service";
 import { sendSetPasswordEmail } from "~/services/mail/resend.service";
 import { getSession } from "~/services/sessions/sessions.service";
@@ -252,9 +252,9 @@ export default function () {
   const isSubmitting = fetcher.state !== "idle";
 
   // Usuarios y roles
-  const [users, setUsers] = useState<UserWithRole[]>([]);
+  const [users, setUsers] = useState<AdminUserListItem[]>([]);
   const [roles, setRoles] = useState<RoleWithPermissions[]>([]);
-  const [toggleTarget, setToggleTarget] = useState<UserWithRole | null>(null);
+  const [toggleTarget, setToggleTarget] = useState<AdminUserListItem | null>(null);
 
   // Datos de nuevo usuario
   const [firstName, setFirstName] = useState("");
@@ -380,7 +380,7 @@ export default function () {
             </tr>
           </thead>
           <tbody>
-            {users.map((user: UserWithRole) => (
+            {users.map((user: AdminUserListItem) => (
               <tr key={user.id} className="border-t border-gray-100">
                 <td className="px-5 py-3.5 text-gray-700 font-medium">
                   {user.first_name} {user.last_name}

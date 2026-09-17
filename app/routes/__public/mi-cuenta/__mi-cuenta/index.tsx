@@ -7,8 +7,10 @@ import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { countAdoptionApplicationDb } from "~/services/db/adoptionApplication.service";
 import { getSession } from "~/services/sessions/sessions.service";
 import { countSavedpetDb } from "~/services/db/savedPet.service";
-import { getUserDb } from "~/services/db/user.service";
-import { user } from "@prisma/client";
+import {
+  getOwnProfileUserDb,
+  OwnProfileUser,
+} from "~/services/db/user.service";
 import { validatePermission } from "~/utils/common";
 
 export const meta = () => {
@@ -66,7 +68,7 @@ export const action: ActionFunction = async ({ request }) => {
     }
 
     // Obtenemos la información del usuario
-    const userInfoRes = await getUserDb({ id: dbUserId });
+    const userInfoRes = await getOwnProfileUserDb({ id: dbUserId });
 
     if (!userInfoRes.success) {
       return json({
@@ -109,7 +111,7 @@ export default function () {
   const [countSavedPet, setCountSavedPet] = useState(0);
 
   // Usuario
-  const [user, setUser] = useState<user | null>(null);
+  const [user, setUser] = useState<OwnProfileUser | null>(null);
 
   // Datos del usuario
   const initials = routeData.initials || "";

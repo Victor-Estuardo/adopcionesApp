@@ -1,4 +1,3 @@
-import { user } from "@prisma/client";
 import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
 import {
   useFetcher,
@@ -15,7 +14,12 @@ import {
   createPasswordResetTokenDb,
   deleteManyPasswordResetTokenDb,
 } from "~/services/db/passwordResetToken.service";
-import { getUserDb, updateUserDb } from "~/services/db/user.service";
+import {
+  getOwnProfileUserDb,
+  getUserDb,
+  OwnProfileUser,
+  updateUserDb,
+} from "~/services/db/user.service";
 import { sendPasswordResetEmail } from "~/services/mail/resend.service";
 import {
   commitSession,
@@ -58,7 +62,7 @@ export const action: ActionFunction = async ({ request }) => {
 
   if (action === "loadInformation") {
     // Obtenemos la información del usuario
-    const userInfoRes = await getUserDb({ id: dbUserId });
+    const userInfoRes = await getOwnProfileUserDb({ id: dbUserId });
 
     if (!userInfoRes.success) {
       return json({
@@ -195,7 +199,7 @@ export default function () {
   const fetcher = useFetcher();
 
   // usuario
-  const [user, setUser] = useState<user | null>(null);
+  const [user, setUser] = useState<OwnProfileUser | null>(null);
   const initials = routeData.initials || "";
   const profile = routeData.profile;
 
@@ -237,7 +241,7 @@ export default function () {
     }
 
     if (fetcher.data?.user) {
-      const tempUser: user = fetcher.data?.user;
+      const tempUser: OwnProfileUser = fetcher.data?.user;
 
       setUser(tempUser);
       setFirstName(tempUser.first_name);

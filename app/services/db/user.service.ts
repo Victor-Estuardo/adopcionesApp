@@ -9,7 +9,23 @@ export type EssentialInfoUser = {
   phone: string | null;
 };
 
-export type UserWithRole = user & { role: role };
+/** Datos de usuario seguros para exponer al propio usuario (sin `password`). */
+export type OwnProfileUser = Pick<
+  user,
+  | "id"
+  | "first_name"
+  | "last_name"
+  | "email"
+  | "phone"
+  | "registration_date"
+  | "it_is_verified"
+>;
+
+/** Usuario administrativo + su rol, sin `password`, para listados en el panel. */
+export type AdminUserListItem = Pick<
+  user,
+  "id" | "first_name" | "last_name" | "email" | "active" | "it_is_verified"
+> & { role: Pick<role, "name"> };
 
 /*==================================================| CREATE |==================================================*/
 /**
@@ -72,20 +88,54 @@ export const getEssentialUserDb = async (
   });
 };
 
+/*--------------------------------------------------------------------------------------------------------*/
+/**
+ * Función para obtener los datos propios de un usuario (para mostrar a
+ * él mismo en "Mi cuenta"), sin exponer el hash de la contraseña.
+ * @param where Información del usuario
+ * @returns usuario
+ */
+export const getOwnProfileUserDb = async (
+  where?: Prisma.userWhereInput,
+): Promise<PrismaUtilResponse<OwnProfileUser | null>> => {
+  return await handlePosiblePrismaError(async () => {
+    return prisma.user.findFirst({
+      where,
+      select: {
+        id: true,
+        first_name: true,
+        last_name: true,
+        email: true,
+        phone: true,
+        registration_date: true,
+        it_is_verified: true,
+      },
+    });
+  });
+};
+
 /*==================================================| LIST |==================================================*/
 /**
  * Función para listar usuarios administrativos (excluye adoptantes)
  * @param where Objeto que contiene los filtros a aplicar a la query
- * @returns Lista de usuarios con su rol
+ * @returns Lista de usuarios con su rol, sin exponer el hash de la contraseña
  */
 export const listUsersDb = async (
   where?: Prisma.userWhereInput,
-): Promise<PrismaUtilResponse<UserWithRole[]>> => {
+): Promise<PrismaUtilResponse<AdminUserListItem[]>> => {
   return await handlePosiblePrismaError(async () => {
     return prisma.user.findMany({
       where: { ...where, role: { its_administrative: true } },
       orderBy: { registration_date: "desc" },
-      include: { role: true },
+      select: {
+        id: true,
+        first_name: true,
+        last_name: true,
+        email: true,
+        active: true,
+        it_is_verified: true,
+        role: { select: { name: true } },
+      },
     });
   });
 };
