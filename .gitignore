@@ -10,3 +10,4 @@ node_modules
 # Mockups y respaldos locales (no se suben al repo)
 /mockup
 /prisma/backup
+/auditoria_seguridad_rutas.md
