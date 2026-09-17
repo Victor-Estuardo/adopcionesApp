@@ -44,6 +44,9 @@ export const action: ActionFunction = async ({ request }) => {
   const { action, payload } = Object.fromEntries(formData);
 
   if (action === "loadInformation") {
+    const validateRequest = validatePermission(session, 11, "Leer");
+    if (validateRequest) throw validateRequest;
+
     const [rolesRes, modulesRes] = await Promise.all([
       listRolesDb({ its_administrative: true }),
       listModulesWithPermissionsDb({

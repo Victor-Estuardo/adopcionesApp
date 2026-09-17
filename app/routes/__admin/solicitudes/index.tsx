@@ -37,11 +37,17 @@ export const loader: LoaderFunction = async ({ request }) => {
 
 /*==============================| Action Function |==============================*/
 export const action: ActionFunction = async ({ request }) => {
+  const cookie = request.headers.get("cookie");
+  const session = await getSession(cookie);
+
   //=============| Datos del POST |==============================//
   const formData = await request.formData();
   const { action, payload } = Object.fromEntries(formData);
 
   if (action === "loadInformation") {
+    const validateRequest = validatePermission(session, 10, "Leer");
+    if (validateRequest) throw validateRequest;
+
     let data: {
       q: string;
       page: string;

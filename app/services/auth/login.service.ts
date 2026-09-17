@@ -74,6 +74,14 @@ export async function loginWebApp(
     };
   }
 
+  // Si la cuenta fue desactivada por un administrador, se bloquea el acceso
+  if (!userInfo.active) {
+    return {
+      sucess: false,
+      errorMsg: "Tu cuenta ha sido desactivada. Contacta a un administrador.",
+    };
+  }
+
   // Si no se ha verificado la cuenta se solicita
   if (!userInfo.it_is_verified) {
     return {
