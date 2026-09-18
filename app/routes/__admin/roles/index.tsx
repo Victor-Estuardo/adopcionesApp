@@ -10,15 +10,23 @@ import {
   listModulesWithPermissionsDb,
   ModuleWithPermissions,
 } from "~/services/db/module.service";
-import { syncPermissionRoleDb } from "~/services/db/permission_role.service";
+import {
+  getPermissionsByIdsDb,
+  syncPermissionRoleDb,
+} from "~/services/db/permission_role.service";
 import {
   createRoleDb,
+  getRoleByIdDb,
+  getRoleByNameDb,
   listRolesDb,
   RoleWithPermissions,
   updateRoleDb,
 } from "~/services/db/role.service";
 import { getSession } from "~/services/sessions/sessions.service";
 import { validatePermission } from "~/utils/common";
+import { PermissionSession } from "~/services/auth/login.service";
+import { listUserIdsByRoleDb } from "~/services/db/user.service";
+import { revokeSessionsForUsersDb } from "~/services/db/session.service";
 
 export const meta = () => {
   return [{ title: "ROLES" }];
@@ -85,8 +93,55 @@ export const action: ActionFunction = async ({ request }) => {
     const description = data.description || null;
     const permissionIds = data.permission_ids;
 
+    // Los roles del sistema (Administrador, Adoptante) no se pueden editar
+    if (id) {
+      const currentRoleRes = await getRoleByIdDb(Number(id));
+      if (!currentRoleRes.success) {
+        return json({ errorMsg: "Ocurrió un error al validar el rol" });
+      }
+      if (currentRoleRes.data?.is_system) {
+        return json({
+          errorMsg: "Este es un rol del sistema y no puede modificarse",
+        });
+      }
+    }
+
     if (!name) {
       return json({ errorMsg: "El nombre del rol es obligatorio" });
+    }
+
+    const duplicateRes = await getRoleByNameDb(name, id ? Number(id) : undefined);
+    if (!duplicateRes.success) {
+      return json({ errorMsg: "Ocurrió un error al validar el nombre del rol" });
+    }
+    if (duplicateRes.data) {
+      return json({ errorMsg: "Ya existe un rol con ese nombre" });
+    }
+
+    // Evitamos que un usuario asigne a un rol permisos que él mismo no posee
+    if (permissionIds.length > 0) {
+      const requestedPermissionsRes = await getPermissionsByIdsDb(permissionIds);
+      if (!requestedPermissionsRes.success) {
+        return json({ errorMsg: "Ocurrió un error al validar los permisos" });
+      }
+
+      const ownPermissions: PermissionSession[] =
+        session.get("permissions") || [];
+      const hasOwnPermission = (module_id: number, action: string) =>
+        ownPermissions.some(
+          (p) => p.module_id === module_id && p.action === action,
+        );
+
+      const disallowed = requestedPermissionsRes.data.filter(
+        (p) => !hasOwnPermission(p.module_id, p.action),
+      );
+
+      if (disallowed.length > 0) {
+        return json({
+          errorMsg:
+            "No puedes asignar permisos que tú mismo no posees",
+        });
+      }
     }
 
     let roleId: number;
@@ -144,11 +199,31 @@ export const action: ActionFunction = async ({ request }) => {
     const id = Number(datos.id);
     const active = datos.active;
 
+    // Los roles del sistema (Administrador, Adoptante) no se pueden desactivar
+    const currentRoleRes = await getRoleByIdDb(id);
+    if (!currentRoleRes.success) {
+      return json({ errorMsg: "Ocurrió un error al validar el rol" });
+    }
+    if (currentRoleRes.data?.is_system) {
+      return json({
+        errorMsg: "Este es un rol del sistema y no puede desactivarse",
+      });
+    }
+
     const updateRes = await updateRoleDb(id, { active });
     if (!updateRes.success) {
       return json({
         errorMsg: "Ocurrió un error al actualizar el estado del rol",
       });
+    }
+
+    // Al desactivar un rol, cerramos la sesión de los usuarios que ya lo
+    // tienen asignado para que no conserven acceso hasta que expire sola
+    if (!active) {
+      const userIdsRes = await listUserIdsByRoleDb(id);
+      if (userIdsRes.success) {
+        await revokeSessionsForUsersDb(userIdsRes.data);
+      }
     }
 
     return json({ updated_status: updateRes.data.id });
@@ -345,6 +420,14 @@ export default function () {
                 >
                   {role.active ? "Activo" : "Inactivo"}
                 </span>
+                {role.is_system && (
+                  <span
+                    className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-600"
+                    title="Este rol es necesario para el funcionamiento del sistema y no puede editarse ni desactivarse"
+                  >
+                    Rol del sistema
+                  </span>
+                )}
               </div>
               {role.description && (
                 <p className="text-sm text-gray-400 truncate">
@@ -360,23 +443,34 @@ export default function () {
             </div>
 
             <div className="flex items-center gap-2 flex-shrink-0">
-              <button
-                onClick={() => openEdit(role)}
-                className="px-4 py-2 rounded-lg border border-[#52C9BB] text-sm font-medium text-[#52C9BB] hover:bg-[#52C9BB]/5 transition-colors"
-              >
-                Editar
-              </button>
-              <button
-                onClick={() => toggleActive(role)}
-                disabled={isSubmitting}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${
-                  role.active
-                    ? "border border-[#F2768C] text-[#F2768C] hover:bg-[#F2768C]/5"
-                    : "bg-[#52C9BB] text-white hover:bg-[#52C9BB]/90"
-                }`}
-              >
-                {role.active ? "Desactivar" : "Activar"}
-              </button>
+              {role.is_system ? (
+                <span
+                  className="px-4 py-2 text-xs text-gray-400"
+                  title="Los roles del sistema no pueden editarse ni desactivarse"
+                >
+                  No editable
+                </span>
+              ) : (
+                <>
+                  <button
+                    onClick={() => openEdit(role)}
+                    className="px-4 py-2 rounded-lg border border-[#52C9BB] text-sm font-medium text-[#52C9BB] hover:bg-[#52C9BB]/5 transition-colors"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    onClick={() => toggleActive(role)}
+                    disabled={isSubmitting}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${
+                      role.active
+                        ? "border border-[#F2768C] text-[#F2768C] hover:bg-[#F2768C]/5"
+                        : "bg-[#52C9BB] text-white hover:bg-[#52C9BB]/90"
+                    }`}
+                  >
+                    {role.active ? "Desactivar" : "Activar"}
+                  </button>
+                </>
+              )}
             </div>
           </div>
         ))}

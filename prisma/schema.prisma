@@ -84,6 +84,7 @@ model role {
   active             Boolean?          @default(true)
   created_in         DateTime          @db.Timestamp(6)
   its_administrative Boolean           @default(false)
+  is_system          Boolean           @default(false)
   permission_role    permission_role[]
   user               user[]
 }

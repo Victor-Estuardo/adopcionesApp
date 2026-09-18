@@ -24,7 +24,13 @@ export type OwnProfileUser = Pick<
 /** Usuario administrativo + su rol, sin `password`, para listados en el panel. */
 export type AdminUserListItem = Pick<
   user,
-  "id" | "first_name" | "last_name" | "email" | "active" | "it_is_verified"
+  | "id"
+  | "first_name"
+  | "last_name"
+  | "email"
+  | "active"
+  | "it_is_verified"
+  | "role_id"
 > & { role: Pick<role, "name"> };
 
 /*==================================================| CREATE |==================================================*/
@@ -116,6 +122,24 @@ export const getOwnProfileUserDb = async (
 
 /*==================================================| LIST |==================================================*/
 /**
+ * Función para obtener los ids de los usuarios que tienen asignado un rol específico
+ * @param roleId Id del rol
+ * @returns Ids de los usuarios con ese rol
+ */
+export const listUserIdsByRoleDb = async (
+  roleId: number,
+): Promise<PrismaUtilResponse<number[]>> => {
+  return await handlePosiblePrismaError(async () => {
+    const users = await prisma.user.findMany({
+      where: { role_id: roleId },
+      select: { id: true },
+    });
+    return users.map((u) => u.id);
+  });
+};
+
+/*==================================================| LIST |==================================================*/
+/**
  * Función para listar usuarios administrativos (excluye adoptantes)
  * @param where Objeto que contiene los filtros a aplicar a la query
  * @returns Lista de usuarios con su rol, sin exponer el hash de la contraseña
@@ -134,6 +158,7 @@ export const listUsersDb = async (
         email: true,
         active: true,
         it_is_verified: true,
+        role_id: true,
         role: { select: { name: true } },
       },
     });

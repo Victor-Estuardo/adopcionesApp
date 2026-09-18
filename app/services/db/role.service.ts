@@ -25,6 +25,27 @@ export const getRoleByIdDb = async (
 
 /*==================================================| LIST |==================================================*/
 /**
+ * Función para verificar si ya existe un rol con el nombre indicado (sin distinguir mayúsculas/minúsculas)
+ * @param name Nombre a verificar
+ * @param excludeId ID de rol a excluir de la búsqueda (para permitir renombrar un rol a su propio nombre)
+ * @returns El rol encontrado, si existe
+ */
+export const getRoleByNameDb = async (
+  name: string,
+  excludeId?: number,
+): Promise<PrismaUtilResponse<role | null>> => {
+  return await handlePosiblePrismaError(async () => {
+    return prisma.role.findFirst({
+      where: {
+        name: { equals: name, mode: "insensitive" },
+        ...(excludeId ? { id: { not: excludeId } } : {}),
+      },
+    });
+  });
+};
+
+/*==================================================| LIST |==================================================*/
+/**
  * Función para listar roles con sus permisos asignados y conteo de usuarios
  * @param where Objeto que contiene los filtros a aplicar a la query
  * @returns Lista de roles

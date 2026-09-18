@@ -72,6 +72,7 @@ Table role {
   active Boolean [default: true]
   created_in DateTime [not null]
   its_administrative Boolean [not null, default: false]
+  is_system Boolean [not null, default: false]
   permission_role permission_role [not null]
   user user [not null]
 }

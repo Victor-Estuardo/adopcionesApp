@@ -21,6 +21,7 @@ import {
   updateUserDb,
 } from "~/services/db/user.service";
 import { sendSetPasswordEmail } from "~/services/mail/resend.service";
+import { revokeSessionsForUsersDb } from "~/services/db/session.service";
 import { getSession } from "~/services/sessions/sessions.service";
 import { getDateGt, validatePermission } from "~/utils/common";
 import { generateSecureToken, hashText } from "~/utils/crypto.server";
@@ -247,6 +248,78 @@ export const action: ActionFunction = async ({ request }) => {
     return json({ updated_status: updateRes.data.id });
   }
 
+  if (action === "update-role") {
+    const validateRequest = validatePermission(session, 12, "Actualizar");
+    if (validateRequest) throw validateRequest;
+
+    const { id, role_id }: { id: number; role_id: string } = JSON.parse(
+      (payload as string | null) || "{}",
+    );
+
+    const targetId = Number(id);
+    const currentUserId = Number(session.get("dbUserId"));
+
+    if (targetId === currentUserId) {
+      return json({ errorMsg: "No puedes cambiar tu propio rol." });
+    }
+
+    if (!role_id) {
+      return json({ errorMsg: "Selecciona un rol válido" });
+    }
+
+    // Solo se permite asignar un rol administrativo activo — mismo catálogo
+    // que en la creación de usuarios
+    const validRoleRes = await listRolesDb({
+      id: Number(role_id),
+      its_administrative: true,
+      active: true,
+    });
+
+    if (!validRoleRes.success || validRoleRes.data.length === 0) {
+      return json({ errorMsg: "El rol seleccionado no es válido" });
+    }
+
+    // Evitamos que se le asigne a otro usuario un rol con permisos que el
+    // propio admin que hace el cambio no posee (misma protección que al
+    // editar un rol, para que no se pueda dar la vuelta al chequeo de ahí
+    // reasignando en vez de editando)
+    const targetRole = validRoleRes.data[0];
+    const ownPermissions: PermissionSession[] = session.get("permissions") || [];
+    const hasOwnPermission = (module_id: number, action: string) =>
+      ownPermissions.some(
+        (p) => p.module_id === module_id && p.action === action,
+      );
+
+    const disallowed = targetRole.permission_role.filter(
+      (pr) => !hasOwnPermission(pr.permission.module_id, pr.permission.action),
+    );
+
+    if (disallowed.length > 0) {
+      return json({
+        errorMsg: "No puedes asignar un rol con permisos que tú mismo no posees",
+      });
+    }
+
+    const updateRes = await updateUserDb(targetId, {
+      role_id: Number(role_id),
+    });
+    if (!updateRes.success) {
+      return json({
+        errorMsg: "Ocurrió un error al actualizar el rol del usuario",
+      });
+    }
+
+    // El rol cambió: revocamos su sesión activa para que el nuevo conjunto
+    // de permisos aplique de inmediato, no hasta que expire sola
+    await revokeSessionsForUsersDb([targetId]);
+
+    return json({
+      updated_role_user: updateRes.data.id,
+      new_role_id: Number(role_id),
+      new_role_name: targetRole.name,
+    });
+  }
+
   return json({
     errorMsg: "Ocurrió un error al cargar la pagina",
   });
@@ -267,6 +340,9 @@ export default function () {
   const [users, setUsers] = useState<AdminUserListItem[]>([]);
   const [roles, setRoles] = useState<RoleWithPermissions[]>([]);
   const [toggleTarget, setToggleTarget] = useState<AdminUserListItem | null>(null);
+  const [roleChangeTarget, setRoleChangeTarget] =
+    useState<AdminUserListItem | null>(null);
+  const [newRoleId, setNewRoleId] = useState("");
 
   // Datos de nuevo usuario
   const [firstName, setFirstName] = useState("");
@@ -296,6 +372,7 @@ export default function () {
       toast.error(fetcher.data.errorMsg);
       setPanelOpen(false);
       setToggleTarget(null);
+      setRoleChangeTarget(null);
     }
 
     if (fetcher.data?.allowedCreate) {
@@ -329,6 +406,25 @@ export default function () {
       );
       setToggleTarget(null);
     }
+
+    if (fetcher.data?.updated_role_user) {
+      const id = fetcher.data.updated_role_user;
+      const updatedRoleId = fetcher.data.new_role_id;
+      const updatedRoleName = fetcher.data.new_role_name;
+      toast.success("Rol actualizado correctamente");
+      setUsers((prev) =>
+        prev.map((row) =>
+          row.id === id
+            ? {
+                ...row,
+                role_id: updatedRoleId,
+                role: { name: updatedRoleName },
+              }
+            : row,
+        ),
+      );
+      setRoleChangeTarget(null);
+    }
   }, [fetcher.data]);
 
   /*------------------------------FUNCIONES------------------------------*/
@@ -340,6 +436,20 @@ export default function () {
         payload: JSON.stringify({
           id: toggleTarget.id,
           active: !toggleTarget.active,
+        }),
+      },
+      { method: "post" },
+    );
+  };
+
+  const confirmRoleChange = () => {
+    if (!roleChangeTarget || !newRoleId) return;
+    fetcher.submit(
+      {
+        action: "update-role",
+        payload: JSON.stringify({
+          id: roleChangeTarget.id,
+          role_id: newRoleId,
         }),
       },
       { method: "post" },
@@ -399,9 +509,23 @@ export default function () {
                 </td>
                 <td className="px-5 py-3.5 text-gray-500">{user.email}</td>
                 <td className="px-5 py-3.5">
-                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[#4674EA]/10 text-[#4674EA]">
-                    {user.role.name}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[#4674EA]/10 text-[#4674EA]">
+                      {user.role.name}
+                    </span>
+                    {user.id !== dbUserId && (
+                      <button
+                        onClick={() => {
+                          setRoleChangeTarget(user);
+                          setNewRoleId(String(user.role_id));
+                        }}
+                        disabled={isSubmitting}
+                        className="text-xs font-medium text-gray-400 hover:text-[#4674EA] disabled:opacity-50"
+                      >
+                        Cambiar
+                      </button>
+                    )}
+                  </div>
                 </td>
                 <td className="px-5 py-3.5">
                   <span
@@ -616,6 +740,59 @@ export default function () {
               ? `¿Desactivar a "${toggleTarget.first_name} ${toggleTarget.last_name}"? No podrá iniciar sesión hasta que se reactive su cuenta.`
               : `¿Activar a "${toggleTarget.first_name} ${toggleTarget.last_name}"? Podrá volver a iniciar sesión con su contraseña actual.`}
           </p>
+        </Modal>
+      )}
+
+      {/* ── Modal de cambio de rol ── */}
+      {roleChangeTarget && (
+        <Modal
+          open
+          onClose={() => setRoleChangeTarget(null)}
+          title="Cambiar rol"
+          footer={
+            <>
+              <button
+                type="button"
+                onClick={() => setRoleChangeTarget(null)}
+                disabled={isSubmitting}
+                className="flex-1 rounded-lg border border-gray-200 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={confirmRoleChange}
+                disabled={
+                  isSubmitting ||
+                  !newRoleId ||
+                  Number(newRoleId) === roleChangeTarget.role_id
+                }
+                className="flex-1 rounded-lg py-2 text-sm font-semibold text-white bg-[#52C9BB] hover:bg-[#52C9BB]/90 disabled:opacity-60"
+              >
+                {isSubmitting ? "Guardando…" : "Guardar"}
+              </button>
+            </>
+          }
+        >
+          <p className="text-sm text-gray-600 mb-3">
+            Cambiar el rol de "{roleChangeTarget.first_name}{" "}
+            {roleChangeTarget.last_name}". Si tiene una sesión activa, se
+            cerrará para que el nuevo rol aplique de inmediato.
+          </p>
+          <Select
+            id="new_role_id"
+            name="new_role_id"
+            className="w-full"
+            value={newRoleId}
+            onChange={(e) => setNewRoleId(e.target.value)}
+          >
+            <option value="">Selecciona un rol</option>
+            {roles.map((r: { id: number; name: string }) => (
+              <option key={r.id} value={r.id}>
+                {r.name}
+              </option>
+            ))}
+          </Select>
         </Modal>
       )}
     </div>

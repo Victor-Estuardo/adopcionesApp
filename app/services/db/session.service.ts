@@ -97,3 +97,25 @@ export async function deleteExpiredSessionsDb(): Promise<
     return result.count;
   });
 }
+
+/**
+ * Revoca (borra) las sesiones activas que pertenecen a alguno de los ids de
+ * usuario indicados — usado al desactivar un usuario o el rol que tiene
+ * asignado, para que no conserve acceso hasta que la sesión expire por sí
+ * sola. El id de usuario se busca dentro del JSON de la sesión (`dbUserId`),
+ * ya que la tabla `session` no tiene una columna propia para eso.
+ * @param userIds Ids de usuario cuyas sesiones deben revocarse
+ * @returns Cantidad de sesiones borradas
+ */
+export async function revokeSessionsForUsersDb(
+  userIds: number[],
+): Promise<PrismaUtilResponse<number>> {
+  return await handlePosiblePrismaError(async () => {
+    if (userIds.length === 0) return 0;
+    const result = await prisma.$executeRaw`
+      DELETE FROM "session"
+      WHERE (data->>'dbUserId')::int = ANY(${userIds})
+    `;
+    return result;
+  });
+}

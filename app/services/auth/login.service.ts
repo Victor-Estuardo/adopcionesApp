@@ -107,6 +107,15 @@ export async function loginWebApp(
   }
 
   const roleInfo = roleInfoRes.data;
+
+  // Si el rol asignado al usuario fue desactivado, se bloquea el acceso
+  if (!roleInfo || !roleInfo.active) {
+    return {
+      sucess: false,
+      errorMsg: "Tu cuenta ha sido desactivada. Contacta a un administrador.",
+    };
+  }
+
   const permissionRoleList = permissionRoleListRes.data;
   const permissionList = permissionRoleList
     .map((p) => p.permission)

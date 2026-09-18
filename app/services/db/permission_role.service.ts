@@ -24,6 +24,21 @@ export const listPermissionRoleDb = async (
   });
 };
 
+/*==================================================| LIST |==================================================*/
+/**
+ * Función para obtener permisos (con su módulo y acción) a partir de una lista de ids
+ * @param ids Ids de permisos a obtener
+ * @returns Lista de permisos encontrados
+ */
+export const getPermissionsByIdsDb = async (
+  ids: number[],
+): Promise<PrismaUtilResponse<permission[]>> => {
+  return await handlePosiblePrismaError(async () => {
+    if (ids.length === 0) return [];
+    return prisma.permission.findMany({ where: { id: { in: ids } } });
+  });
+};
+
 /*==================================================| SYNC |==================================================*/
 /**
  * Función para sincronizar los permisos de un rol: elimina los actuales y crea los nuevos

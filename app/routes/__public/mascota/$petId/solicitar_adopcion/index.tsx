@@ -12,12 +12,10 @@ import AdoptionForm, { FormQuestion } from "~/components/Form/adoption";
 import { getPetDb, Pet } from "~/services/db/pet.service";
 import { listFormQuestionDb } from "~/services/db/formQuestion.service";
 import {
-  createAdoptionApplicationDb,
   getAdoptionApplicationDb,
+  submitAdoptionApplicationDb,
 } from "~/services/db/adoptionApplication.service";
-import { createApplicationAnswersDb } from "~/services/db/applicationAnswer.service";
 import { toast } from "sonner";
-import { createcommitmentAgreementDb } from "~/services/db/commitmentAgreement.service";
 import { validatePermission } from "~/utils/common";
 import { getPetStatusConfig } from "~/utils/pet-helpers";
 import { enforceRateLimits, getClientIp } from "~/utils/rateLimit.server";
@@ -145,65 +143,74 @@ export const action: ActionFunction = async ({ request, params }) => {
 
   const questions = getQuestionsResponse.data;
 
-  // Crear la solicitud de adopción
-  const createApplicationRes = await createAdoptionApplicationDb({
-    pet_id: Number(petId),
-    user_id: dbUserId,
-    status: "pendiente",
-    submitted_at: new Date(),
-    updated_at: new Date(),
-  });
-
-  if (!createApplicationRes.success) {
-    return json({
-      errorMsg:
-        "Ocurrió un error al crear la solicitud, por favor intente nuevamente",
-    });
-  }
-
-  const application = createApplicationRes.data;
-
-  // Guardar respuestas
+  // Armamos las respuestas recibidas
   const answersData = questions
     .map((q) => {
       const raw = formData.getAll(`answer_${q.id}`);
       const value = raw.length > 1 ? raw.join(", ") : raw[0] ?? "";
       return {
-        application_id: application.id,
         question_id: q.id,
         answer_value: value.toString(),
       };
     })
     .filter((a) => a.answer_value !== "");
 
-  const createAnswersRes = await createApplicationAnswersDb(answersData);
+  // El formulario debe estar completo: toda pregunta obligatoria necesita
+  // una respuesta no vacía antes de aceptar el envío (antes solo se
+  // validaba en el cliente, un POST directo podía saltárselo)
+  const answeredQuestionIds = new Set(answersData.map((a) => a.question_id));
+  const missingRequired = questions.some(
+    (q) => q.required && !answeredQuestionIds.has(q.id),
+  );
+  if (missingRequired) {
+    return json({
+      errorMsg: "Debes completar todas las preguntas obligatorias del formulario",
+    });
+  }
 
-  if (!createAnswersRes.success) {
+  // La carta de compromiso debe estar aceptada para poder enviar la
+  // solicitud (antes el servidor la creaba igual aunque "agreed" viniera
+  // en false, dejando la solicitud "enviada" sin firma)
+  const agreed = formData.get("agreed") === "true";
+  if (!agreed) {
+    return json({
+      errorMsg: "Debes aceptar la carta de compromiso para enviar la solicitud",
+    });
+  }
+
+  const ip =
+    request.headers.get("x-forwarded-for") ??
+    request.headers.get("x-real-ip") ??
+    "unknown";
+
+  // Solicitud + respuestas + carta de compromiso se crean en una sola
+  // transacción: si algo falla, no queda ningún registro huérfano
+  const submitRes = await submitAdoptionApplicationDb(
+    {
+      pet_id: Number(petId),
+      user_id: dbUserId,
+      status: "pendiente",
+      submitted_at: new Date(),
+      updated_at: new Date(),
+    },
+    answersData,
+    {
+      agreement_text: formData.get("agreementText")?.toString() ?? "",
+      accepted: true,
+      ip_address: ip,
+      signed_at: new Date(),
+    },
+  );
+
+  if (!submitRes.success) {
     return json({
       errorMsg:
         "Ocurrió un error al crear la solicitud, por favor intente nuevamente",
     });
   }
 
-  // Guardar carta de compromiso
-  const agreed = formData.get("agreed") === "true";
-  if (agreed) {
-    const ip =
-      request.headers.get("x-forwarded-for") ??
-      request.headers.get("x-real-ip") ??
-      "unknown";
-
-    await createcommitmentAgreementDb({
-      application_id: application.id,
-      agreement_text: formData.get("agreementText")?.toString() ?? "",
-      accepted: true,
-      ip_address: ip,
-      signed_at: new Date(),
-    });
-  }
-
   return json({
-    answers_success: application.id,
+    answers_success: submitRes.data.id,
   });
 };
 

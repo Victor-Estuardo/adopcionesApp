@@ -28,15 +28,40 @@ export type ListApplicationWithPet = adoptionApplication & {
 
 /*==================================================| CREATE |==================================================*/
 /**
- * Función para crear una nueva aplicación a adopción
- * @param data Información de la aplicación
- * @returns
+ * Función para crear una solicitud de adopción completa (solicitud + respuestas
+ * del formulario + carta de compromiso) en una sola transacción — si falla
+ * cualquiera de las tres, no queda ningún registro huérfano.
+ * @param application Datos de la solicitud
+ * @param answers Respuestas del formulario (ya sin el application_id, se completa en la transacción)
+ * @param commitment Datos de la carta de compromiso a firmar
+ * @returns La solicitud creada
  */
-export const createAdoptionApplicationDb = async (
-  data: Prisma.adoptionApplicationUncheckedCreateInput,
+export const submitAdoptionApplicationDb = async (
+  application: Omit<Prisma.adoptionApplicationUncheckedCreateInput, "id">,
+  answers: Omit<Prisma.applicationAnswerUncheckedCreateInput, "application_id">[],
+  commitment: Omit<Prisma.commitmentAgreementUncheckedCreateInput, "application_id">,
 ): Promise<PrismaUtilResponse<adoptionApplication>> => {
   return await handlePosiblePrismaError(async () => {
-    return prisma.adoptionApplication.create({ data });
+    return prisma.$transaction(async (tx) => {
+      const createdApplication = await tx.adoptionApplication.create({
+        data: application,
+      });
+
+      if (answers.length > 0) {
+        await tx.applicationAnswer.createMany({
+          data: answers.map((a) => ({
+            ...a,
+            application_id: createdApplication.id,
+          })),
+        });
+      }
+
+      await tx.commitmentAgreement.create({
+        data: { ...commitment, application_id: createdApplication.id },
+      });
+
+      return createdApplication;
+    });
   });
 };
 
