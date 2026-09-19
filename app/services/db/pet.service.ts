@@ -11,19 +11,6 @@ export type PetWithImage = Pet & {
 };
 
 /*==================================================| CREATE |==================================================*/
-/**
- * Función para crear una nueva mascota
- * @param data Información de la mascota
- * @returns
- */
-export const createPetDb = async (
-  data: Prisma.petUncheckedCreateInput,
-): Promise<PrismaUtilResponse<pet>> => {
-  return await handlePosiblePrismaError(async () => {
-    return prisma.pet.create({ data });
-  });
-};
-
 /*==================================================| LIST |==================================================*/
 /**
  * Función para obtener la lista de mascotas con sus imagenes

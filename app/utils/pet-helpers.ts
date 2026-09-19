@@ -12,6 +12,12 @@ const SPECIES_PALETTE = [
   { bg: "bg-[#E3EFDD]", text: "text-[#4C7A38]", dot: "bg-[#7CB35C]" }, // verde
 ] as const;
 
+// `pet.size` es un String libre en el schema, pero el formulario solo ofrece
+// estas 3 opciones — se centraliza aquí para reusar tanto en la UI (select)
+// como en la validación server-side al crear/editar una mascota.
+export const PET_SIZE_OPTIONS = ["Pequeño", "Mediano", "Grande"] as const;
+export type PetSize = (typeof PET_SIZE_OPTIONS)[number];
+
 export function getSpeciesAccent(speciesName: string) {
   let hash = 0;
   for (let i = 0; i < speciesName.length; i++) {

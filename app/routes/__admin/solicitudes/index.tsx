@@ -107,7 +107,7 @@ export const action: ActionFunction = async ({ request }) => {
     return json({
       applications: applicationsRes.data,
       totalPages: Math.ceil(totalAppsResponse.data / limit),
-      totalApps: applicationsRes.data.length,
+      totalApps: totalAppsResponse.data,
       cloudName: config.cloudinaryCloudName,
       species: speciesResponse.data,
     });
@@ -166,7 +166,7 @@ export default function () {
 
     if (fetcher.data?.applications) {
       setApplications(fetcher.data.applications);
-      setTotalPages(fetcher.data?.applications || 0);
+      setTotalPages(fetcher.data?.totalPages || 0);
       setTotalApps(fetcher.data?.totalApps || 0);
       setIsLoadingApps(false);
     }

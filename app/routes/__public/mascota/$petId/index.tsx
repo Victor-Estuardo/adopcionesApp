@@ -4,9 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import Carousel from "~/components/Carousel";
 import { getPetWithImagesDb, PetWithImage } from "~/services/db/pet.service";
 import { FaChevronLeft, FaMapPin, FaRegHeart } from "react-icons/fa";
-import { PiGenderIntersexBold } from "react-icons/pi";
+import { IoFemaleOutline, IoMaleOutline } from "react-icons/io5";
 import { LiaBirthdayCakeSolid } from "react-icons/lia";
-import { calculateAge } from "~/utils/common";
+import { calculateAge, validatePermission } from "~/utils/common";
 import { FaHeart } from "react-icons/fa";
 import { GrStatusGoodSmall } from "react-icons/gr";
 import { getSession } from "~/services/sessions/sessions.service";
@@ -81,6 +81,16 @@ export const action: ActionFunction = async ({ request, params }) => {
   }
 
   if (action === "savedPet") {
+    // Solo un usuario autenticado con permiso "Guardar" puede guardar mascotas
+    const validateRequest = validatePermission(session, 1, "Guardar");
+    if (validateRequest) throw validateRequest;
+    if (!dbUserId) {
+      throw new Response(
+        "No cuenta con los permisos necesarios para ejecutar la acción",
+        { status: 404 },
+      );
+    }
+
     // Guardamos la mascota para el usuario
     const createSavedRes = await createSavedPetDb({
       pet_id: Number(petId),
@@ -89,6 +99,18 @@ export const action: ActionFunction = async ({ request, params }) => {
     });
 
     if (!createSavedRes.success) {
+      // La mascota ya estaba guardada (constraint único user_id+pet_id)
+      if (createSavedRes.error.includes("Unique constraint")) {
+        const existing = await getSavedPetDb({
+          user_id: dbUserId,
+          pet_id: Number(petId),
+        });
+        return json({
+          pet_saved: true,
+          pet_saved_id: existing.success ? existing.data?.id : undefined,
+        });
+      }
+
       return json({
         errorMsg:
           "Ocurrió un error al guardar la mascota, por favor intente nuevamente",
@@ -102,6 +124,16 @@ export const action: ActionFunction = async ({ request, params }) => {
   }
 
   if (action === "unsavePet") {
+    // Solo un usuario autenticado con permiso "Guardar" puede quitar guardados
+    const validateRequest = validatePermission(session, 1, "Guardar");
+    if (validateRequest) throw validateRequest;
+    if (!dbUserId) {
+      throw new Response(
+        "No cuenta con los permisos necesarios para ejecutar la acción",
+        { status: 404 },
+      );
+    }
+
     let {
       saved_id,
     }: {
@@ -305,7 +337,11 @@ export default function () {
 
             <div className="w-full flex flex-wrap gap-3 text-gray-600">
               <span className="flex justify-center items-center gap-x-2">
-                <PiGenderIntersexBold className="w-6 h-6 text-medium-turquoise-meraki" />
+                {pet.gender === "Hembra" ? (
+                  <IoFemaleOutline className="w-6 h-6 text-medium-turquoise-meraki" />
+                ) : (
+                  <IoMaleOutline className="w-6 h-6 text-medium-turquoise-meraki" />
+                )}
                 {pet.gender}
               </span>
               <span className="flex justify-center items-center gap-x-2">

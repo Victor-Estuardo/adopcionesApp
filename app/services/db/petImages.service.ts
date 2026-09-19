@@ -3,19 +3,6 @@ import prisma, { handlePosiblePrismaError, PrismaUtilResponse } from "./prisma";
 import { GetBatchResult } from "@prisma/client/runtime/library";
 
 /*==================================================| CREATE |==================================================*/
-/**
- * Función para crear nuevas imagenes de una mascota
- * @param data Información de las imagenes
- * @returns
- */
-export const createManyPetImagesDb = async (
-  data: Prisma.pet_imagesUncheckedCreateInput[],
-): Promise<PrismaUtilResponse<GetBatchResult>> => {
-  return await handlePosiblePrismaError(async () => {
-    return prisma.pet_images.createMany({ data });
-  });
-};
-
 /*==================================================| LIST |==================================================*/
 /**
  * Función para obtener la lista de imagenes de mascotas

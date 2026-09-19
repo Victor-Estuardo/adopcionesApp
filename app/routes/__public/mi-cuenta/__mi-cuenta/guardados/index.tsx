@@ -1,5 +1,5 @@
 import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
-import { Link, useFetcher } from "@remix-run/react";
+import { FetcherWithComponents, Link, useFetcher } from "@remix-run/react";
 import { useEffect, useState } from "react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { FaChevronRight } from "react-icons/fa";
@@ -82,7 +82,7 @@ export const action: ActionFunction = async ({ request }) => {
         birthdate: s.pet.birthdate.toISOString(),
         status: s.pet.status,
         species: s.pet.petSpecies.name,
-        imageUrl: s.pet.pet_images[0].path,
+        imageUrl: s.pet.pet_images[0]?.path ?? null,
       },
     }));
 
@@ -214,6 +214,7 @@ export default function () {
               key={item.savedId}
               item={item}
               cloudName={cloudName}
+              fetcher={fetcher}
             />
           ))}
         </div>
@@ -226,11 +227,16 @@ export default function () {
 function SavedPetCard({
   item,
   cloudName,
+  fetcher,
 }: {
   item: SavedPetItem;
   cloudName: string;
+  fetcher: FetcherWithComponents<any>;
 }) {
   const statusConfig = getPetStatusConfig(item.pet.status);
+  const isRemoving =
+    fetcher.state !== "idle" &&
+    fetcher.formData?.get("savedId") === item.savedId;
 
   return (
     <div className="group relative bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200">
@@ -261,17 +267,20 @@ function SavedPetCard({
       </Link>
 
       {/* Botón quitar guardado */}
-      <form method="post">
-        <input type="hidden" name="action" value={"unsavePet"} />
-        <input type="hidden" name="savedId" value={item.savedId} />
-        <button
-          type="submit"
-          className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-full bg-white/90 backdrop-blur-sm shadow text-rose-400 hover:text-rose-600 hover:bg-white transition-colors"
-          aria-label="Quitar de guardados"
-        >
-          <LuHeart className="w-4 h-4 fill-current" />
-        </button>
-      </form>
+      <button
+        type="button"
+        onClick={() =>
+          fetcher.submit(
+            { action: "unsavePet", savedId: item.savedId },
+            { method: "post" },
+          )
+        }
+        disabled={isRemoving}
+        className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-full bg-white/90 backdrop-blur-sm shadow text-rose-400 hover:text-rose-600 hover:bg-white transition-colors disabled:opacity-50"
+        aria-label="Quitar de guardados"
+      >
+        <LuHeart className="w-4 h-4 fill-current" />
+      </button>
 
       {/* Info */}
       <div className="p-4">

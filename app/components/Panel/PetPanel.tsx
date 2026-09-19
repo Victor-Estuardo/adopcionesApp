@@ -1,10 +1,12 @@
 import { useFetcher } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { PetWithImage } from "~/services/db/pet.service";
 import Input from "../Input";
 import { petSpecies } from "@prisma/client";
 import { Select } from "../Input/Select";
 import { compressImage, petImageUrl } from "~/utils/image";
+import { PET_SIZE_OPTIONS } from "~/utils/pet-helpers";
 
 interface PetFormPanelProps {
   open: boolean;
@@ -66,9 +68,16 @@ export function PetFormPanel({
     if (fetcher.state === "submitting") wasSubmitting.current = true;
     if (fetcher.state === "idle" && wasSubmitting.current) {
       wasSubmitting.current = false;
+      // Si el servidor rechazó el envío (ej. validación), mantenemos el
+      // panel abierto y avisamos por qué — antes se cerraba en silencio
+      // sin importar si la operación falló
+      if (fetcher.data?.errorMsg) {
+        toast.error(fetcher.data.errorMsg);
+        return;
+      }
       onClose();
     }
-  }, [fetcher.state]);
+  }, [fetcher.state, fetcher.data]);
 
   // Limpieza de las URLs de previsualización al desmontar
   useEffect(() => {
@@ -261,9 +270,11 @@ export function PetFormPanel({
                 <option value="" disabled>
                   Selecciona
                 </option>
-                <option value="Pequeño">Pequeño</option>
-                <option value="Mediano">Mediano</option>
-                <option value="Grande">Grande</option>
+                {PET_SIZE_OPTIONS.map((size) => (
+                  <option key={size} value={size}>
+                    {size}
+                  </option>
+                ))}
               </Select>
             </Field>
             <Field label="Color">

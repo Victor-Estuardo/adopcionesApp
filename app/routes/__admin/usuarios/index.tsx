@@ -15,6 +15,7 @@ import {
 import { listRolesDb, RoleWithPermissions } from "~/services/db/role.service";
 import {
   AdminUserListItem,
+  countUsersDb,
   createUserDb,
   getUserDb,
   listUsersDb,
@@ -23,7 +24,11 @@ import {
 import { sendSetPasswordEmail } from "~/services/mail/resend.service";
 import { revokeSessionsForUsersDb } from "~/services/db/session.service";
 import { getSession } from "~/services/sessions/sessions.service";
-import { getDateGt, validatePermission } from "~/utils/common";
+import {
+  getDateGt,
+  handleEmailValidation,
+  validatePermission,
+} from "~/utils/common";
 import { generateSecureToken, hashText } from "~/utils/crypto.server";
 
 export const meta = () => {
@@ -94,6 +99,11 @@ export const action: ActionFunction = async ({ request }) => {
 
     if (!first_name || !last_name || !email || !role_id) {
       return json({ errorMsg: "Todos los campos marcados son obligatorios" });
+    }
+
+    const emailError = handleEmailValidation(email);
+    if (emailError) {
+      return json({ errorMsg: emailError });
     }
 
     // Solo se permite asignar un rol administrativo activo — el mismo
@@ -238,11 +248,37 @@ export const action: ActionFunction = async ({ request }) => {
       return json({ errorMsg: "No puedes desactivar tu propia cuenta." });
     }
 
+    if (active === false) {
+      const targetUserRes = await getUserDb({ id: targetId });
+
+      // Rol "Administrador" (id=1, is_system) — se protege que siempre quede
+      // al menos un administrador activo, sin importar quién lo desactive.
+      if (targetUserRes.success && targetUserRes.data?.role_id === 1) {
+        const activeAdminsRes = await countUsersDb({
+          role_id: 1,
+          active: true,
+        });
+
+        if (activeAdminsRes.success && activeAdminsRes.data <= 1) {
+          return json({
+            errorMsg:
+              "No puedes desactivar al último administrador activo del sistema.",
+          });
+        }
+      }
+    }
+
     const updateRes = await updateUserDb(targetId, { active });
     if (!updateRes.success) {
       return json({
         errorMsg: "Ocurrió un error al actualizar el estado del usuario",
       });
+    }
+
+    // Al desactivar, revocamos cualquier sesión activa para que el bloqueo
+    // aplique de inmediato, no hasta que la sesión expire o cierre sola
+    if (active === false) {
+      await revokeSessionsForUsersDb([targetId]);
     }
 
     return json({ updated_status: updateRes.data.id });
@@ -490,7 +526,8 @@ export default function () {
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[720px]">
           <thead>
             <tr className="bg-gray-50 text-left text-xs text-gray-500 uppercase tracking-wide">
               <th className="px-5 py-3 font-medium">Nombre</th>
@@ -594,6 +631,7 @@ export default function () {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* ── Panel de nuevo usuario ── */}

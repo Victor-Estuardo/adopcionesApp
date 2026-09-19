@@ -120,6 +120,20 @@ export const getOwnProfileUserDb = async (
   });
 };
 
+/*==================================================| COUNT |==================================================*/
+/**
+ * Función para obtener la cantidad de usuarios que cumplen un filtro
+ * @param where Objeto que contiene los filtros a aplicar a la query
+ * @returns Cantidad de usuarios obtenidos
+ */
+export const countUsersDb = async (
+  where?: Prisma.userWhereInput,
+): Promise<PrismaUtilResponse<number>> => {
+  return await handlePosiblePrismaError(async () => {
+    return prisma.user.count({ where });
+  });
+};
+
 /*==================================================| LIST |==================================================*/
 /**
  * Función para obtener los ids de los usuarios que tienen asignado un rol específico

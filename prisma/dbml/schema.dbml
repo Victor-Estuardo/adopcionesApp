@@ -205,6 +205,10 @@ Table savedPet {
   saved_at DateTime [default: `now()`, not null]
   pet pet [not null]
   user user [not null]
+
+  indexes {
+    (user_id, pet_id) [unique]
+  }
 }
 
 Table donation {

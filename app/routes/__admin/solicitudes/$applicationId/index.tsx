@@ -151,6 +151,18 @@ export const action: ActionFunction = async ({ request, params }) => {
     const validateRequest = validatePermission(session, 10, "Actualizar");
     if (validateRequest) throw validateRequest;
 
+    const currentRes = await getAdoptionApplicationDb({ id: applicationId });
+    if (
+      !currentRes.success ||
+      !currentRes.data ||
+      (currentRes.data.status !== "pendiente" &&
+        currentRes.data.status !== "en_revision")
+    ) {
+      return json({
+        errorMsg: "Esta solicitud ya no está pendiente de decisión",
+      });
+    }
+
     const updateRes = await updateAdoptionApplicationDb(applicationId, {
       status: "aprobada",
       updated_at: new Date(),
@@ -175,6 +187,18 @@ export const action: ActionFunction = async ({ request, params }) => {
 
     if (!rejectionReason) {
       return json({ errorMsg: "Debes indicar un motivo de rechazo" });
+    }
+
+    const currentRes = await getAdoptionApplicationDb({ id: applicationId });
+    if (
+      !currentRes.success ||
+      !currentRes.data ||
+      (currentRes.data.status !== "pendiente" &&
+        currentRes.data.status !== "en_revision")
+    ) {
+      return json({
+        errorMsg: "Esta solicitud ya no está pendiente de decisión",
+      });
     }
 
     const updateRes = await updateAdoptionApplicationDb(applicationId, {
@@ -442,15 +466,22 @@ export default function () {
             <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
               Carta de compromiso
             </h2>
-            <div className="flex items-center gap-3 text-sm text-[#52C9BB] bg-[#52C9BB]/5 rounded-xl px-4 py-3 border border-[#52C9BB]/20">
-              <FaCheck className="w-4 h-4 flex-shrink-0" />
-              <span>
-                Firmada digitalmente el{" "}
-                {formatDate(application.commitmentAgreement[0].signed_at)}
-                {application.commitmentAgreement[0].ip_address &&
-                  ` · IP ${application.commitmentAgreement[0].ip_address}`}
-              </span>
-            </div>
+            {application.commitmentAgreement[0].accepted ? (
+              <div className="flex items-center gap-3 text-sm text-[#52C9BB] bg-[#52C9BB]/5 rounded-xl px-4 py-3 border border-[#52C9BB]/20">
+                <FaCheck className="w-4 h-4 flex-shrink-0" />
+                <span>
+                  Firmada digitalmente el{" "}
+                  {formatDate(application.commitmentAgreement[0].signed_at)}
+                  {application.commitmentAgreement[0].ip_address &&
+                    ` · IP ${application.commitmentAgreement[0].ip_address}`}
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3 text-sm text-[#F2768C] bg-[#F2768C]/5 rounded-xl px-4 py-3 border border-[#F2768C]/20">
+                <FaTimes className="w-4 h-4 flex-shrink-0" />
+                <span>No aceptada por el adoptante</span>
+              </div>
+            )}
           </div>
         )}
       </div>

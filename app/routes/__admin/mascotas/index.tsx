@@ -14,18 +14,17 @@ import SearchInput from "~/components/Input/SearchInput";
 import { Select } from "~/components/Input/Select";
 import Pagination from "~/components/Pagination";
 import { PetFormPanel } from "~/components/Panel/PetPanel";
+import { Modal } from "~/components/Modal/Modal";
 import { config } from "~/config";
 import { PermissionSession } from "~/services/auth/login.service";
 import { deletePetImage } from "~/services/cloudinary/delete";
 import { uploadPetImage } from "~/services/cloudinary/upload";
 import {
   CountPetsDb,
-  createPetDb,
   listPetsWithImagesDb,
   PetWithImage,
 } from "~/services/db/pet.service";
 import {
-  createManyPetImagesDb,
   deleteManyPetImagesDb,
   listPetImagesDb,
 } from "~/services/db/petImages.service";
@@ -33,7 +32,11 @@ import { listPetSpeciesDb } from "~/services/db/petSpecies.service";
 import prisma from "~/services/db/prisma";
 import { getSession } from "~/services/sessions/sessions.service";
 import { validatePermission } from "~/utils/common";
-import { getPetStatusConfig, PET_STATUS_OPTIONS } from "~/utils/pet-helpers";
+import {
+  getPetStatusConfig,
+  PET_SIZE_OPTIONS,
+  PET_STATUS_OPTIONS,
+} from "~/utils/pet-helpers";
 
 export const meta = () => {
   return [{ title: "MASCOTAS" }];
@@ -118,17 +121,38 @@ export const action: ActionFunction = async ({ request }) => {
 
   function parsePetFields(fd: FormData) {
     return {
-      name: String(fd.get("name")),
+      name: String(fd.get("name") ?? "").trim(),
       gender: fd.get("gender") as gender_pet,
       pet_species_id: Number(fd.get("pet_species_id")),
       birthdate: new Date(String(fd.get("birthdate"))),
-      size: String(fd.get("size")),
-      color: String(fd.get("color")),
+      size: String(fd.get("size") ?? ""),
+      color: String(fd.get("color") ?? "").trim(),
       vaccinated: fd.get("vaccinated") === "on",
       sterilized: fd.get("sterilized") === "on",
       description: (fd.get("description") as string) || null,
       race: (fd.get("race") as string) || null,
     };
+  }
+
+  // Validación server-side: antes solo se casteaban los valores (as gender_pet,
+  // Number(...), new Date(...)) sin verificar que fueran válidos — el único
+  // freno eran los atributos HTML del formulario, bypasseables con un POST directo
+  function validatePetFields(
+    data: ReturnType<typeof parsePetFields>,
+  ): string | null {
+    if (!data.name) return "El nombre es obligatorio";
+    if (!Object.values(gender_pet).includes(data.gender))
+      return "El género no es válido";
+    if (!Number.isInteger(data.pet_species_id) || data.pet_species_id <= 0)
+      return "Selecciona una especie válida";
+    if (Number.isNaN(data.birthdate.getTime()))
+      return "La fecha de nacimiento no es válida";
+    if (data.birthdate.getTime() > Date.now())
+      return "La fecha de nacimiento no puede ser futura";
+    if (!(PET_SIZE_OPTIONS as readonly string[]).includes(data.size))
+      return "Selecciona un tamaño válido";
+    if (!data.color) return "El color es obligatorio";
+    return null;
   }
 
   if (intent === "create") {
@@ -139,44 +163,55 @@ export const action: ActionFunction = async ({ request }) => {
     // Creamos a la mascota
     const petData = parsePetFields(formData);
 
-    const newPetRes = await createPetDb({
-      ...petData,
-      creation_date: new Date(),
-      update_date: new Date(),
-      creator_id: userId,
-      updater_id: userId,
-    });
-
-    if (!newPetRes.success) {
-      return json({
-        errorMsg: "Ocurrió un error al crear la mascota",
-      });
+    const validationError = validatePetFields(petData);
+    if (validationError) {
+      return json({ errorMsg: validationError });
     }
 
-    const newPet = newPetRes.data;
-
-    // Guardamos imagenes
+    // Subimos las imágenes antes de la transacción (Cloudinary no participa
+    // en la transacción de Prisma), y creamos mascota + imágenes de forma
+    // atómica para no dejar una mascota sin sus fotos si algo falla
     const files = (formData.getAll("images") as File[]).filter(
       (f) => f.size > 0,
     );
-    const uploaded = await Promise.all(
-      files.map((file) => uploadPetImage(file, newPet.id)),
-    );
 
-    if (uploaded.length) {
-      await createManyPetImagesDb(
-        uploaded.map((img) => ({
-          pet_id: newPet.id,
-          path: img.success ? img.data.public_id : "",
-          creation_date: new Date(),
-          update_date: new Date(),
-          creator_id: userId,
-          updater_id: userId,
-        })),
-      );
+    let newPetId: number;
+    try {
+      newPetId = await prisma.$transaction(async (tx) => {
+        const newPet = await tx.pet.create({
+          data: {
+            ...petData,
+            creation_date: new Date(),
+            update_date: new Date(),
+            creator_id: userId,
+            updater_id: userId,
+          },
+        });
+
+        if (files.length) {
+          const uploaded = await Promise.all(
+            files.map((file) => uploadPetImage(file, newPet.id)),
+          );
+          await tx.pet_images.createMany({
+            data: uploaded.map((img) => ({
+              pet_id: newPet.id,
+              path: img.success ? img.data.public_id : "",
+              creation_date: new Date(),
+              update_date: new Date(),
+              creator_id: userId,
+              updater_id: userId,
+            })),
+          });
+        }
+
+        return newPet.id;
+      });
+    } catch (error) {
+      console.error("Error al crear la mascota:", error);
+      return json({ errorMsg: "Ocurrió un error al crear la mascota" });
     }
 
-    return json({ create_pet: true });
+    return json({ create_pet: true, pet_id: newPetId });
   }
 
   if (intent === "update") {
@@ -185,6 +220,11 @@ export const action: ActionFunction = async ({ request }) => {
 
     const petId = Number(formData.get("id"));
     const petData = parsePetFields(formData);
+
+    const validationError = validatePetFields(petData);
+    if (validationError) {
+      return json({ errorMsg: validationError });
+    }
 
     // 1. Borrar imágenes marcadas para eliminar (Cloudinary + BD)
     const deletedIds = formData.getAll("deleted_image_ids").map(Number);
@@ -243,11 +283,16 @@ export const action: ActionFunction = async ({ request }) => {
     const validateRequest = validatePermission(session, 9, "Actualizar");
     if (validateRequest) throw validateRequest;
 
+    const status = formData.get("status") as status_pet;
+    if (!Object.values(status_pet).includes(status)) {
+      return json({ errorMsg: "El estado seleccionado no es válido" });
+    }
+
     try {
       await prisma.pet.update({
         where: { id: Number(formData.get("id")) },
         data: {
-          status: formData.get("status") as status_pet,
+          status,
           update_date: new Date(),
           updater_id: userId,
         },
@@ -295,6 +340,13 @@ export default function () {
 
   // Para info de mascota
   const [editingPet, setEditingPet] = useState<PetWithImage | null>(null);
+
+  // Confirmación antes de marcar una mascota como Adoptado (acción final
+  // del ciclo de vida, a diferencia de los demás cambios de estado)
+  const [pendingAdopt, setPendingAdopt] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
 
   /*------------------------------EFECTOS------------------------------*/
   // Debounce del texto de búsqueda antes de reflejarlo en la URL
@@ -422,7 +474,9 @@ export default function () {
           >
             <option value="">Toda especie</option>
             {species.map((s: petSpecies) => (
-              <option value={s.id}>{s.name}</option>
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
             ))}
           </Select>
           <Select
@@ -505,9 +559,14 @@ export default function () {
                         <select
                           id={`status-${pet.id}`}
                           value={pet.status}
-                          onChange={(e) =>
-                            onChangeStatus(pet.id, e.target.value as status_pet)
-                          }
+                          onChange={(e) => {
+                            const newStatus = e.target.value as status_pet;
+                            if (newStatus === "Adoptado") {
+                              setPendingAdopt({ id: pet.id, name: pet.name });
+                            } else {
+                              onChangeStatus(pet.id, newStatus);
+                            }
+                          }}
                           className={`flex-1 cursor-pointer rounded-lg border-0 px-2 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-medium-turquoise-meraki/50 ${statusConfig.bg} ${statusConfig.color}`}
                         >
                           {PET_STATUS_OPTIONS.map((opt) => (
@@ -545,6 +604,41 @@ export default function () {
         pet={editingPet ?? undefined}
         cloudName={cloudName}
       />
+
+      {pendingAdopt && (
+        <Modal
+          open
+          onClose={() => setPendingAdopt(null)}
+          title="Marcar como Adoptado"
+          footer={
+            <>
+              <button
+                type="button"
+                onClick={() => setPendingAdopt(null)}
+                className="flex-1 rounded-lg border border-gray-200 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  onChangeStatus(pendingAdopt.id, "Adoptado" as status_pet);
+                  setPendingAdopt(null);
+                }}
+                className="flex-1 rounded-lg py-2 text-sm font-semibold text-white bg-medium-turquoise-meraki hover:bg-medium-turquoise-meraki/90"
+              >
+                Marcar como Adoptado
+              </button>
+            </>
+          }
+        >
+          <p className="text-sm text-gray-600">
+            ¿Confirmas que "{pendingAdopt.name}" fue adoptada? Dejará de
+            aparecer en el catálogo público y en los filtros de solicitudes
+            disponibles.
+          </p>
+        </Modal>
+      )}
     </div>
   );
 }
