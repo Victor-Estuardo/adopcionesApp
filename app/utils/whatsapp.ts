@@ -1,5 +1,7 @@
-// Número de contacto de Meraki para coordinar donaciones (mismo usado en mi-cuenta/solicitudes)
+// Datos de contacto reales de Meraki, usados en donaciones, solicitudes y mi-cuenta
 const MERAKI_WHATSAPP_NUMBER = "50243895664";
+export const MERAKI_PHONE_DISPLAY = "+502 4389-5664";
+export const MERAKI_EMAIL = "asocimeraki@gmail.com";
 
 // Arma el link de WhatsApp para que un donante coordine una donación en efectivo o en especie
 export function buildDonationWhatsAppUrl(tipo: "efectivo" | "especie") {

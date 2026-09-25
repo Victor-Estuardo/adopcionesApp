@@ -222,6 +222,7 @@ export default function () {
 
   // Creación de cuenta
   const [createAccount, setCreateAccount] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   /*------------------------------SETEO DE DATOS PROVENIENTES DEL POST------------------------------*/
   useEffect(() => {
@@ -264,6 +265,14 @@ export default function () {
 
     if (err) {
       toast.error(err, { duration: 3000 });
+      return;
+    }
+
+    if (!acceptedTerms) {
+      toast.error(
+        "Debes aceptar los Términos y Condiciones y la Política de Privacidad",
+        { duration: 3000 },
+      );
       return;
     }
 
@@ -446,10 +455,38 @@ export default function () {
             )}
           </div>
         </div>
+        <label className="w-full flex items-start gap-x-2 text-xs text-gray-600">
+          <input
+            type="checkbox"
+            checked={acceptedTerms}
+            onChange={(e) => setAcceptedTerms(e.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-gray-300 accent-medium-turquoise-meraki"
+          />
+          <span>
+            Acepto los{" "}
+            <a
+              href="/terminos-y-condiciones"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-teal-600 font-medium hover:text-teal-700 underline"
+            >
+              Términos y Condiciones
+            </a>{" "}
+            y la{" "}
+            <a
+              href="/politica-privacidad"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-teal-600 font-medium hover:text-teal-700 underline"
+            >
+              Política de Privacidad
+            </a>
+          </span>
+        </label>
         <div className="pt-6">
           <button
             className="bg-medium-turquoise-meraki text-white rounded-full px-16 py-3 disabled:opacity-60"
-            disabled={isCreating}
+            disabled={isCreating || !acceptedTerms}
             onClick={(e) => {
               if (isCreating) e.preventDefault();
             }}

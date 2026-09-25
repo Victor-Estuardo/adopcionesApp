@@ -305,6 +305,19 @@ export function NotifyDonationModal({
                 {errors.contact}
               </p>
             )}
+            <p className="text-xs text-gray-400">
+              Usamos estos datos solo para confirmar tu donación. Consulta
+              nuestra{" "}
+              <a
+                href="/politica-privacidad"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-teal-600 font-medium hover:text-teal-700 underline"
+              >
+                Política de Privacidad
+              </a>
+              .
+            </p>
           </fieldset>
         )}
 

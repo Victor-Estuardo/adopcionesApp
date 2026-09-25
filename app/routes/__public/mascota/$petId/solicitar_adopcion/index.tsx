@@ -363,6 +363,19 @@ export default function () {
               ))}
             </div>
           </div>
+          <p className="text-xs text-gray-500">
+            Al firmar aceptas que se guarde tu respuesta con fecha y dirección
+            IP como respaldo de la firma. Consulta nuestra{" "}
+            <a
+              href="/politica-privacidad"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-teal-600 font-medium hover:text-teal-700 underline"
+            >
+              Política de Privacidad
+            </a>
+            .
+          </p>
           <button
             type="button"
             onClick={() => setAgreed(true)}

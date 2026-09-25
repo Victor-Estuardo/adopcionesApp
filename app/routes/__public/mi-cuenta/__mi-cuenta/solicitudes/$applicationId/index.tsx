@@ -13,6 +13,7 @@ import {
   getAdoptionApplicationAllInfoDb,
 } from "~/services/db/adoptionApplication.service";
 import { getSession } from "~/services/sessions/sessions.service";
+import { MERAKI_EMAIL, MERAKI_PHONE_DISPLAY } from "~/utils/whatsapp";
 
 export const meta = () => {
   return [{ title: "PROGRESO DE SOLICITUD" }];
@@ -201,18 +202,18 @@ export default function () {
           </p>
           <div className="flex flex-col sm:flex-row gap-3">
             <a
-              href="mailto:adopciones@meraki.org"
+              href={`mailto:${MERAKI_EMAIL}`}
               className="flex items-center gap-2 text-sm text-teal-600 font-medium hover:text-teal-700 transition-colors"
             >
               <FaEnvelope className="w-4 h-4" />
-              adopciones@meraki.org
+              {MERAKI_EMAIL}
             </a>
             <a
-              href="tel:+50212345678"
+              href={`tel:+${MERAKI_PHONE_DISPLAY.replace(/\D/g, "")}`}
               className="flex items-center gap-2 text-sm text-teal-600 font-medium hover:text-teal-700 transition-colors"
             >
               <FaPhone className="w-4 h-4" />
-              +502 1234-5678
+              {MERAKI_PHONE_DISPLAY}
             </a>
           </div>
         </div>
