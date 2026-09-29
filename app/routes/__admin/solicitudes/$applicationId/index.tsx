@@ -458,7 +458,7 @@ export default function () {
         </ApplicationTimeLine>
 
         {/* ── Respuestas del formulario ── */}
-        <ApplicationPanel application={application} />
+        <ApplicationPanel application={application} title="Respuestas del solicitante" />
 
         {/* ── Carta de compromiso ── */}
         {application?.commitmentAgreement?.[0] && (

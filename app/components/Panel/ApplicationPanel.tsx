@@ -2,9 +2,13 @@ import { AdoptionAppAllInfo } from "~/services/db/adoptionApplication.service";
 
 interface ApplicationProps {
   application: AdoptionAppAllInfo | undefined;
+  title?: string;
 }
 
-export function ApplicationPanel({ application }: ApplicationProps) {
+export function ApplicationPanel({
+  application,
+  title = "Tus respuestas",
+}: ApplicationProps) {
   // Agrupar respuestas por sección
   const answersBySection = application?.other_applicationAnswer.reduce<
     Record<string, typeof application.other_applicationAnswer>
@@ -17,7 +21,7 @@ export function ApplicationPanel({ application }: ApplicationProps) {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
       <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-5">
-        Tus respuestas
+        {title}
       </h2>
 
       <div className="flex flex-col gap-6">

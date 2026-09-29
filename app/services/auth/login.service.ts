@@ -133,8 +133,9 @@ export async function loginWebApp(
             .filter((p) => p.action === "Leer")
             .map((p) => p.module_id),
         },
+        is_active: true,
       },
-      { nav_audience: "ALL" },
+      { nav_audience: "ALL", is_active: true },
     ],
   });
 
