@@ -9,6 +9,13 @@ import type { story_category, story_status } from "@prisma/client";
 // pink-meraki y medium-turquoise-meraki NO sirven como color de texto sobre
 // blanco: solo fondos con texto oscuro, bordes o íconos decorativos.
 
+// Límites de longitud (= VarChar de la BD). Viven aquí y no en el servicio
+// para poder usarlos también en el cliente (contadores del formulario).
+export const STORY_TITLE_MAX = 150;
+export const STORY_SUMMARY_MAX = 300;
+export const STORY_BODY_MAX = 10000;
+export const STORY_ALT_MAX = 150;
+
 export const STORY_CATEGORY_CONFIG: Record<
   story_category,
   {

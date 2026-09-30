@@ -12,14 +12,16 @@ import {
   sanitizeText,
 } from "~/utils/sanitize";
 import { isValidSlug, slugify, SLUG_MAX_LENGTH } from "~/utils/slug";
-import { getStoryExcerpt } from "~/utils/story-helpers";
+import {
+  getStoryExcerpt,
+  STORY_ALT_MAX,
+  STORY_BODY_MAX,
+  STORY_SUMMARY_MAX,
+  STORY_TITLE_MAX,
+} from "~/utils/story-helpers";
 import prisma, { handlePosiblePrismaError, PrismaUtilResponse } from "./prisma";
 
 /*==================================================| CONSTANTES |==================================================*/
-export const STORY_TITLE_MAX = 150;
-export const STORY_SUMMARY_MAX = 300;
-export const STORY_BODY_MAX = 10000;
-export const STORY_ALT_MAX = 150;
 export const STORY_PUBLIC_PAGE_SIZE = 12;
 export const STORY_ADMIN_PAGE_SIZE = 10;
 

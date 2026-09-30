@@ -4,7 +4,12 @@ import { IconType } from "react-icons";
 import { BsClipboard2Heart } from "react-icons/bs";
 import { FaPaw, FaUsers } from "react-icons/fa";
 import { IoIosLogOut } from "react-icons/io";
-import { LuBuilding, LuClipboardList, LuImage } from "react-icons/lu";
+import {
+  LuBookHeart,
+  LuBuilding,
+  LuClipboardList,
+  LuImage,
+} from "react-icons/lu";
 import { MdBarChart, MdDashboard, MdMenuOpen } from "react-icons/md";
 import { ModuleSession } from "~/services/db/module.service";
 import { BiSolidDonateHeart } from "react-icons/bi";
@@ -41,6 +46,7 @@ export default ({
       FaUsers: FaUsers,
       BiSolidDonateHeart: BiSolidDonateHeart,
       MdBarChart: MdBarChart,
+      LuBookHeart: LuBookHeart,
     }),
     [],
   );
