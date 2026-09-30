@@ -12,6 +12,7 @@
     "dev:css": "tailwindcss -w -i ./styles/app.css -o app/styles/app.css",
     "start": "cross-env NODE_ENV=production",
     "typecheck": "tsc",
+    "seed:historias": "node prisma/seed-historias.mjs",
     "postinstall": "npx prisma generate"
   },
   "dependencies": {

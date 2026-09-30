@@ -47,6 +47,7 @@ model pet {
   user_pet_updater_idTouser user                  @relation("pet_updater_idTouser", fields: [updater_id], references: [id], onUpdate: Restrict, map: "fk_updater_pet")
   pet_images                pet_images[]
   savedPet                  savedPet[]
+  story                     story[]
 
   @@index([name])
   @@index([status])
@@ -95,41 +96,44 @@ model role {
 }
 
 model user {
-  id                                                       Int                   @id @default(autoincrement())
-  first_name                                               String                @db.VarChar(100)
-  last_name                                                String                @db.VarChar(100)
-  email                                                    String                @unique(map: "user_username_key") @db.VarChar(100)
-  password                                                 String                @db.VarChar(255)
+  id                                                       Int                        @id @default(autoincrement())
+  first_name                                               String                     @db.VarChar(100)
+  last_name                                                String                     @db.VarChar(100)
+  email                                                    String                     @unique(map: "user_username_key") @db.VarChar(100)
+  password                                                 String                     @db.VarChar(255)
   role_id                                                  Int
-  registration_date                                        DateTime?             @default(now()) @db.Timestamp(6)
-  it_is_verified                                           Boolean               @default(false)
-  active                                                   Boolean               @default(true)
-  profile_public_id                                        String?               @unique(map: "user_unique")
-  phone                                                    String?               @db.VarChar(25)
-  profile_version                                          String?               @db.VarChar(100)
+  registration_date                                        DateTime?                  @default(now()) @db.Timestamp(6)
+  it_is_verified                                           Boolean                    @default(false)
+  active                                                   Boolean                    @default(true)
+  profile_public_id                                        String?                    @unique(map: "user_unique")
+  phone                                                    String?                    @db.VarChar(25)
+  profile_version                                          String?                    @db.VarChar(100)
   adoptionApplication                                      adoptionApplication[]
-  donation_donation_reviewed_byTouser                      donation[]            @relation("donation_reviewed_byTouser")
-  donation_donation_user_idTouser                          donation[]            @relation("donation_user_idTouser")
-  donationBankAccount_donationBankAccount_creator_idTouser donationBankAccount[] @relation("donationBankAccount_creator_idTouser")
-  donationBankAccount_donationBankAccount_updater_idTouser donationBankAccount[] @relation("donationBankAccount_updater_idTouser")
-  needSupplies_needSupplies_creator_idTouser               needSupplies[]        @relation("needSupplies_creator_idTouser")
-  needSupplies_needSupplies_updater_idTouser               needSupplies[]        @relation("needSupplies_updater_idTouser")
+  donation_donation_reviewed_byTouser                      donation[]                 @relation("donation_reviewed_byTouser")
+  donation_donation_user_idTouser                          donation[]                 @relation("donation_user_idTouser")
+  donationBankAccount_donationBankAccount_creator_idTouser donationBankAccount[]      @relation("donationBankAccount_creator_idTouser")
+  donationBankAccount_donationBankAccount_updater_idTouser donationBankAccount[]      @relation("donationBankAccount_updater_idTouser")
+  needSupplies_needSupplies_creator_idTouser               needSupplies[]             @relation("needSupplies_creator_idTouser")
+  needSupplies_needSupplies_updater_idTouser               needSupplies[]             @relation("needSupplies_updater_idTouser")
   passwordResetToken                                       passwordResetToken[]
   accountVerificationToken                                 accountVerificationToken[]
-  pet_pet_creator_idTouser                                 pet[]                 @relation("pet_creator_idTouser")
-  pet_pet_updater_idTouser                                 pet[]                 @relation("pet_updater_idTouser")
-  petSpecies_petSpecies_creator_idTouser                   petSpecies[]          @relation("petSpecies_creator_idTouser")
-  petSpecies_petSpecies_updater_idTouser                   petSpecies[]          @relation("petSpecies_updater_idTouser")
-  pet_images_pet_images_creator_idTouser                   pet_images[]          @relation("pet_images_creator_idTouser")
-  pet_images_pet_images_updater_idTouser                   pet_images[]          @relation("pet_images_updater_idTouser")
-  project_project_creator_idTouser                         project[]             @relation("project_creator_idTouser")
-  project_project_updater_idTouser                         project[]             @relation("project_updater_idTouser")
-  project_photo_project_photo_creator_idTouser             project_photo[]       @relation("project_photo_creator_idTouser")
-  project_photo_project_photo_updater_idTouser             project_photo[]       @relation("project_photo_updater_idTouser")
+  pet_pet_creator_idTouser                                 pet[]                      @relation("pet_creator_idTouser")
+  pet_pet_updater_idTouser                                 pet[]                      @relation("pet_updater_idTouser")
+  petSpecies_petSpecies_creator_idTouser                   petSpecies[]               @relation("petSpecies_creator_idTouser")
+  petSpecies_petSpecies_updater_idTouser                   petSpecies[]               @relation("petSpecies_updater_idTouser")
+  pet_images_pet_images_creator_idTouser                   pet_images[]               @relation("pet_images_creator_idTouser")
+  pet_images_pet_images_updater_idTouser                   pet_images[]               @relation("pet_images_updater_idTouser")
+  project_project_creator_idTouser                         project[]                  @relation("project_creator_idTouser")
+  project_project_updater_idTouser                         project[]                  @relation("project_updater_idTouser")
+  project_photo_project_photo_creator_idTouser             project_photo[]            @relation("project_photo_creator_idTouser")
+  project_photo_project_photo_updater_idTouser             project_photo[]            @relation("project_photo_updater_idTouser")
   savedPet                                                 savedPet[]
-  sponsor_sponsor_creator_idTouser                         sponsor[]             @relation("sponsor_creator_idTouser")
-  sponsor_sponsor_updater_idTouser                         sponsor[]             @relation("sponsor_updater_idTouser")
-  role                                                     role                  @relation(fields: [role_id], references: [id], onUpdate: Restrict, map: "user_rol_fk")
+  sponsor_sponsor_creator_idTouser                         sponsor[]                  @relation("sponsor_creator_idTouser")
+  sponsor_sponsor_updater_idTouser                         sponsor[]                  @relation("sponsor_updater_idTouser")
+  story_story_creator_idTouser                             story[]                    @relation("story_creator_idTouser")
+  story_story_updater_idTouser                             story[]                    @relation("story_updater_idTouser")
+  story_image_story_image_creator_idTouser                 story_image[]              @relation("story_image_creator_idTouser")
+  role                                                     role                       @relation(fields: [role_id], references: [id], onUpdate: Restrict, map: "user_rol_fk")
 }
 
 model permission {
@@ -338,6 +342,50 @@ model sponsor {
   user_sponsor_updater_idTouser user       @relation("sponsor_updater_idTouser", fields: [updater_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_updater_patrocinador")
 }
 
+// Historias públicas (Finales felices / Camino al arcoíris). Solo las
+// `Publicada` son visibles al público. `published_at` se fija en la primera
+// publicación y el slug queda fijo desde entonces. "Exactamente una portada
+// por historia" se garantiza en la aplicación (db push no admite índices
+// parciales).
+model story {
+  id                          Int            @id(map: "pk_story") @default(autoincrement())
+  title                       String         @db.VarChar(150)
+  slug                        String         @unique(map: "story_slug_unique") @db.VarChar(180)
+  summary                     String?        @db.VarChar(300)
+  body                        String
+  category                    story_category
+  status                      story_status   @default(Borrador)
+  event_date                  DateTime?      @db.Date
+  published_at                DateTime?      @db.Timestamp(6)
+  pet_id                      Int?
+  creation_date               DateTime       @default(now()) @db.Timestamp(6)
+  creator_id                  Int
+  update_date                 DateTime       @default(now()) @db.Timestamp(6)
+  updater_id                  Int
+  pet                         pet?           @relation(fields: [pet_id], references: [id], onDelete: SetNull, onUpdate: Restrict, map: "fk_pet_story")
+  user_story_creator_idTouser user           @relation("story_creator_idTouser", fields: [creator_id], references: [id], onUpdate: Restrict, map: "fk_creator_story")
+  user_story_updater_idTouser user           @relation("story_updater_idTouser", fields: [updater_id], references: [id], onUpdate: Restrict, map: "fk_updater_story")
+  story_image                 story_image[]
+
+  @@index([category, status, published_at])
+  @@index([pet_id])
+}
+
+model story_image {
+  id                                Int      @id(map: "pk_story_image") @default(autoincrement())
+  story_id                          Int
+  path                              String   @db.VarChar(150)
+  alt_text                          String?  @db.VarChar(150)
+  sort_order                        Int      @default(0)
+  is_cover                          Boolean  @default(false)
+  creation_date                     DateTime @default(now()) @db.Timestamp(6)
+  creator_id                        Int
+  story                             story    @relation(fields: [story_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_story_story_image")
+  user_story_image_creator_idTouser user     @relation("story_image_creator_idTouser", fields: [creator_id], references: [id], onUpdate: Restrict, map: "fk_creator_story_image")
+
+  @@index([story_id, sort_order])
+}
+
 // Respaldo en servidor de las sesiones de Remix (createSessionStorage): la
 // cookie del cliente solo lleva este id firmado, no los datos. Sustituye a
 // createCookieSessionStorage, cuyo payload (módulos + permisos) ya superaba
@@ -410,6 +458,17 @@ enum category_proyectoFoto {
   Antes
   Durante
   Despu_s @map("Después")
+}
+
+enum story_category {
+  Finales_felices
+  Camino_arcoiris
+}
+
+enum story_status {
+  Borrador
+  Publicada
+  Archivada
 }
 
 enum status_pet {

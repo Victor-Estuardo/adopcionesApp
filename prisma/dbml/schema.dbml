@@ -37,6 +37,7 @@ Table pet {
   user_pet_updater_idTouser user [not null]
   pet_images pet_images [not null]
   savedPet savedPet [not null]
+  story story [not null]
 }
 
 Table petSpecies {
@@ -112,6 +113,9 @@ Table user {
   savedPet savedPet [not null]
   sponsor_sponsor_creator_idTouser sponsor [not null]
   sponsor_sponsor_updater_idTouser sponsor [not null]
+  story_story_creator_idTouser story [not null]
+  story_story_updater_idTouser story [not null]
+  story_image_story_image_creator_idTouser story_image [not null]
   role role [not null]
 }
 
@@ -316,6 +320,40 @@ Table sponsor {
   user_sponsor_updater_idTouser user [not null]
 }
 
+Table story {
+  id Int [pk, increment]
+  title String [not null]
+  slug String [unique, not null]
+  summary String
+  body String [not null]
+  category story_category [not null]
+  status story_status [not null, default: 'Borrador']
+  event_date DateTime
+  published_at DateTime
+  pet_id Int
+  creation_date DateTime [default: `now()`, not null]
+  creator_id Int [not null]
+  update_date DateTime [default: `now()`, not null]
+  updater_id Int [not null]
+  pet pet
+  user_story_creator_idTouser user [not null]
+  user_story_updater_idTouser user [not null]
+  story_image story_image [not null]
+}
+
+Table story_image {
+  id Int [pk, increment]
+  story_id Int [not null]
+  path String [not null]
+  alt_text String
+  sort_order Int [not null, default: 0]
+  is_cover Boolean [not null, default: false]
+  creation_date DateTime [default: `now()`, not null]
+  creator_id Int [not null]
+  story story [not null]
+  user_story_image_creator_idTouser user [not null]
+}
+
 Table session {
   id String [pk]
   data Json [not null]
@@ -375,6 +413,17 @@ Enum category_proyectoFoto {
   Antes
   Durante
   Despu_s
+}
+
+Enum story_category {
+  Finales_felices
+  Camino_arcoiris
+}
+
+Enum story_status {
+  Borrador
+  Publicada
+  Archivada
 }
 
 Enum status_pet {
@@ -459,3 +508,13 @@ Ref: project_photo.updater_id > user.id [delete: No Action]
 Ref: sponsor.creator_id > user.id [delete: No Action]
 
 Ref: sponsor.updater_id > user.id [delete: No Action]
+
+Ref: story.pet_id > pet.id [delete: Set Null]
+
+Ref: story.creator_id > user.id
+
+Ref: story.updater_id > user.id
+
+Ref: story_image.story_id > story.id [delete: Cascade]
+
+Ref: story_image.creator_id > user.id
