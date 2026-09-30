@@ -11,6 +11,8 @@ import {
   PATROCINADOR_LOGO_MIME_TYPES,
   PROYECTO_FOTO_MAX_MB,
   PROYECTO_FOTO_MIME_TYPES,
+  STORY_IMAGE_MAX_MB,
+  STORY_IMAGE_MIME_TYPES,
 } from "./fileConstraints";
 
 cloudinary.config({
@@ -315,5 +317,64 @@ export async function uploadPetImage(
   } catch (error) {
     console.error("Error al subir foto de mascota a Cloudinary:", error);
     return { success: false, error: "Ocurrió un error al subir la imagen" };
+  }
+}
+
+/*==============================| Fotos de historias |==============================*/
+/**
+ * Sube una foto de una historia. Cada historia puede tener varias fotos, así
+ * que NO se sobrescribe: Cloudinary genera un public_id único dentro de
+ * `story/{storyId}` (nunca se usa el nombre del archivo del cliente). El
+ * `storyId` debe venir de la BD, no del formulario.
+ */
+export async function uploadStoryImage(
+  file: File,
+  storyId: number,
+): Promise<UploadResult> {
+  if (!Number.isInteger(storyId) || storyId <= 0) {
+    return { success: false, error: "Historia inválida" };
+  }
+  if (!file || file.size === 0) {
+    return { success: false, error: "No se recibió ningún archivo" };
+  }
+  if (!STORY_IMAGE_MIME_TYPES.includes(file.type)) {
+    return {
+      success: false,
+      error: "Formato no permitido. Usa JPG, PNG o WEBP",
+    };
+  }
+  if (file.size > STORY_IMAGE_MAX_MB * 1024 * 1024) {
+    return {
+      success: false,
+      error: `La foto no debe superar los ${STORY_IMAGE_MAX_MB}MB`,
+    };
+  }
+
+  try {
+    const buffer = Buffer.from(await file.arrayBuffer());
+
+    const result = await uploadBuffer(buffer, {
+      folder: `story/${storyId}`,
+      overwrite: false,
+      use_filename: false,
+      unique_filename: true,
+      resource_type: "image",
+      transformation: [
+        { width: 1600, crop: "limit" },
+        { quality: "auto", fetch_format: "auto" },
+      ],
+    });
+
+    return {
+      success: true,
+      data: {
+        secure_url: result.secure_url,
+        public_id: result.public_id,
+        version: result.version,
+      },
+    };
+  } catch (error) {
+    console.error("Error al subir foto de historia a Cloudinary:", error);
+    return { success: false, error: "Ocurrió un error al subir la foto" };
   }
 }

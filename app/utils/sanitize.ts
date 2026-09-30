@@ -40,6 +40,37 @@ export function sanitizeText(value: unknown, maxLength = 500): string {
   return collapsed.slice(0, maxLength);
 }
 
+// Igual que CONTROL_CHARS pero sin el salto de línea (\u000A).
+// eslint-disable-next-line no-control-regex
+const CONTROL_CHARS_EXCEPT_NEWLINE = new RegExp(
+  "[\u0000-\u0009\u000B-\u001F\u007F]+",
+  "g",
+);
+
+/**
+ * Como `sanitizeText`, pero para texto largo con párrafos (p. ej. el cuerpo
+ * de una historia): conserva los saltos de línea. Normaliza `\r\n`/`\r` a
+ * `\n`, cambia los caracteres de control (tabulador incluido) por un espacio,
+ * colapsa espacios repetidos dentro de cada línea, quita los espacios de los
+ * extremos de cada línea, deja como máximo una línea en blanco entre párrafos
+ * y recorta a `maxLength`. Devuelve `""` si no queda nada útil.
+ */
+export function sanitizeMultilineText(
+  value: unknown,
+  maxLength = 10000,
+): string {
+  if (typeof value !== "string") return "";
+  const normalized = value
+    .replace(/\r\n?/g, "\n")
+    .replace(CONTROL_CHARS_EXCEPT_NEWLINE, " ")
+    .split("\n")
+    .map((line) => line.replace(/ {2,}/g, " ").trim())
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+  return normalized.slice(0, maxLength).trimEnd();
+}
+
 /**
  * Sanitiza y valida un correo. Devuelve el correo en minúsculas si tiene una
  * forma válida y razonable, o `null` en caso contrario.

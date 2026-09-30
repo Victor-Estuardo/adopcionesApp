@@ -21,6 +21,40 @@ export function petImageUrl(
   return `https://res.cloudinary.com/${cloudName}/image/upload/${PRESETS[preset]}/${publicId}`;
 }
 
+export type StoryImagePreset =
+  | "storyThumb"
+  | "storyCard"
+  | "storyCover"
+  | "storyOg";
+
+const STORY_PRESETS: Record<StoryImagePreset, string> = {
+  storyThumb: "c_fill,g_auto,w_120,h_120,f_auto,q_auto", // miniatura del admin
+  storyCard: "c_fill,g_auto,w_640,h_400,f_auto,q_auto", // tarjeta 16:10
+  storyCover: "c_fill,g_auto,w_1600,h_900,f_auto,q_auto", // portada del detalle
+  // Vista previa al compartir: JPG fijo (WhatsApp/Facebook no siempre
+  // procesan WebP/AVIF, que es lo que f_auto podría entregar).
+  storyOg: "c_fill,g_auto,w_1200,h_630,f_jpg,q_auto",
+};
+
+/** Dimensiones de cada preset (para `width`/`height` y `og:image:*`). */
+export const STORY_IMAGE_SIZES: Record<
+  StoryImagePreset,
+  { width: number; height: number }
+> = {
+  storyThumb: { width: 120, height: 120 },
+  storyCard: { width: 640, height: 400 },
+  storyCover: { width: 1600, height: 900 },
+  storyOg: { width: 1200, height: 630 },
+};
+
+export function storyImageUrl(
+  cloudName: string,
+  publicId: string,
+  preset: StoryImagePreset = "storyCard",
+) {
+  return `https://res.cloudinary.com/${cloudName}/image/upload/${STORY_PRESETS[preset]}/${publicId}`;
+}
+
 // Modificamos el tamaño de una imagen
 export async function resizeImage(
   file: File,

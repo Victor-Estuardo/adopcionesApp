@@ -29,3 +29,9 @@ export const PROYECTO_FOTO_MIME_TYPES = [
   "image/webp",
 ];
 export const PROYECTO_FOTO_MAX_MB = 5;
+
+/** Foto de una historia (Finales felices / Camino al arcoíris). */
+export const STORY_IMAGE_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"];
+export const STORY_IMAGE_MAX_MB = 5;
+/** Máximo de fotos por historia (RN-06). */
+export const STORY_MAX_IMAGES = 10;
