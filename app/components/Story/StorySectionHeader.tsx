@@ -33,7 +33,7 @@ export function StorySectionHeader({ category }: StorySectionHeaderProps) {
       )}
 
       <div className="relative flex flex-col gap-2 px-5 py-8 sm:px-8 sm:py-10">
-        <h1 className="max-w-[80%] text-2xl font-extrabold text-[#1F1D1A] sm:text-3xl">
+        <h1 className="max-w-[80%] break-words text-2xl font-extrabold text-[#1F1D1A] sm:text-3xl">
           {cfg.sectionTitle}
         </h1>
         <p className="max-w-2xl text-base text-[#6B665C]">

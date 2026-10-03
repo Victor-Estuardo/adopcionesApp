@@ -359,6 +359,9 @@ export async function uploadStoryImage(
       use_filename: false,
       unique_filename: true,
       resource_type: "image",
+      // El MIME lo declara el cliente; Cloudinary verifica el formato REAL
+      // del contenido y rechaza el resto (p. ej. un SVG enviado como PNG).
+      allowed_formats: ["jpg", "png", "webp"],
       transformation: [
         { width: 1600, crop: "limit" },
         { quality: "auto", fetch_format: "auto" },

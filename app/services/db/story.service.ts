@@ -247,6 +247,19 @@ async function getStoryOrFail(tx: Tx, storyId: number) {
   return current;
 }
 
+/**
+ * Bloquea la fila de la historia hasta el fin de la transacción (SEG-13).
+ * Serializa las operaciones concurrentes sobre la MISMA historia: sin esto,
+ * con READ COMMITTED dos "set-cover" simultáneos pueden dejar dos portadas,
+ * dos subidas pueden superar el tope de fotos, o un borrado puede colarse
+ * entre la validación y la publicación. Consulta parametrizada.
+ */
+async function lockStory(tx: Tx, storyId: number) {
+  const rows = await tx.$queryRaw<{ id: number }[]>`
+    SELECT id FROM "story" WHERE id = ${storyId} FOR UPDATE`;
+  if (rows.length === 0) throw new StoryRuleError("La historia no existe.");
+}
+
 async function assertPetExists(tx: Tx, petId: number | null) {
   if (petId === null) return;
   const pet = await tx.pet.findUnique({
@@ -456,6 +469,7 @@ export const updateStoryDb = async (
     if (!storyId) throw new StoryRuleError("La historia no existe.");
 
     return prisma.$transaction(async (tx) => {
+      await lockStory(tx, storyId);
       const current = await getStoryOrFail(tx, storyId);
       await assertPetExists(tx, input.pet_id);
 
@@ -546,6 +560,7 @@ export const changeStoryStatusDb = async (
     if (!transition) throw new StoryRuleError("Acción no válida.");
 
     return prisma.$transaction(async (tx) => {
+      await lockStory(tx, storyId);
       const current = await getStoryOrFail(tx, storyId);
       if (!transition.from.includes(current.status)) {
         throw new StoryRuleError(transition.invalidMsg);
@@ -627,7 +642,7 @@ export const addStoryImagesDb = async (
     });
 
     return prisma.$transaction(async (tx) => {
-      await getStoryOrFail(tx, id);
+      await lockStory(tx, id);
       const [count, last, cover] = await Promise.all([
         tx.story_image.count({ where: { story_id: id } }),
         tx.story_image.findFirst({
@@ -688,6 +703,7 @@ export const removeStoryImageDb = async (
     if (!sId || !iId) throw new StoryRuleError("La foto no existe.");
 
     return prisma.$transaction(async (tx) => {
+      await lockStory(tx, sId);
       const current = await getStoryOrFail(tx, sId);
       const image = await tx.story_image.findFirst({
         where: { id: iId, story_id: sId },
@@ -742,7 +758,7 @@ export const reorderStoryImagesDb = async (
     }
 
     return prisma.$transaction(async (tx) => {
-      await getStoryOrFail(tx, sId);
+      await lockStory(tx, sId);
       const existing = await tx.story_image.findMany({
         where: { story_id: sId },
         select: { id: true },
@@ -785,6 +801,7 @@ export const setStoryCoverDb = async (
     if (!sId || !iId) throw new StoryRuleError("La foto no existe.");
 
     return prisma.$transaction(async (tx) => {
+      await lockStory(tx, sId);
       const image = await tx.story_image.findFirst({
         where: { id: iId, story_id: sId },
         select: { id: true },

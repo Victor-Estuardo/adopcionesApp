@@ -1,5 +1,6 @@
 import type { story_category } from "@prisma/client";
 import { Link } from "@remix-run/react";
+import { useId } from "react";
 import { LuHeart } from "react-icons/lu";
 import { storyImageUrl } from "~/utils/image";
 import { formatStoryDate, STORY_CATEGORY_CONFIG } from "~/utils/story-helpers";
@@ -59,6 +60,9 @@ export function StoryCard({
   const cfg = STORY_CATEGORY_CONFIG[story.category];
   const featured = variant === "featured";
   const Heading = headingLevel === 2 ? "h2" : "h3";
+  // Nombre accesible del enlace = solo el título (no toda la tarjeta).
+  const titleId = useId();
+  const excerptId = useId();
   const href = `${cfg.route}/${story.slug}`;
   const cover = story.cover
     ? storyImageUrl(cloudName, story.cover.path, featured ? "storyCover" : "storyCard")
@@ -72,6 +76,8 @@ export function StoryCard({
     <article className="h-full">
       <Link
         to={href}
+        aria-labelledby={titleId}
+        aria-describedby={story.excerpt ? excerptId : undefined}
         prefetch="intent"
         className={`group flex h-full flex-col overflow-hidden rounded-2xl border border-[#EAE6DC] bg-white shadow-sm motion-reduce:transform-none motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1D1A] focus-visible:ring-offset-2 ${
           cfg.classes.card
@@ -124,7 +130,8 @@ export function StoryCard({
         >
           <StoryCategoryBadge category={story.category} />
           <Heading
-            className={`line-clamp-2 font-bold text-[#1F1D1A] ${
+            id={titleId}
+            className={`line-clamp-2 break-words font-bold text-[#1F1D1A] ${
               featured ? "text-xl md:text-2xl" : "text-lg"
             }`}
           >
@@ -132,7 +139,8 @@ export function StoryCard({
           </Heading>
           {story.excerpt && (
             <p
-              className={`line-clamp-3 text-[#6B665C] ${
+              id={excerptId}
+              className={`line-clamp-3 break-words text-[#6B665C] ${
                 featured ? "text-base" : "text-sm"
               }`}
             >

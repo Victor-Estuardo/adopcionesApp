@@ -157,8 +157,20 @@ const MAX_BYTES = STORY_IMAGE_MAX_MB * 1024 * 1024;
 // Clases compartidas (objetivo táctil ≥ 44 px en móvil + foco visible).
 const FOCUS =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-medium-turquoise-meraki/60 focus-visible:ring-offset-1";
-const INPUT_CLASS = `w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-medium-turquoise-meraki focus:outline-none focus:ring-2 focus:ring-medium-turquoise-meraki/30 aria-[invalid=true]:border-[#B42318]`;
-const ICON_BUTTON = `flex h-11 w-11 items-center justify-center rounded-lg border border-[#E4E0D6] bg-white text-[#3A362E] transition-colors hover:bg-[#F4F2EC] disabled:cursor-not-allowed disabled:opacity-40 md:h-9 md:w-9 ${FOCUS}`;
+const INPUT_CLASS = `min-h-[44px] w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-medium-turquoise-meraki focus:outline-none focus:ring-2 focus:ring-medium-turquoise-meraki/30 aria-[invalid=true]:border-[#B42318]`;
+const ICON_BUTTON = `flex h-11 w-11 items-center justify-center rounded-lg border border-[#E4E0D6] bg-white text-[#3A362E] transition-colors motion-reduce:transition-none hover:bg-[#F4F2EC] aria-disabled:cursor-not-allowed aria-disabled:opacity-40 aria-disabled:hover:bg-white md:h-9 md:w-9 ${FOCUS}`;
+
+/**
+ * Bloqueo accesible: `aria-disabled` en lugar de `disabled`. Un botón con
+ * `disabled` pierde el foco (se va al <body>, fuera de la trampa del panel)
+ * justo después de usarlo; así el foco se queda y el clic se ignora.
+ */
+const blocked = (isBlocked: boolean, fn: () => void) => ({
+  "aria-disabled": isBlocked || undefined,
+  onClick: () => {
+    if (!isBlocked) fn();
+  },
+});
 
 function initialValues(story: PanelStory | null): FormValues {
   return {
@@ -306,6 +318,16 @@ export function StoryPanel({
 
   const containerRef = useFocusTrap<HTMLDivElement>(true, handleEscape);
 
+  // Rescate de foco: si el elemento enfocado desaparece (foto eliminada,
+  // botón de estado que cambia tras publicar…), el foco caería en <body>,
+  // fuera del panel. Se devuelve al panel para no perder al usuario de
+  // teclado. Con un modal de confirmación abierto, el foco es suyo.
+  useEffect(() => {
+    if (confirm) return;
+    const active = document.activeElement;
+    if (!active || active === document.body) containerRef.current?.focus();
+  });
+
   // Aviso del navegador si hay cambios sin guardar y se sale de la página.
   useEffect(() => {
     if (!isDirty && !isUploading) return;
@@ -357,6 +379,7 @@ export function StoryPanel({
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (isSaving || isUploading) return;
     setServerError(null);
     const nextErrors = validate(values, isEditing);
     setErrors(nextErrors);
@@ -735,9 +758,10 @@ export function StoryPanel({
                       <button
                         key={action}
                         type="button"
-                        disabled={busyStatus || isDirty || isUploading}
-                        onClick={() => setConfirm({ kind: "status", action })}
-                        className={`min-h-[44px] rounded-lg px-4 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 md:min-h-[36px] ${FOCUS} ${
+                        {...blocked(busyStatus || isDirty || isUploading, () =>
+                          setConfirm({ kind: "status", action }),
+                        )}
+                        className={`min-h-[44px] rounded-lg px-4 text-sm font-semibold transition-colors motion-reduce:transition-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50 md:min-h-[36px] ${FOCUS} ${
                           cfg.tone === "primary"
                             ? "bg-[#1F1D1A] text-white hover:bg-[#3A362E]"
                             : "border border-[#D6D1C4] bg-white text-[#3A362E] hover:bg-[#EDEAE3]"
@@ -776,7 +800,7 @@ export function StoryPanel({
                 onChange={(e) =>
                   setField("category", e.target.value as story_category | "")
                 }
-                className="w-full"
+                className="min-h-[44px] w-full"
                 {...errorProps("category", [fid("guide")])}
               >
                 <option value="" disabled>
@@ -850,7 +874,7 @@ export function StoryPanel({
                     readOnly={slugLocked}
                     maxLength={180}
                     onChange={(e) => setField("slug", e.target.value.toLowerCase())}
-                    className="min-w-0 flex-1 px-2 py-2 text-sm text-gray-800 read-only:bg-[#FBFAF7] read-only:text-[#57534E] focus:outline-none"
+                    className="min-h-[44px] min-w-0 flex-1 px-2 py-2 text-sm text-gray-800 read-only:bg-[#FBFAF7] read-only:text-[#57534E] focus:outline-none"
                     {...errorProps("slug", [`${fid("slug")}-hint`])}
                   />
                 </div>
@@ -1017,10 +1041,11 @@ export function StoryPanel({
                     />
                     <button
                       type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={remainingSlots === 0 || isSaving}
+                      {...blocked(remainingSlots === 0 || isSaving, () =>
+                        fileInputRef.current?.click(),
+                      )}
                       aria-describedby={fid("photos-hint")}
-                      className={`flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[#C9C3B5] px-4 text-sm font-medium text-[#3A362E] hover:bg-[#F4F2EC] disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS}`}
+                      className={`flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[#C9C3B5] px-4 text-sm font-medium text-[#3A362E] hover:bg-[#F4F2EC] aria-disabled:cursor-not-allowed aria-disabled:opacity-50 ${FOCUS}`}
                     >
                       <LuImagePlus className="h-5 w-5" aria-hidden />
                       {remainingSlots === 0
@@ -1075,9 +1100,9 @@ export function StoryPanel({
             </button>
             <button
               type="submit"
-              disabled={isSaving || isUploading}
+              aria-disabled={isSaving || isUploading || undefined}
               aria-busy={isSaving}
-              className={`min-h-[44px] flex-1 rounded-lg bg-[#1F1D1A] text-sm font-semibold text-white hover:bg-[#3A362E] disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS}`}
+              className={`min-h-[44px] flex-1 rounded-lg bg-[#1F1D1A] text-sm font-semibold text-white hover:bg-[#3A362E] aria-disabled:cursor-not-allowed aria-disabled:opacity-60 ${FOCUS}`}
             >
               {isSaving
                 ? "Guardando…"
@@ -1274,8 +1299,7 @@ function PhotoRow({
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            onClick={onUp}
-            disabled={busy || index === 0}
+            {...blocked(busy || index === 0, onUp)}
             aria-label={`Subir ${position}`}
             className={ICON_BUTTON}
           >
@@ -1283,8 +1307,7 @@ function PhotoRow({
           </button>
           <button
             type="button"
-            onClick={onDown}
-            disabled={busy || index === total - 1}
+            {...blocked(busy || index === total - 1, onDown)}
             aria-label={`Bajar ${position}`}
             className={ICON_BUTTON}
           >
@@ -1292,8 +1315,7 @@ function PhotoRow({
           </button>
           <button
             type="button"
-            onClick={onCover}
-            disabled={busy || isCover}
+            {...blocked(busy || isCover, onCover)}
             aria-pressed={isCover}
             aria-label={isCover ? `${position}: es la portada` : `Usar ${position} como portada`}
             className={`${ICON_BUTTON} w-auto gap-1.5 px-3 text-xs font-medium md:w-auto`}
@@ -1303,8 +1325,7 @@ function PhotoRow({
           </button>
           <button
             type="button"
-            onClick={onRemove}
-            disabled={busy}
+            {...blocked(busy, onRemove)}
             aria-label={`Eliminar ${position}`}
             className={`${ICON_BUTTON} text-[#B42318]`}
           >
@@ -1459,7 +1480,14 @@ function PetCombobox({
             className="absolute left-0 right-0 top-full z-10 mt-1 max-h-60 overflow-y-auto rounded-xl border border-[#EAE6DC] bg-white py-1 shadow-lg"
           >
             {matches.length === 0 ? (
-              <li className="px-3 py-2 text-sm text-[#57534E]">Sin resultados</li>
+              <li
+                role="option"
+                aria-selected={false}
+                aria-disabled
+                className="px-3 py-2 text-sm text-[#57534E]"
+              >
+                Sin resultados
+              </li>
             ) : (
               matches.map((pet, index) => (
                 <li

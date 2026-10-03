@@ -13,7 +13,6 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { LuPlus } from "react-icons/lu";
 import { toast } from "sonner";
-import { PrimaryButton } from "~/components/Button/primary";
 import SearchInput from "~/components/Input/SearchInput";
 import { Select } from "~/components/Input/Select";
 import Pagination from "~/components/Pagination";
@@ -248,13 +247,26 @@ export async function action({ request }: ActionArgs) {
       return fail("Datos de fotos no válidos.");
     }
 
+    // Los IDs de foto se validan ANTES de escribir nada: enteros positivos y
+    // de ESTA historia. Así una petición manipulada no deja la historia a
+    // medio guardar.
+    const altIds = imageIds.map(toPositiveInt);
+    if (altIds.length > 0) {
+      const current = await getStoryAdminDb(storyId);
+      if (!current.success) return fail(current.error);
+      const ownIds = new Set(current.data?.images.map((img) => img.id) ?? []);
+      if (altIds.some((id) => id === null || !ownIds.has(id))) {
+        return fail("Datos de fotos no válidos.");
+      }
+    }
+
     const res = await updateStoryDb(storyId, parsed.data, userId);
     if (!res.success) return fail(res.error);
 
-    for (const [index, rawId] of imageIds.entries()) {
+    for (const [index, imageId] of altIds.entries()) {
       const altRes = await updateStoryImageAltDb(
         storyId,
-        toPositiveInt(rawId) ?? 0,
+        imageId as number,
         sanitizeText(imageAlts[index], STORY_ALT_MAX),
         userId,
       );
@@ -483,12 +495,16 @@ export default function HistoriasAdmin() {
           </p>
         </div>
         {allowedToCreate && (
-          <PrimaryButton
-            label="Nueva historia"
-            Icon={LuPlus}
+          // Mismo turquesa que PrimaryButton pero con texto oscuro: el blanco
+          // sobre medium-turquoise-meraki da 2:1 y no cumple 4.5:1.
+          <button
+            type="button"
             onClick={openCreate}
-            className="min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1D1A]/40"
-          />
+            className="flex min-h-[44px] items-center gap-x-2 rounded-full bg-medium-turquoise-meraki px-4 text-sm font-semibold text-[#1F1D1A] hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1D1A] focus-visible:ring-offset-2 md:text-base"
+          >
+            <LuPlus aria-hidden />
+            Nueva historia
+          </button>
         )}
       </div>
 
@@ -499,13 +515,11 @@ export default function HistoriasAdmin() {
           placeholder="Buscar por título..."
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          isClearable
-          onClearable={() => setQ("")}
         />
         <div className="grid grid-cols-2 gap-3 md:flex md:items-center">
           <Select
             aria-label="Filtrar por categoría"
-            className="w-full md:w-auto"
+            className="min-h-[44px] w-full md:w-auto"
             value={filters.category}
             onChange={(e) => updateParam("category", e.target.value)}
           >
@@ -518,7 +532,7 @@ export default function HistoriasAdmin() {
           </Select>
           <Select
             aria-label="Filtrar por estado"
-            className="w-full md:w-auto"
+            className="min-h-[44px] w-full md:w-auto"
             value={filters.status}
             onChange={(e) => updateParam("status", e.target.value)}
           >
@@ -570,7 +584,7 @@ export default function HistoriasAdmin() {
       ) : (
         <div
           aria-busy={isLoading}
-          className={`flex flex-col gap-4 transition-opacity ${
+          className={`flex flex-col gap-4 transition-opacity motion-reduce:transition-none ${
             isLoading ? "opacity-60" : "opacity-100"
           }`}
         >
@@ -604,7 +618,7 @@ export default function HistoriasAdmin() {
                         <StoryThumb src={src} />
                       </td>
                       <td className="max-w-xs px-4 py-3">
-                        <p className="line-clamp-2 font-semibold text-[#1F1D1A]">
+                        <p className="line-clamp-2 break-words font-semibold text-[#1F1D1A]">
                           {story.title}
                         </p>
                       </td>
@@ -644,7 +658,7 @@ export default function HistoriasAdmin() {
               >
                 <StoryThumb src={thumb(story.cover?.path)} />
                 <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                  <p className="line-clamp-2 font-semibold text-[#1F1D1A]">
+                  <p className="line-clamp-2 break-words font-semibold text-[#1F1D1A]">
                     {story.title}
                   </p>
                   <div className="flex flex-wrap items-center gap-2 text-xs text-[#57534E]">
@@ -744,7 +758,7 @@ function EditButton({
       type="button"
       onClick={onClick}
       aria-label={`Editar «${title}»`}
-      className={`min-h-[44px] rounded-lg border border-[#1F6F66] px-4 text-sm font-medium text-[#1F6F66] transition-colors hover:bg-[#EAF7F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-medium-turquoise-meraki/50 md:min-h-[36px] ${className}`}
+      className={`min-h-[44px] rounded-lg border border-[#1F6F66] px-4 text-sm font-medium text-[#1F6F66] transition-colors motion-reduce:transition-none hover:bg-[#EAF7F5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-medium-turquoise-meraki/50 md:min-h-[36px] ${className}`}
     >
       Editar
     </button>
