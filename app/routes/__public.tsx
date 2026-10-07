@@ -5,7 +5,6 @@ import {
   Outlet,
   useLoaderData,
 } from "@remix-run/react";
-import { useEffect, useState } from "react";
 import { RouteErrorPage } from "~/components/Alerts/ErrorPage";
 import PublicLayout from "~/components/Layout/publicLayout";
 import { config } from "~/config";
@@ -48,7 +47,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 
       return json(
         {
-          modules,
+          modules: publicModuleListRes.data,
           initials,
           profile: profile ? `${baseCloud}/v${profileV}/${profile}` : undefined,
           isLoggenIn: !!session.get("dbUserId"),
@@ -87,16 +86,8 @@ export default () => {
   // Hooks...
   const data = useLoaderData();
 
-  // Bandera para saber cuando este listo el componente
-  const [isDomLoaded, setIsDomLoaded] = useState(false);
-
-  /*------------------------------ESCUCHAS------------------------------*/
-  useEffect(() => {
-    setIsDomLoaded(true);
-  }, []);
-
-  if (!isDomLoaded) return <main></main>;
-
+  // Se renderiza también en el servidor: el HTML inicial debe traer el
+  // contenido y el menú para que los buscadores puedan leerlos.
   return (
     <PublicLayout
       modules={data.modules}

@@ -1,5 +1,10 @@
-import { ActionFunction, json } from "@remix-run/node";
-import { useFetcher, useNavigate } from "@remix-run/react";
+import {
+  ActionFunction,
+  json,
+  LoaderArgs,
+  V2_MetaFunction,
+} from "@remix-run/node";
+import { useFetcher, useLoaderData, useNavigate } from "@remix-run/react";
 import { useEffect, useMemo, useState } from "react";
 import Carousel from "~/components/Carousel";
 import { getPetWithImagesDb, PetWithImage } from "~/services/db/pet.service";
@@ -26,11 +31,93 @@ import { SecondaryButton } from "~/components/Button/secondary";
 import { PrimaryButton } from "~/components/Button/primary";
 import { config } from "~/config";
 import { petImageUrl } from "~/utils/image";
-import { getPetStatusConfig } from "~/utils/pet-helpers";
+import { absoluteUrl } from "~/utils/site.server";
+import { petDetailMeta } from "~/utils/pet-meta";
+import { getPetStatusConfig, PUBLIC_PET_STATUSES } from "~/utils/pet-helpers";
 
-export const meta = () => {
-  return [{ title: "Mascota | Asociación Meraki" }];
+/*==============================| Loader Function |==============================*/
+// La ficha llega renderizada en el HTML (SEO y vista previa al compartir).
+export const loader = async ({ request, params }: LoaderArgs) => {
+  const session = await getSession(request.headers.get("cookie"));
+  const dbUserId = session.get("dbUserId");
+  const { petId } = params;
+  const canonicalUrl = absoluteUrl(`/mascota/${petId}`);
+
+  const notFound = () =>
+    json({ notFound: true as const, errorMsg: null, canonicalUrl }, 404);
+
+  // Un id no numérico nunca corresponde a una mascota
+  if (!petId || !/^\d+$/.test(petId)) return notFound();
+
+  const [petInfoRes, getSavedPetRes] = await Promise.all([
+    getPetWithImagesDb({ id: Number(petId) }),
+    getSavedPetDb({ user_id: dbUserId || -100, pet_id: Number(petId) }),
+  ]);
+
+  // La mascota no existe: no es un error, solo se muestra el estado vacío
+  if (petInfoRes.success && !petInfoRes.data) return notFound();
+
+  if (!petInfoRes.success || !petInfoRes.data || !getSavedPetRes.success) {
+    return json(
+      {
+        notFound: true as const,
+        errorMsg: "Ocurrió un error al obtener la información de la mascota",
+        canonicalUrl,
+      },
+      500,
+    );
+  }
+
+  const pet = petInfoRes.data;
+  const permissions: PermissionSession[] = session.get("permissions") || [];
+  const cloudName = config.cloudinaryCloudName;
+
+  // Datos para los metadatos
+  const species = pet.petSpecies?.name?.toLowerCase() || "mascota";
+  const race = pet.race ? ` (${pet.race})` : "";
+  const intro = `Conoce a ${pet.name}, ${species} ${pet.gender.toLowerCase()} de ${calculateAge(pet.birthdate)}${race}, que busca un hogar en Guatemala.`;
+  const body = (pet.description || "").replace(/\s+/g, " ").trim();
+  let description = `${intro} ${body}`.trim();
+  if (description.length > 300) description = `${description.slice(0, 297)}...`;
+  const cover = pet.pet_images?.[0];
+
+  return json({
+    notFound: false as const,
+    errorMsg: null,
+    pet,
+    isUser: !!dbUserId,
+    allowedLikePet: !!permissions.find(
+      (p) => p.module_id === 1 && p.action === "Guardar",
+    ),
+    allowedRequestPet: !!permissions.find(
+      (p) => p.module_id === 1 && p.action === "Crear",
+    ),
+    pet_saved_id: getSavedPetRes.data?.id ?? null,
+    cloudName,
+    canonicalUrl,
+    indexable: PUBLIC_PET_STATUSES.includes(pet.status),
+    title: `Adopta a ${pet.name}, ${species} en Guatemala`,
+    description,
+    ogImage:
+      cover && cloudName
+        ? `https://res.cloudinary.com/${cloudName}/image/upload/c_fill,g_auto,w_1200,h_630,f_jpg,q_auto/${cover.path}`
+        : null,
+  });
 };
+
+export const meta: V2_MetaFunction<typeof loader> = ({ data }) =>
+  petDetailMeta(
+    data && !data.notFound
+      ? {
+          notFound: false,
+          indexable: data.indexable,
+          canonicalUrl: data.canonicalUrl,
+          title: data.title,
+          description: data.description,
+          ogImage: data.ogImage,
+        }
+      : undefined,
+  );
 
 /*==============================| Action Function |==============================*/
 export const action: ActionFunction = async ({ request, params }) => {
@@ -44,55 +131,6 @@ export const action: ActionFunction = async ({ request, params }) => {
   //=============| Datos del POST |==============================//
   const formData = await request.formData();
   const { action, payload } = Object.fromEntries(formData);
-
-  if (action === "loadInformation") {
-    // Obtenemos los permisos
-    const permissions: PermissionSession[] = session.get("permissions") || [];
-
-    if (!petId) {
-      return json({
-        errorMsg: "Ocurrió un error al obtener la información de la mascota",
-      });
-    }
-
-    // Un id no numérico nunca corresponde a una mascota
-    if (!Number.isInteger(Number(petId))) {
-      return json({ notFound: true });
-    }
-
-    // Obtenemos información de la mascota
-    const petInfoRes = await getPetWithImagesDb({ id: Number(petId) });
-
-    // Obtenemos información de si la mascota ha sido guardada
-    const getSavedPetRes = await getSavedPetDb({
-      user_id: dbUserId || -100,
-      pet_id: Number(petId),
-    });
-
-    // La mascota no existe: no es un error, solo se muestra el estado vacío
-    if (petInfoRes.success && !petInfoRes.data) {
-      return json({ notFound: true });
-    }
-
-    if (!petInfoRes.success || !petInfoRes.data || !getSavedPetRes.success) {
-      return json({
-        errorMsg: "Ocurrió un error al obtener la información de la mascota",
-      });
-    }
-
-    return json({
-      pet: petInfoRes.data,
-      isUser: !!session.get("dbUserId"),
-      allowedLikePet: permissions.find(
-        (p) => p.module_id === 1 && p.action === "Guardar",
-      ),
-      allowedRequestPet: permissions.find(
-        (p) => p.module_id === 1 && p.action === "Crear",
-      ),
-      pet_saved_id: getSavedPetRes.data?.id,
-      cloudName: config.cloudinaryCloudName,
-    });
-  }
 
   if (action === "savedPet") {
     // Solo un usuario autenticado con permiso "Guardar" puede guardar mascotas
@@ -181,9 +219,14 @@ export default function () {
   const fetcher = useFetcher();
   const navigate = useNavigate();
 
-  // Información de la mascota
-  const [pet, setPet] = useState<PetWithImage | null>(null);
-  const [cloudName, setCloudName] = useState("");
+  const data = useLoaderData<typeof loader>();
+
+  // Información de la mascota y del usuario (vienen del loader)
+  const pet = data.notFound ? null : data.pet;
+  const cloudName = data.notFound ? "" : data.cloudName;
+  const isUser = data.notFound ? false : data.isUser;
+  const allowedLike = data.notFound ? false : data.allowedLikePet;
+  const allowedRequest = data.notFound ? false : data.allowedRequestPet;
   const petImages = useMemo(() => {
     if (pet && cloudName) {
       return pet.pet_images.map((img) =>
@@ -194,60 +237,31 @@ export default function () {
     return [];
   }, [pet, cloudName]);
 
-  // Información del usuario
-  const [isUser, setIsUser] = useState(false);
-  const [allowedLike, setAllowedLike] = useState(false);
-  const [allowedRequest, setAllowedRequest] = useState(false);
-
   // Banderas
-  const [isLoading, setIsLoading] = useState(true);
-  const [petSavedId, setPetSavedId] = useState<string | null>(null);
+  const [petSavedId, setPetSavedId] = useState<string | null>(
+    data.notFound ? null : data.pet_saved_id,
+  );
   const [saving, setSaving] = useState(false);
 
-  /*------------------------------CARGA DE CATÁLOGOS------------------------------*/
+  // Tras guardar/quitar, Remix vuelve a ejecutar el loader: nos alineamos con él
   useEffect(() => {
-    fetcher.submit(
-      {
-        action: "loadInformation",
-      },
-      { method: "post" },
-    );
-  }, []);
+    setPetSavedId(data.notFound ? null : data.pet_saved_id);
+  }, [data]);
 
-  /*------------------------------SETEO DE DATOS PROVENIENTES DEL POST------------------------------*/
+  /*------------------------------MENSAJES DEL SERVIDOR------------------------------*/
+  useEffect(() => {
+    if (data.errorMsg) toast.error(data.errorMsg);
+  }, [data.errorMsg]);
+
   useEffect(() => {
     // Mensaje de error durante algun proceso
     if (fetcher.data?.errorMsg) {
       toast.error(fetcher.data.errorMsg);
-      setIsLoading(false);
-    }
-
-    // La mascota no existe: se muestra el estado vacío (sin toast de error)
-    if (fetcher.data?.notFound) {
-      setIsLoading(false);
-    }
-
-    if (fetcher.data?.pet) {
-      setPet(fetcher.data.pet);
-      setIsLoading(false);
-    }
-    if (fetcher.data?.isUser) {
-      setIsUser(true);
-    }
-    if (fetcher.data?.allowedLikePet) {
-      setAllowedLike(true);
-    }
-    if (fetcher.data?.allowedRequestPet) {
-      setAllowedRequest(true);
-    }
-    if (fetcher.data?.pet_saved_id) {
-      setPetSavedId(fetcher.data.pet_saved_id);
-    }
-    if (fetcher.data?.cloudName) {
-      setCloudName(fetcher.data.cloudName);
+      setSaving(false);
     }
     if (fetcher.data?.pet_saved) {
       toast.success("Guardado exitosamente.");
+      setPetSavedId(fetcher.data.pet_saved_id ?? null);
       setSaving(false);
     }
     if (fetcher.data?.unsave_pet) {
@@ -288,15 +302,6 @@ export default function () {
 
     navigate("solicitar_adopcion");
   };
-
-  // Si aún no hay información de la mascota
-  if (isLoading) {
-    return (
-      <div className="w-full h-full flex justify-center items-center">
-        <AiOutlineLoading3Quarters className="animate-spin w-16 h-16" />
-      </div>
-    );
-  }
 
   if (!pet) {
     return (

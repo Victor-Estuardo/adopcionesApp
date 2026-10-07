@@ -91,6 +91,12 @@ export const getPetWithImagesDb = async (
             pet_id: true,
           },
         },
+        petSpecies: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     });
   });
