@@ -142,7 +142,7 @@ function getPasswordResetEmailHtml(
           <p style="word-break: break-all; color: #666; font-size: 12px;">${resetUrl}</p>
           
           <div class="warning">
-            <strong>⏱️ Importante:</strong> Este enlace expirará en 15 minutos por razones de seguridad.
+            <strong>⏱️ Importante:</strong> Este enlace expirará en 30 minutos por razones de seguridad.
           </div>
           
           <p>Si no solicitaste restablecer tu contraseña, puedes ignorar este correo de forma segura. Tu cuenta permanecerá protegida.</p>
@@ -153,7 +153,7 @@ function getPasswordResetEmailHtml(
         </div>
         
         <div class="footer">
-          <p>© 2025 MERAKI. Todos los derechos reservados.</p>
+          <p>© ${new Date().getFullYear()} Asociación Meraki. Todos los derechos reservados.</p>
           <p>Este es un correo automático, por favor no respondas a este mensaje.</p>
         </div>
       </div>
@@ -176,14 +176,14 @@ function getPasswordResetEmailText(
     Haz clic en el siguiente enlace para crear una nueva contraseña:
     ${resetUrl}
     
-    ⏱️ Este enlace expirará en 15 minutos.
+    ⏱️ Este enlace expirará en 30 minutos.
     
     Si no solicitaste restablecer tu contraseña, puedes ignorar este correo de forma segura. Tu cuenta permanecerá protegida.
     
     🔒 Por tu seguridad, nunca compartas este enlace con nadie.
     
     Saludos,
-    El equipo de MERAKI
+    El equipo de Meraki
   `;
 }
 
@@ -255,7 +255,7 @@ export async function sendVerificationEmail(
       <body>
         <div class="container">
           <div class="header">
-            <h1>¡Bienvenido a MERAKI!</h1>
+            <h1>¡Bienvenido a Meraki!</h1>
           </div>
           
           <div class="content">
@@ -278,7 +278,7 @@ export async function sendVerificationEmail(
           </div>
           
           <div class="footer">
-            <p>© 2025 MERAKI. Todos los derechos reservados.</p>
+            <p>© ${new Date().getFullYear()} Asociación Meraki. Todos los derechos reservados.</p>
             <p>Este es un correo automático, por favor no respondas a este mensaje.</p>
           </div>
         </div>
@@ -290,7 +290,7 @@ export async function sendVerificationEmail(
     const textContent = `
       Hola ${userName},
 
-      Gracias por registrarte en MERAKI.
+      Gracias por registrarte en Meraki.
       
       Para activar tu cuenta, por favor visita el siguiente enlace:
       ${verificationLink}
@@ -300,7 +300,7 @@ export async function sendVerificationEmail(
       Si no creaste esta cuenta, puedes ignorar este correo.
       
       Saludos,
-      El equipo de MERAKI
+      El equipo de Meraki
     `;
 
     // Enviar el correo con Resend
@@ -400,7 +400,7 @@ function getSetPasswordEmailHtml(
           <p>Si no reconoces esta invitación, puedes ignorar este correo.</p>
         </div>
         <div class="footer">
-          <p>© 2025 MERAKI. Todos los derechos reservados.</p>
+          <p>© ${new Date().getFullYear()} Asociación Meraki. Todos los derechos reservados.</p>
           <p>Este es un correo automático, por favor no respondas a este mensaje.</p>
         </div>
       </div>
@@ -428,7 +428,7 @@ function getSetPasswordEmailText(
     Si no reconoces esta invitación, puedes ignorar este correo.
 
     Saludos,
-    El equipo de MERAKI
+    El equipo de Meraki
   `;
 }
 
@@ -500,7 +500,7 @@ function getApplicationDecisionEmailHtml(
           <p style="word-break: break-all; color: #666; font-size: 12px;">${applicationUrl}</p>
         </div>
         <div class="footer">
-          <p>© 2025 MERAKI. Todos los derechos reservados.</p>
+          <p>© ${new Date().getFullYear()} Asociación Meraki. Todos los derechos reservados.</p>
           <p>Este es un correo automático, por favor no respondas a este mensaje.</p>
         </div>
       </div>
@@ -524,6 +524,6 @@ function getApplicationDecisionEmailText(
     ${applicationUrl}
 
     Saludos,
-    El equipo de MERAKI
+    El equipo de Meraki
   `;
 }

@@ -51,6 +51,11 @@ export const action: ActionFunction = async ({ request, params }) => {
       });
     }
 
+    // Un id no numérico nunca corresponde a una mascota
+    if (!Number.isInteger(Number(petId))) {
+      return json({ notFound: true });
+    }
+
     // Obtenemos información de la mascota
     const petInfoRes = await getPetWithImagesDb({ id: Number(petId) });
 
@@ -59,6 +64,11 @@ export const action: ActionFunction = async ({ request, params }) => {
       user_id: dbUserId || -100,
       pet_id: Number(petId),
     });
+
+    // La mascota no existe: no es un error, solo se muestra el estado vacío
+    if (petInfoRes.success && !petInfoRes.data) {
+      return json({ notFound: true });
+    }
 
     if (!petInfoRes.success || !petInfoRes.data || !getSavedPetRes.success) {
       return json({
@@ -214,6 +224,11 @@ export default function () {
       setIsLoading(false);
     }
 
+    // La mascota no existe: se muestra el estado vacío (sin toast de error)
+    if (fetcher.data?.notFound) {
+      setIsLoading(false);
+    }
+
     if (fetcher.data?.pet) {
       setPet(fetcher.data.pet);
       setIsLoading(false);
@@ -287,8 +302,14 @@ export default function () {
 
   if (!pet) {
     return (
-      <div className="w-full h-full fles justify-center items-center">
-        No se encontro información de la mascota
+      <div className="w-full h-full flex flex-col justify-center items-center gap-3 p-5 text-center">
+        <p className="font-medium text-[#1F1D1A]">
+          No encontramos esta mascota
+        </p>
+        <p className="max-w-xs text-sm text-[#8A8577]">
+          Puede que el enlace sea incorrecto o que ya no esté disponible.
+        </p>
+        <PrimaryButton label="Ver mascotas" onClick={() => navigate("/")} />
       </div>
     );
   }

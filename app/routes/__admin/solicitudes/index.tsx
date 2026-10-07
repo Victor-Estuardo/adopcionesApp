@@ -287,7 +287,7 @@ export default function () {
           >
             <option value="">Toda especie</option>
             {species.map((s: petSpecies) => (
-              <option value={s.id}>{s.name}</option>
+              <option key={s.id} value={s.id}>{s.name}</option>
             ))}
           </Select>
           <Select
