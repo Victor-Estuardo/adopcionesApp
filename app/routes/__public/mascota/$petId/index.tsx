@@ -6,7 +6,11 @@ import { getPetWithImagesDb, PetWithImage } from "~/services/db/pet.service";
 import { FaChevronLeft, FaMapPin, FaRegHeart } from "react-icons/fa";
 import { IoFemaleOutline, IoMaleOutline } from "react-icons/io5";
 import { LiaBirthdayCakeSolid } from "react-icons/lia";
-import { calculateAge, validatePermission } from "~/utils/common";
+import {
+  calculateAge,
+  NO_PERMISSION_MESSAGE,
+  validatePermission,
+} from "~/utils/common";
 import { FaHeart } from "react-icons/fa";
 import { GrStatusGoodSmall } from "react-icons/gr";
 import { getSession } from "~/services/sessions/sessions.service";
@@ -95,10 +99,7 @@ export const action: ActionFunction = async ({ request, params }) => {
     const validateRequest = validatePermission(session, 1, "Guardar");
     if (validateRequest) throw validateRequest;
     if (!dbUserId) {
-      throw new Response(
-        "No cuenta con los permisos necesarios para ejecutar la acción",
-        { status: 404 },
-      );
+      throw new Response(NO_PERMISSION_MESSAGE, { status: 403 });
     }
 
     // Guardamos la mascota para el usuario
@@ -138,10 +139,7 @@ export const action: ActionFunction = async ({ request, params }) => {
     const validateRequest = validatePermission(session, 1, "Guardar");
     if (validateRequest) throw validateRequest;
     if (!dbUserId) {
-      throw new Response(
-        "No cuenta con los permisos necesarios para ejecutar la acción",
-        { status: 404 },
-      );
+      throw new Response(NO_PERMISSION_MESSAGE, { status: 403 });
     }
 
     let {

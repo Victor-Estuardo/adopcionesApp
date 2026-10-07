@@ -13,6 +13,7 @@ import { useFetcher, useNavigate, useSearchParams } from "@remix-run/react";
 import {
   getDateGt,
   getFirstAdminModuleRoute,
+  getSafeRedirect,
   handleEmailValidation,
   handlePasswordValidation,
 } from "~/utils/common";
@@ -41,7 +42,12 @@ export const loader: LoaderFunction = async ({ request }) => {
   const session = await getSession(cookie);
 
   if (session.get("dbUserId")) {
-    return redirect(session.get("administrative") ? "/admin" : "/mi-cuenta");
+    const modules: ModuleSession[] = session.get("modules") || [];
+    return redirect(
+      session.get("administrative")
+        ? getFirstAdminModuleRoute(modules)
+        : "/mi-cuenta",
+    );
   }
 
   return json({});
@@ -103,10 +109,12 @@ export const action: ActionFunction = async ({ request }) => {
     const modules: ModuleSession[] = session.get("modules") || [];
 
     return redirect(
-      search.get("redirect") ||
-        (loginRes?.administrative
+      getSafeRedirect(
+        search.get("redirect"),
+        loginRes?.administrative
           ? getFirstAdminModuleRoute(modules)
-          : "/mi-cuenta"),
+          : "/mi-cuenta",
+      ),
       {
         headers: {
           "Set-Cookie": await commitSession(session),

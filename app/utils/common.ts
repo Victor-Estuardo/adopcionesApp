@@ -159,6 +159,13 @@ export function getDateGt(): Date {
   return new Date(new Date().getTime() - 6 * 60 * 60 * 1000);
 }
 
+/**
+ * Mensaje del Response que lanza `validatePermission`. Los ErrorBoundary lo
+ * comparan para distinguir "sin permiso" de un 404 normal.
+ */
+export const NO_PERMISSION_MESSAGE =
+  "No cuenta con los permisos necesarios para ejecutar la acción";
+
 /*------------------------------------------------------------------------*/
 /**
  * Función que Verifica los permisos de navegación
@@ -175,15 +182,39 @@ export function validatePermission(
   if (
     !permissions.find((p) => p.module_id === moduleId && p.action === action)
   ) {
-    return new Response(
-      "No cuenta con los permisos necesarios para ejecutar la acción",
-      {
-        status: 404,
-      },
-    );
+    return new Response(NO_PERMISSION_MESSAGE, {
+      status: 403,
+    });
   }
 
   return null;
+}
+
+/*------------------------------------------------------------------------*/
+/**
+ * Valida un destino de redirección que viene del cliente (p. ej. `?redirect=`)
+ * para evitar redirecciones abiertas. Solo se aceptan rutas internas
+ * ("/mascota/8"); se rechazan URLs absolutas ("https://…"), protocol-relative
+ * ("//sitio.com"), con barra invertida ("/\sitio.com") o con caracteres de control.
+ * @param target Destino recibido (puede ser null)
+ * @param fallback Ruta a usar si el destino no es seguro
+ * @returns El destino si es una ruta interna segura; si no, `fallback`
+ */
+export function getSafeRedirect(
+  target: string | null | undefined,
+  fallback: string,
+): string {
+  if (
+    !target ||
+    !target.startsWith("/") ||
+    target.startsWith("//") ||
+    target.includes("\\") ||
+    /[\u0000-\u001f]/.test(target)
+  ) {
+    return fallback;
+  }
+
+  return target;
 }
 
 /*------------------------------------------------------------------------*/
