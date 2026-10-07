@@ -21,7 +21,7 @@ export function ApplicationTimeLine({
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
       <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-5">
-        Estado de tu solicitud
+        {adopter ? "Estado de tu solicitud" : "Estado de la solicitud"}
       </h2>
 
       <div className="flex items-center gap-0">

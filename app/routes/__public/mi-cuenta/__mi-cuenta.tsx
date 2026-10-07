@@ -14,7 +14,7 @@ import { getSession } from "~/services/sessions/sessions.service";
 import { IconType } from "react-icons";
 
 export const meta = () => {
-  return [{ title: "Mi cuenta" }];
+  return [{ title: "Mi cuenta | Asociación Meraki" }];
 };
 
 /*==============================| Loader Function |==============================*/

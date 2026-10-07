@@ -11,7 +11,7 @@ import prisma from "~/services/db/prisma";
 import { validatePasswordResetToken } from "~/services/db/passwordResetToken.service";
 
 export const meta = () => {
-  return [{ title: "Restablecer Contraseña" }];
+  return [{ title: "Restablecer contraseña | Asociación Meraki" }];
 };
 
 /*==============================| Loader |==============================*/
@@ -52,7 +52,7 @@ export const action: ActionFunction = async ({ request }) => {
 
     if (!data) {
       return json({
-        errorMsg: "Datos incompletos.\nPor favor, intente nuevamente.",
+        errorMsg: "Datos incompletos.\nPor favor, intenta de nuevo.",
       });
     }
 
@@ -93,7 +93,7 @@ export const action: ActionFunction = async ({ request }) => {
     } catch (error) {
       return json({
         errorMsg:
-          "Error al restablecer la contraseña.\nPor favor, intente nuevamente.",
+          "Error al restablecer la contraseña.\nPor favor, intenta de nuevo.",
       });
     }
   }
@@ -200,7 +200,7 @@ export default function ResetPasswordPage() {
         className="w-full sm:w-[450px] min-h-[450px] flex flex-col justify-start items-center gap-y-6 rounded-lg bg-white px-4 pt-6 pb-4 shadow-lg"
       >
         <h1 className="text-center font-bold text-xl border-b border-gray-300 pb-2">
-          Restablecer Contraseña
+          Restablecer contraseña
         </h1>
         <p className="text-gray-500 text-sm text-center px-8">
           Crea una nueva contraseña segura para tu cuenta.

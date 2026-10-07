@@ -32,7 +32,7 @@ import { ModuleSession } from "~/services/db/module.service";
 import { enforceRateLimits, getClientIp } from "~/utils/rateLimit.server";
 
 export const meta = () => {
-  return [{ title: "Iniciar sesión" }];
+  return [{ title: "Iniciar sesión | Asociación Meraki" }];
 };
 
 /*==============================| Loader Function |==============================*/
@@ -370,13 +370,13 @@ export default function () {
           ¿Has olvidado tu contraseña?
         </div>
         <div className="w-full pt-3 sm:pt-5 border-b border-gray-300" />
-        <p>¿Eres Nuevo?</p>
+        <p>¿Eres nuevo?</p>
         <div
           className="border border-medium-turquoise-meraki rounded-full px-16 py-3"
           role="button"
           onClick={() => navigate("/crear-cuenta")}
         >
-          Crear Cuenta
+          Crear cuenta
         </div>
       </form>
     </div>

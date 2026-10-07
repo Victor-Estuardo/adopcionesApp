@@ -43,7 +43,7 @@ import { resolveDateRange } from "~/utils/statsDateRange";
 import StatsHeader, { PresetRange } from "~/components/Stats/StatsHeader";
 
 export const meta = () => {
-  return [{ title: "ESTADÍSTICAS" }];
+  return [{ title: "Estadísticas | Asociación Meraki" }];
 };
 
 const ESTADISTICAS_MODULE_ID = 16;

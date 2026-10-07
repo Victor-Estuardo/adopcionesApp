@@ -25,7 +25,7 @@ import { petImageUrl } from "~/utils/image";
 import { getPetStatusConfig } from "~/utils/pet-helpers";
 
 export const meta = () => {
-  return [{ title: "MASCOTA" }];
+  return [{ title: "Mascota | Asociación Meraki" }];
 };
 
 /*==============================| Action Function |==============================*/
@@ -113,7 +113,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 
       return json({
         errorMsg:
-          "Ocurrió un error al guardar la mascota, por favor intente nuevamente",
+          "Ocurrió un error al guardar la mascota, por favor intenta de nuevo.",
       });
     }
 
@@ -238,7 +238,7 @@ export default function () {
       setSaving(false);
     }
     if (fetcher.data?.unsave_pet) {
-      toast.success("Se quito de Guardados exitosamente");
+      toast.success("Se quitó de Guardados exitosamente");
       setPetSavedId(null);
       setSaving(false);
     }
@@ -361,7 +361,7 @@ export default function () {
                   onClick={() => handleAdoptionPet()}
                   label={
                     getPetStatusConfig(pet.status).canRequestAdoption
-                      ? "Solicitar Adopción"
+                      ? "Solicitar adopción"
                       : getPetStatusConfig(pet.status).label
                   }
                 />

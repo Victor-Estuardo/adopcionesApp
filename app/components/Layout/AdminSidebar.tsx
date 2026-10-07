@@ -107,7 +107,7 @@ export default ({
           }`}
         >
           <IoIosLogOut className="w-8 h-8" />
-          {!collapsed && <p>Cerrar Sesión</p>}
+          {!collapsed && <p>Cerrar sesión</p>}
         </NavLink>
       </aside>
       {/* Drawer móvil */}
@@ -159,7 +159,7 @@ export default ({
             className="w-full mt-auto py-3 border-t border-gray-100 flex items-center gap-x-3 px-6"
           >
             <IoIosLogOut className="w-6 h-6" />
-            <p>Cerrar Sesión</p>
+            <p>Cerrar sesión</p>
           </NavLink>
         </div>
       </div>

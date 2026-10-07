@@ -31,7 +31,7 @@ import { resizeImage } from "~/utils/image";
 import { enforceRateLimits, getClientIp } from "~/utils/rateLimit.server";
 
 export const meta = () => {
-  return [{ title: "EDITAR CUENTA" }];
+  return [{ title: "Editar cuenta | Asociación Meraki" }];
 };
 
 /*==============================| Loader Function |==============================*/
@@ -208,7 +208,7 @@ export const action: ActionFunction = async ({ request }) => {
   }
 
   return json({
-    errorMsg: "Ocurrió un error al cargar la pagina",
+    errorMsg: "Ocurrió un error al cargar la página",
   });
 };
 
@@ -383,9 +383,9 @@ export default function () {
   // Función para cambiar infomación del usuario
   const handleUpdateUser = () => {
     let error = "";
-    if (firstName === "") error = "El nombre no puede estar vacio";
+    if (firstName === "") error = "El nombre no puede estar vacío";
 
-    if (lastName === "") error = "El apellido no puede estar vacio";
+    if (lastName === "") error = "El apellido no puede estar vacío";
 
     if (error) {
       toast.error(error);

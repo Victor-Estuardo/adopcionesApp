@@ -21,7 +21,7 @@ import { getPetStatusConfig } from "~/utils/pet-helpers";
 import { enforceRateLimits, getClientIp } from "~/utils/rateLimit.server";
 
 export const meta = () => {
-  return [{ title: "SOLICITUD DE ADOPCIÓN" }];
+  return [{ title: "Solicitud de adopción | Asociación Meraki" }];
 };
 
 /*==============================| Loader Function |==============================*/
@@ -137,7 +137,7 @@ export const action: ActionFunction = async ({ request, params }) => {
   if (!getQuestionsResponse.success) {
     return json({
       errorMsg:
-        "Ocurrió un error al crear la solicitud, por favor intente nuevamente",
+        "Ocurrió un error al crear la solicitud, por favor intenta de nuevo.",
     });
   }
 
@@ -205,7 +205,7 @@ export const action: ActionFunction = async ({ request, params }) => {
   if (!submitRes.success) {
     return json({
       errorMsg:
-        "Ocurrió un error al crear la solicitud, por favor intente nuevamente",
+        "Ocurrió un error al crear la solicitud, por favor intenta de nuevo.",
     });
   }
 
@@ -232,7 +232,7 @@ export default function () {
   /*------------------------------SETEO DE DATOS PROVENIENTES DEL POST------------------------------*/
   useEffect(() => {
     if (actionData?.answers_success) {
-      toast.success("Solicitud enviada exitosamente,", { duration: 4000 });
+      toast.success("Solicitud enviada exitosamente.", { duration: 4000 });
 
       navigate(
         `/mi-cuenta/solicitudes/${actionData.answers_success}?rc=pet&enviada=true`,

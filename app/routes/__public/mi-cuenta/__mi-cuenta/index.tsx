@@ -14,7 +14,7 @@ import {
 import { validatePermission } from "~/utils/common";
 
 export const meta = () => {
-  return [{ title: "MI CUENTA" }];
+  return [{ title: "Mi cuenta | Asociación Meraki" }];
 };
 
 /*==============================| Loader Function |==============================*/
@@ -86,7 +86,7 @@ export const action: ActionFunction = async ({ request }) => {
   }
 
   return json({
-    errorMsg: "Ocurrió un error al cargar la pagina",
+    errorMsg: "Ocurrió un error al cargar la página",
   });
 };
 

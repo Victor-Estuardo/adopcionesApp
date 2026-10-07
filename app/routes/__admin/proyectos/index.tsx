@@ -36,7 +36,7 @@ import { sanitizeLimit, sanitizeText } from "~/utils/sanitize";
 const FOTO_ACCEPT = PROYECTO_FOTO_MIME_TYPES.join(",");
 
 export const meta = () => {
-  return [{ title: "PROYECTOS" }];
+  return [{ title: "Proyectos | Asociación Meraki" }];
 };
 
 const PROYECTOS_MODULE_ID = 14;

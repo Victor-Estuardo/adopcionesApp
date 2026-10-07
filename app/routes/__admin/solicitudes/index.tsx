@@ -19,7 +19,7 @@ import { getSession } from "~/services/sessions/sessions.service";
 import { validatePermission } from "~/utils/common";
 
 export const meta = () => {
-  return [{ title: "SOLICITUDES" }];
+  return [{ title: "Solicitudes | Asociación Meraki" }];
 };
 
 /*==============================| Loader Function |==============================*/
@@ -101,7 +101,7 @@ export const action: ActionFunction = async ({ request }) => {
       !speciesResponse.success
     )
       return json({
-        errorMsg: "Ocurrió un error al cargar la pagina",
+        errorMsg: "Ocurrió un error al cargar la página",
       });
 
     return json({
@@ -114,7 +114,7 @@ export const action: ActionFunction = async ({ request }) => {
   }
 
   return json({
-    errorMsg: "Ocurrió un error al cargar la pagina",
+    errorMsg: "Ocurrió un error al cargar la página",
   });
 };
 

@@ -58,7 +58,7 @@ async function notifyAdopterDecision(
 }
 
 export const meta = () => {
-  return [{ title: "PROGRESO DE SOLICITUD" }];
+  return [{ title: "Progreso de solicitud | Asociación Meraki" }];
 };
 
 /*==============================| Loader Function |==============================*/
@@ -217,7 +217,7 @@ export const action: ActionFunction = async ({ request, params }) => {
   }
 
   return json({
-    errorMsg: "Ocurrió un error al cargar la pagina",
+    errorMsg: "Ocurrió un error al cargar la página",
   });
 };
 
@@ -336,7 +336,7 @@ export default function () {
   // Función para rechazar solicitudes
   function handleReject() {
     if (!rejectionReason.trim()) {
-      toast.error("No puede mandar una razon vacia");
+      toast.error("Debes escribir el motivo del rechazo");
       return;
     }
 

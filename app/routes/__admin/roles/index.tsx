@@ -29,7 +29,7 @@ import { listUserIdsByRoleDb } from "~/services/db/user.service";
 import { revokeSessionsForUsersDb } from "~/services/db/session.service";
 
 export const meta = () => {
-  return [{ title: "ROLES" }];
+  return [{ title: "Roles | Asociación Meraki" }];
 };
 
 /*==============================| Loader Function |==============================*/
@@ -230,7 +230,7 @@ export const action: ActionFunction = async ({ request }) => {
   }
 
   return json({
-    errorMsg: "Ocurrió un error al cargar la pagina",
+    errorMsg: "Ocurrió un error al cargar la página",
   });
 };
 
@@ -390,7 +390,7 @@ export default function () {
         </h2>
         <PrimaryButton
           className="order-2 md:order-2"
-          label="Nuevo Rol"
+          label="Nuevo rol"
           Icon={LuPlus}
           onClick={openCreate}
         />

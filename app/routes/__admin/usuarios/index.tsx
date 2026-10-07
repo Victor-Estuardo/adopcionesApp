@@ -32,7 +32,7 @@ import {
 import { generateSecureToken, hashText } from "~/utils/crypto.server";
 
 export const meta = () => {
-  return [{ title: "USUARIOS" }];
+  return [{ title: "Usuarios | Asociación Meraki" }];
 };
 
 /*==============================| Loader Function |==============================*/
@@ -357,7 +357,7 @@ export const action: ActionFunction = async ({ request }) => {
   }
 
   return json({
-    errorMsg: "Ocurrió un error al cargar la pagina",
+    errorMsg: "Ocurrió un error al cargar la página",
   });
 };
 
@@ -424,7 +424,7 @@ export default function () {
     }
 
     if (fetcher.data?.created_user) {
-      toast.success("Se creo el usuario exitosamente");
+      toast.success("Se creó el usuario exitosamente");
       window.location.reload();
     }
 
@@ -518,7 +518,7 @@ export default function () {
         {allowedCreate && (
           <PrimaryButton
             className="order-2 md:order-2"
-            label="Nuevo Usuario"
+            label="Nuevo usuario"
             Icon={LuPlus}
             onClick={() => setPanelOpen(true)}
           />

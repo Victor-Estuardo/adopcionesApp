@@ -38,7 +38,7 @@ export async function loginWebApp(
 ): Promise<LoginResponse> {
   // ======== | Mensaje de errores
   const errorMsg =
-    "Ocurrió un error al iniciar sesión\nPor favor, intente nuevamente.";
+    "Ocurrió un error al iniciar sesión\nPor favor, intenta de nuevo.";
   const errorEmail = "¿Seguro que has introducido tu correo correctamente?";
   const errorPass =
     'Contraseña incorrecta. Vuelve a intentarlo o selecciona "¿Has olvidado tu contraseña?" para cambiarla.';

@@ -74,7 +74,7 @@ const BANK_ACCOUNT_TYPES = [
 type BankAccountType = (typeof BANK_ACCOUNT_TYPES)[number];
 
 export const meta = () => {
-  return [{ title: "DONACIONES" }];
+  return [{ title: "Donaciones | Asociación Meraki" }];
 };
 
 /*==============================| Loader |==============================*/

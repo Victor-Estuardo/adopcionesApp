@@ -63,7 +63,7 @@ import {
 } from "~/utils/sanitize";
 
 export const meta = () => {
-  return [{ title: "DONACIONES" }];
+  return [{ title: "Donaciones | Asociación Meraki" }];
 };
 
 /* Etiqueta legible para el tipo de cuenta (el enum de Prisma llega como su
