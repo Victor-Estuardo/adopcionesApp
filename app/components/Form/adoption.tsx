@@ -221,9 +221,16 @@ export default function AdoptionForm({
               </div>
 
               <label className="flex items-start gap-3 cursor-pointer group">
+                {/* Checkbox real (oculto visualmente): el clic en el texto, el teclado y los lectores de pantalla funcionan */}
+                <input
+                  type="checkbox"
+                  className="sr-only peer"
+                  checked={agreed}
+                  onChange={(e) => setAgreed(e.target.checked)}
+                />
                 <div
-                  onClick={() => setAgreed(!agreed)}
-                  className={`mt-0.5 w-5 h-5 flex-shrink-0 rounded-md border-2 flex items-center justify-center transition-all
+                  aria-hidden="true"
+                  className={`mt-0.5 w-5 h-5 flex-shrink-0 rounded-md border-2 flex items-center justify-center transition-all peer-focus-visible:ring-2 peer-focus-visible:ring-teal-400
                     ${
                       agreed
                         ? "bg-teal-500 border-teal-500"

@@ -166,7 +166,7 @@ export default function () {
           <p className="text-sm text-gray-400 mt-1">
             {isEmpty
               ? "Aún no has enviado ninguna solicitud de adopción."
-              : `aquí están todas tus solicitudes.`}
+              : `Aquí están todas tus solicitudes.`}
           </p>
         </div>
 

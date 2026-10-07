@@ -428,7 +428,7 @@ export default function () {
       <div className="w-full">
         <h1 className="text-2xl font-bold text-gray-800">Mi cuenta</h1>
         <p className="text-sm text-gray-400 mt-1">
-          {`aquí esta toda tu información personal.`}
+          {`Aquí está toda tu información personal.`}
         </p>
       </div>
       {/* ── Información personal ── */}
@@ -478,9 +478,9 @@ export default function () {
         />
       </div>
       <div className="w-full flex gap-x-5 justify-end items-center">
-        <span className="text-gray-400 text-sm">Campos Obligatorios*</span>
+        <span className="text-gray-400 text-sm">Campos obligatorios*</span>
         <PrimaryButton
-          label={isUpdatingUser ? "Guardando..." : "Guardar Cambios"}
+          label={isUpdatingUser ? "Guardando..." : "Guardar cambios"}
           disabled={!infoHasModified || isUpdatingUser}
           onClick={() => handleUpdateUser()}
         />
