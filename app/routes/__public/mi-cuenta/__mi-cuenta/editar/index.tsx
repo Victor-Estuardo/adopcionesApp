@@ -31,7 +31,7 @@ import { resizeImage } from "~/utils/image";
 import { enforceRateLimits, getClientIp } from "~/utils/rateLimit.server";
 
 export const meta = () => {
-  return [{ title: "EDITAR CUENTA" }];
+  return [{ title: "Editar cuenta | Asociación Meraki" }];
 };
 
 /*==============================| Loader Function |==============================*/
@@ -208,7 +208,7 @@ export const action: ActionFunction = async ({ request }) => {
   }
 
   return json({
-    errorMsg: "Ocurrió un error al cargar la pagina",
+    errorMsg: "Ocurrió un error al cargar la página",
   });
 };
 
@@ -383,9 +383,9 @@ export default function () {
   // Función para cambiar infomación del usuario
   const handleUpdateUser = () => {
     let error = "";
-    if (firstName === "") error = "El nombre no puede estar vacio";
+    if (firstName === "") error = "El nombre no puede estar vacío";
 
-    if (lastName === "") error = "El apellido no puede estar vacio";
+    if (lastName === "") error = "El apellido no puede estar vacío";
 
     if (error) {
       toast.error(error);
@@ -428,7 +428,7 @@ export default function () {
       <div className="w-full">
         <h1 className="text-2xl font-bold text-gray-800">Mi cuenta</h1>
         <p className="text-sm text-gray-400 mt-1">
-          {`aquí esta toda tu información personal.`}
+          {`Aquí está toda tu información personal.`}
         </p>
       </div>
       {/* ── Información personal ── */}
@@ -478,9 +478,9 @@ export default function () {
         />
       </div>
       <div className="w-full flex gap-x-5 justify-end items-center">
-        <span className="text-gray-400 text-sm">Campos Obligatorios*</span>
+        <span className="text-gray-400 text-sm">Campos obligatorios*</span>
         <PrimaryButton
-          label={isUpdatingUser ? "Guardando..." : "Guardar Cambios"}
+          label={isUpdatingUser ? "Guardando..." : "Guardar cambios"}
           disabled={!infoHasModified || isUpdatingUser}
           onClick={() => handleUpdateUser()}
         />

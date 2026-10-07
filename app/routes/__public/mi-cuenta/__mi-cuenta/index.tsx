@@ -14,7 +14,7 @@ import {
 import { validatePermission } from "~/utils/common";
 
 export const meta = () => {
-  return [{ title: "MI CUENTA" }];
+  return [{ title: "Mi cuenta | Asociación Meraki" }];
 };
 
 /*==============================| Loader Function |==============================*/
@@ -86,7 +86,7 @@ export const action: ActionFunction = async ({ request }) => {
   }
 
   return json({
-    errorMsg: "Ocurrió un error al cargar la pagina",
+    errorMsg: "Ocurrió un error al cargar la página",
   });
 };
 
@@ -174,7 +174,7 @@ export default function () {
       <div className="flex-1 p-5 flex flex-col gap-y-5 overflow-y-auto">
         {/** Actividad Reciente */}
         <div className="flex flex-col gap-y-6 shadow-md rounded-lg p-3">
-          <p className="border-b border-gray-200 py-3">Resumen de Actividad</p>
+          <p className="border-b border-gray-200 py-3">Resumen de actividad</p>
           <div className="flex gap-x-6">
             {stats(
               countApplication,

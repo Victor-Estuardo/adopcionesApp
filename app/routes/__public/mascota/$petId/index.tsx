@@ -6,7 +6,11 @@ import { getPetWithImagesDb, PetWithImage } from "~/services/db/pet.service";
 import { FaChevronLeft, FaMapPin, FaRegHeart } from "react-icons/fa";
 import { IoFemaleOutline, IoMaleOutline } from "react-icons/io5";
 import { LiaBirthdayCakeSolid } from "react-icons/lia";
-import { calculateAge, validatePermission } from "~/utils/common";
+import {
+  calculateAge,
+  NO_PERMISSION_MESSAGE,
+  validatePermission,
+} from "~/utils/common";
 import { FaHeart } from "react-icons/fa";
 import { GrStatusGoodSmall } from "react-icons/gr";
 import { getSession } from "~/services/sessions/sessions.service";
@@ -25,7 +29,7 @@ import { petImageUrl } from "~/utils/image";
 import { getPetStatusConfig } from "~/utils/pet-helpers";
 
 export const meta = () => {
-  return [{ title: "MASCOTA" }];
+  return [{ title: "Mascota | Asociación Meraki" }];
 };
 
 /*==============================| Action Function |==============================*/
@@ -51,6 +55,11 @@ export const action: ActionFunction = async ({ request, params }) => {
       });
     }
 
+    // Un id no numérico nunca corresponde a una mascota
+    if (!Number.isInteger(Number(petId))) {
+      return json({ notFound: true });
+    }
+
     // Obtenemos información de la mascota
     const petInfoRes = await getPetWithImagesDb({ id: Number(petId) });
 
@@ -59,6 +68,11 @@ export const action: ActionFunction = async ({ request, params }) => {
       user_id: dbUserId || -100,
       pet_id: Number(petId),
     });
+
+    // La mascota no existe: no es un error, solo se muestra el estado vacío
+    if (petInfoRes.success && !petInfoRes.data) {
+      return json({ notFound: true });
+    }
 
     if (!petInfoRes.success || !petInfoRes.data || !getSavedPetRes.success) {
       return json({
@@ -85,10 +99,7 @@ export const action: ActionFunction = async ({ request, params }) => {
     const validateRequest = validatePermission(session, 1, "Guardar");
     if (validateRequest) throw validateRequest;
     if (!dbUserId) {
-      throw new Response(
-        "No cuenta con los permisos necesarios para ejecutar la acción",
-        { status: 404 },
-      );
+      throw new Response(NO_PERMISSION_MESSAGE, { status: 403 });
     }
 
     // Guardamos la mascota para el usuario
@@ -113,7 +124,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 
       return json({
         errorMsg:
-          "Ocurrió un error al guardar la mascota, por favor intente nuevamente",
+          "Ocurrió un error al guardar la mascota, por favor intenta de nuevo.",
       });
     }
 
@@ -128,10 +139,7 @@ export const action: ActionFunction = async ({ request, params }) => {
     const validateRequest = validatePermission(session, 1, "Guardar");
     if (validateRequest) throw validateRequest;
     if (!dbUserId) {
-      throw new Response(
-        "No cuenta con los permisos necesarios para ejecutar la acción",
-        { status: 404 },
-      );
+      throw new Response(NO_PERMISSION_MESSAGE, { status: 403 });
     }
 
     let {
@@ -214,6 +222,11 @@ export default function () {
       setIsLoading(false);
     }
 
+    // La mascota no existe: se muestra el estado vacío (sin toast de error)
+    if (fetcher.data?.notFound) {
+      setIsLoading(false);
+    }
+
     if (fetcher.data?.pet) {
       setPet(fetcher.data.pet);
       setIsLoading(false);
@@ -238,7 +251,7 @@ export default function () {
       setSaving(false);
     }
     if (fetcher.data?.unsave_pet) {
-      toast.success("Se quito de Guardados exitosamente");
+      toast.success("Se quitó de Guardados exitosamente");
       setPetSavedId(null);
       setSaving(false);
     }
@@ -287,8 +300,14 @@ export default function () {
 
   if (!pet) {
     return (
-      <div className="w-full h-full fles justify-center items-center">
-        No se encontro información de la mascota
+      <div className="w-full h-full flex flex-col justify-center items-center gap-3 p-5 text-center">
+        <p className="font-medium text-[#1F1D1A]">
+          No encontramos esta mascota
+        </p>
+        <p className="max-w-xs text-sm text-[#8A8577]">
+          Puede que el enlace sea incorrecto o que ya no esté disponible.
+        </p>
+        <PrimaryButton label="Ver mascotas" onClick={() => navigate("/")} />
       </div>
     );
   }
@@ -361,7 +380,7 @@ export default function () {
                   onClick={() => handleAdoptionPet()}
                   label={
                     getPetStatusConfig(pet.status).canRequestAdoption
-                      ? "Solicitar Adopción"
+                      ? "Solicitar adopción"
                       : getPetStatusConfig(pet.status).label
                   }
                 />

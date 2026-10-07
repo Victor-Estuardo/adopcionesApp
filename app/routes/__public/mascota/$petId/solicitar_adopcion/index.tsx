@@ -21,7 +21,7 @@ import { getPetStatusConfig } from "~/utils/pet-helpers";
 import { enforceRateLimits, getClientIp } from "~/utils/rateLimit.server";
 
 export const meta = () => {
-  return [{ title: "SOLICITUD DE ADOPCIÓN" }];
+  return [{ title: "Solicitud de adopción | Asociación Meraki" }];
 };
 
 /*==============================| Loader Function |==============================*/
@@ -83,12 +83,12 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 
   const agreementText = `
     Yo, como solicitante de adopción, me comprometo a:
-    1. Continuar con los cuidados médicos y tratamientos que esten en proceso (Si fuera el caso).
+    1. Continuar con los cuidados médicos y tratamientos que estén en proceso (si fuera el caso).
     2. Proveerle cada día de agua limpia.
     3. Proveerle concentrado de calidad y darle de acuerdo al peso, en raciones distribuidas en 3 tiempos si fueran cachorros y en 2 si fuesen adultos.
-    4. La mascota no será en ningún caso golpeado, maltratado, amarrado por periodos largos (24 horas), abandonado o regalado a nadie mas.
-    5. El maltrato es un delito tipificado en el codigo civil art. 480 y en la ley de bienestar animal considerados como faltas graves y con cauciones económicas de hasta 12 salarios mínimos.
-    6. si por alguna razón la mascota no se adaptara, después de algún tiempo, se devolverá a la asociación, previo aviso mínimo de una semana.
+    4. La mascota no será en ningún caso golpeada, maltratada, amarrada por periodos largos (24 horas), abandonada o regalada a nadie más.
+    5. El maltrato es un delito tipificado en el Código Civil art. 480 y en la Ley de Bienestar Animal considerados como faltas graves y con cauciones económicas de hasta 12 salarios mínimos.
+    6. Si por alguna razón la mascota no se adaptara, después de algún tiempo, se devolverá a la asociación, previo aviso mínimo de una semana.
     Esta carta de compromiso tiene carácter legal y cualquier incumplimiento puede
     derivar en la recuperación del animal por parte de la asociación.
   `.trim();
@@ -137,7 +137,7 @@ export const action: ActionFunction = async ({ request, params }) => {
   if (!getQuestionsResponse.success) {
     return json({
       errorMsg:
-        "Ocurrió un error al crear la solicitud, por favor intente nuevamente",
+        "Ocurrió un error al crear la solicitud, por favor intenta de nuevo.",
     });
   }
 
@@ -205,7 +205,7 @@ export const action: ActionFunction = async ({ request, params }) => {
   if (!submitRes.success) {
     return json({
       errorMsg:
-        "Ocurrió un error al crear la solicitud, por favor intente nuevamente",
+        "Ocurrió un error al crear la solicitud, por favor intenta de nuevo.",
     });
   }
 
@@ -232,7 +232,7 @@ export default function () {
   /*------------------------------SETEO DE DATOS PROVENIENTES DEL POST------------------------------*/
   useEffect(() => {
     if (actionData?.answers_success) {
-      toast.success("Solicitud enviada exitosamente,", { duration: 4000 });
+      toast.success("Solicitud enviada exitosamente.", { duration: 4000 });
 
       navigate(
         `/mi-cuenta/solicitudes/${actionData.answers_success}?rc=pet&enviada=true`,
@@ -278,7 +278,7 @@ export default function () {
                 mascota y el número del dueño.
               </li>
               <li>
-                En tal caso se llegara a salir, notificar a la asociación de
+                En caso de que se llegue a salir, notificar a la asociación de
                 inmediato para que se sume a la búsqueda de la mascota.
               </li>
               <li>
@@ -288,8 +288,8 @@ export default function () {
               <li>Notificar cualquier cambio de teléfono o dirección.</li>
               <li>
                 Adjuntar fotocopia de DPI, recibo de agua, luz o teléfono del
-                domicilio realizar la cancelación de las vacunas y la
-                castracion, siendo para perro Q 350. y para gatito Q 300.
+                domicilio para realizar la cancelación de las vacunas y la
+                castración, siendo para perro Q350 y para gatito Q300.
               </li>
               <li>
                 Estar de acuerdo con el monitoreo de parte de la asociación, es

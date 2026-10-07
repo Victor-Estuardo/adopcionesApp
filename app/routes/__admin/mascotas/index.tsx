@@ -39,7 +39,7 @@ import {
 } from "~/utils/pet-helpers";
 
 export const meta = () => {
-  return [{ title: "MASCOTAS" }];
+  return [{ title: "Mascotas | Asociación Meraki" }];
 };
 
 /*==============================| Loader Function |==============================*/
@@ -87,7 +87,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     !speciesResponse.success
   ) {
     return json({
-      errorMsg: "Ocurrió un error al cargar la pagina",
+      errorMsg: "Ocurrió un error al cargar la página",
     });
   }
 
@@ -451,7 +451,7 @@ export default function () {
         {allowedToCreate && (
           <PrimaryButton
             className="order-2 md:order-2"
-            label="Nueva Mascota"
+            label="Nueva mascota"
             Icon={LuPlus}
             onClick={openCreate}
           />

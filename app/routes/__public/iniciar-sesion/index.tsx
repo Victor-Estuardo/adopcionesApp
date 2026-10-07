@@ -13,6 +13,7 @@ import { useFetcher, useNavigate, useSearchParams } from "@remix-run/react";
 import {
   getDateGt,
   getFirstAdminModuleRoute,
+  getSafeRedirect,
   handleEmailValidation,
   handlePasswordValidation,
 } from "~/utils/common";
@@ -32,7 +33,7 @@ import { ModuleSession } from "~/services/db/module.service";
 import { enforceRateLimits, getClientIp } from "~/utils/rateLimit.server";
 
 export const meta = () => {
-  return [{ title: "Iniciar sesión" }];
+  return [{ title: "Iniciar sesión | Asociación Meraki" }];
 };
 
 /*==============================| Loader Function |==============================*/
@@ -41,7 +42,12 @@ export const loader: LoaderFunction = async ({ request }) => {
   const session = await getSession(cookie);
 
   if (session.get("dbUserId")) {
-    return redirect(session.get("administrative") ? "/admin" : "/mi-cuenta");
+    const modules: ModuleSession[] = session.get("modules") || [];
+    return redirect(
+      session.get("administrative")
+        ? getFirstAdminModuleRoute(modules)
+        : "/mi-cuenta",
+    );
   }
 
   return json({});
@@ -103,10 +109,12 @@ export const action: ActionFunction = async ({ request }) => {
     const modules: ModuleSession[] = session.get("modules") || [];
 
     return redirect(
-      search.get("redirect") ||
-        (loginRes?.administrative
+      getSafeRedirect(
+        search.get("redirect"),
+        loginRes?.administrative
           ? getFirstAdminModuleRoute(modules)
-          : "/mi-cuenta"),
+          : "/mi-cuenta",
+      ),
       {
         headers: {
           "Set-Cookie": await commitSession(session),
@@ -370,13 +378,13 @@ export default function () {
           ¿Has olvidado tu contraseña?
         </div>
         <div className="w-full pt-3 sm:pt-5 border-b border-gray-300" />
-        <p>¿Eres Nuevo?</p>
+        <p>¿Eres nuevo?</p>
         <div
           className="border border-medium-turquoise-meraki rounded-full px-16 py-3"
           role="button"
           onClick={() => navigate("/crear-cuenta")}
         >
-          Crear Cuenta
+          Crear cuenta
         </div>
       </form>
     </div>

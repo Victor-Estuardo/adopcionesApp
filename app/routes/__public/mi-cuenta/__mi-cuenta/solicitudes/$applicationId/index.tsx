@@ -16,7 +16,7 @@ import { getSession } from "~/services/sessions/sessions.service";
 import { MERAKI_EMAIL, MERAKI_PHONE_DISPLAY } from "~/utils/whatsapp";
 
 export const meta = () => {
-  return [{ title: "PROGRESO DE SOLICITUD" }];
+  return [{ title: "Progreso de solicitud | Asociación Meraki" }];
 };
 
 /*==============================| Action Function |==============================*/
@@ -58,7 +58,7 @@ export const action: ActionFunction = async ({ request, params }) => {
   }
 
   return json({
-    errorMsg: "Ocurrió un error al cargar la pagina",
+    errorMsg: "Ocurrió un error al cargar la página",
   });
 };
 

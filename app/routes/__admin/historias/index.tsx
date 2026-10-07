@@ -58,7 +58,7 @@ import {
 } from "~/utils/story-helpers";
 
 export const meta = () => {
-  return [{ title: "HISTORIAS" }];
+  return [{ title: "Historias | Asociación Meraki" }];
 };
 
 const HISTORIAS_MODULE_ID = 18;

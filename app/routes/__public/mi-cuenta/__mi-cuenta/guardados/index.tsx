@@ -17,7 +17,7 @@ import { getPetStatusConfig } from "~/utils/pet-helpers";
 import { status_pet } from "@prisma/client";
 
 export const meta = () => {
-  return [{ title: "GUARDADOS" }];
+  return [{ title: "Guardados | Asociación Meraki" }];
 };
 
 /*==============================| Types |==============================*/
@@ -67,7 +67,7 @@ export const action: ActionFunction = async ({ request }) => {
 
     if (!savedPetListRes.success)
       return json({
-        errorMsg: "Ocurrió un error al cargar la pagina",
+        errorMsg: "Ocurrió un error al cargar la página",
       });
 
     // Formateo de items
@@ -119,7 +119,7 @@ export const action: ActionFunction = async ({ request }) => {
   }
 
   return json({
-    errorMsg: "Ocurrió un error al cargar la pagina",
+    errorMsg: "Ocurrió un error al cargar la página",
   });
 };
 

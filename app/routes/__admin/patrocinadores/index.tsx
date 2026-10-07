@@ -34,7 +34,7 @@ const WEBSITE_RE =
   /^(https?:\/\/)?([a-z0-9](-?[a-z0-9])*\.)+[a-z]{2,}(:\d{2,5})?(\/\S*)?$/i;
 
 export const meta = () => {
-  return [{ title: "PATROCINADORES" }];
+  return [{ title: "Patrocinadores | Asociación Meraki" }];
 };
 
 const PATROCINADORES_MODULE_ID = 13;

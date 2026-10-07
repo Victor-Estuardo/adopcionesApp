@@ -23,7 +23,7 @@ import { LuMail, LuCircleCheck, LuClock, LuCircleAlert } from "react-icons/lu";
 import { enforceRateLimits, getClientIp } from "~/utils/rateLimit.server";
 
 export const meta = () => {
-  return [{ title: "Crear cuenta" }];
+  return [{ title: "Crear cuenta | Asociación Meraki" }];
 };
 
 /*==============================| Loader Function |==============================*/
@@ -50,7 +50,7 @@ export const action: ActionFunction = async ({ request }) => {
     if (!data) {
       return json({
         errorMsg:
-          "Ocurrió un error al crear la cuenta\nPor favor, intente nuevamente.",
+          "Ocurrió un error al crear la cuenta\nPor favor, intenta de nuevo.",
       });
     }
 
@@ -131,7 +131,7 @@ export const action: ActionFunction = async ({ request }) => {
     if (!data)
       return json({
         errorMsg:
-          "Ocurrió un error al enviar el correo, por favor intente nuevamente.",
+          "Ocurrió un error al enviar el correo, por favor intenta de nuevo.",
       });
 
     const { userId } = data;
@@ -163,7 +163,7 @@ export const action: ActionFunction = async ({ request }) => {
     if (!userRes.success || !userRes.data) {
       return json({
         errorMsg:
-          "Ocurrió un error al enviar el correo, por favor intente nuevamente.",
+          "Ocurrió un error al enviar el correo, por favor intenta de nuevo.",
       });
     }
 

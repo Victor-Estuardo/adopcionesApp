@@ -22,7 +22,7 @@ import { getSession } from "~/services/sessions/sessions.service";
 import { enforceRateLimits, getClientIp } from "~/utils/rateLimit.server";
 
 export const meta = () => {
-  return [{ title: "Recuperar Contraseña" }];
+  return [{ title: "Recuperar contraseña | Asociación Meraki" }];
 };
 
 /*==============================| Loader |==============================*/
@@ -147,7 +147,7 @@ export default function ForgotPasswordPage() {
         className="w-full sm:w-[450px] min-h-[450px] flex flex-col justify-start items-center gap-y-6 rounded-lg bg-white px-4 pt-6 pb-4 shadow-lg"
       >
         <h1 className="text-center font-bold text-xl border-b border-gray-300 pb-2">
-          Recuperar Contraseña
+          Recuperar contraseña
         </h1>
         <p className="text-gray-500 text-sm text-center px-8">
           Ingresa tu correo electrónico y te enviaremos un enlace para

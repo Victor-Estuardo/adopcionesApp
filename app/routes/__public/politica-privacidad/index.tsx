@@ -1,7 +1,7 @@
 import { MERAKI_EMAIL, MERAKI_PHONE_DISPLAY } from "~/utils/whatsapp";
 
 export const meta = () => {
-  return [{ title: "POLÍTICA DE PRIVACIDAD" }];
+  return [{ title: "Política de privacidad | Asociación Meraki" }];
 };
 
 /*==============================| Component |==============================*/

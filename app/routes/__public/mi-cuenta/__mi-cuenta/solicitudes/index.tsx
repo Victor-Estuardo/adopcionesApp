@@ -15,7 +15,7 @@ import { calculateAge, validatePermission } from "~/utils/common";
 import { petImageUrl } from "~/utils/image";
 
 export const meta = () => {
-  return [{ title: "SOLICITUDES DE ADOPCIÓN" }];
+  return [{ title: "Solicitudes de adopción | Asociación Meraki" }];
 };
 
 /*==============================| Loader Function |==============================*/
@@ -48,7 +48,7 @@ export const action: ActionFunction = async ({ request }) => {
 
     if (!applicationsRes.success)
       return json({
-        errorMsg: "Ocurrió un error al cargar la pagina",
+        errorMsg: "Ocurrió un error al cargar la página",
       });
 
     return json({
@@ -58,7 +58,7 @@ export const action: ActionFunction = async ({ request }) => {
   }
 
   return json({
-    errorMsg: "Ocurrió un error al cargar la pagina",
+    errorMsg: "Ocurrió un error al cargar la página",
   });
 };
 
@@ -166,7 +166,7 @@ export default function () {
           <p className="text-sm text-gray-400 mt-1">
             {isEmpty
               ? "Aún no has enviado ninguna solicitud de adopción."
-              : `aquí están todas tus solicitudes.`}
+              : `Aquí están todas tus solicitudes.`}
           </p>
         </div>
 

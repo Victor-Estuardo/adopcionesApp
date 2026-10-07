@@ -1,13 +1,12 @@
 import { json, LoaderFunction } from "@remix-run/node";
 import {
   useRouteError,
-  isRouteErrorResponse,
-  useLocation,
+  useRouteLoaderData,
   Outlet,
   useLoaderData,
 } from "@remix-run/react";
 import { useEffect, useState } from "react";
-import { ErrorBoundaryAlert } from "~/components/Alerts/ErrorBoundaryAlert";
+import { RouteErrorPage } from "~/components/Alerts/ErrorPage";
 import PublicLayout from "~/components/Layout/publicLayout";
 import { config } from "~/config";
 import {
@@ -74,32 +73,13 @@ export const loader: LoaderFunction = async ({ request }) => {
 
 /*==============================| Error Boundary |==============================*/
 export function ErrorBoundary() {
-  const route = useLocation().pathname;
   const error = useRouteError();
-
-  //Esto es lo que usualmente va hacia `CatchBoundary`
-  if (isRouteErrorResponse(error)) {
-    // Si el error.data es string se usa caso contrario se busca message
-    const errorMsg =
-      typeof error.data === "string" ? error.data : error.data.message;
-
-    return (
-      <ErrorBoundaryAlert
-        title={`CatchBoundary - ${error.status} - ${route}`}
-        description={errorMsg}
-      />
-    );
-  }
+  const loaderData = useRouteLoaderData("routes/__public") as
+    | { isLoggenIn?: boolean }
+    | undefined;
 
   return (
-    <ErrorBoundaryAlert
-      title={`Error - ${route}`}
-      description={
-        process.env.NODE_ENV === "production"
-          ? "Ocurrió un error inesperado. Por favor, intenta de nuevo."
-          : error?.toString() ?? ""
-      }
-    />
+    <RouteErrorPage error={error} isLoggedIn={!!loaderData?.isLoggenIn} />
   );
 }
 

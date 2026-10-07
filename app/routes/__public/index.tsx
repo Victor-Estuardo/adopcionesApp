@@ -18,11 +18,12 @@ import { listPetSpeciesDb } from "~/services/db/petSpecies.service";
 import { SecondaryButton } from "~/components/Button/secondary";
 import { PetCard } from "~/components/Card/PetCard";
 import { config } from "~/config";
+import { useFocusTrap } from "~/hooks/useFocusTrap";
 import { PUBLIC_PET_STATUSES } from "~/utils/pet-helpers";
 import { PrimaryButton } from "~/components/Button/primary";
 
 export const meta = () => {
-  return [{ title: "MASCOTAS" }];
+  return [{ title: "Mascotas | Asociación Meraki" }];
 };
 
 /*==============================| Types |==============================*/
@@ -43,7 +44,7 @@ export const action: ActionFunction = async ({ request }) => {
 
     if (!petSpeciesResponse.success) {
       return json({
-        errorMsg: "Ocurrió un error al cargar la pagina",
+        errorMsg: "Ocurrió un error al cargar la página",
       });
     }
 
@@ -106,7 +107,7 @@ export const action: ActionFunction = async ({ request }) => {
 
     if (!petListResponse.success || !totalPetsResponse.success) {
       return json({
-        errorMsg: "Ocurrió un error al cargar la pagina",
+        errorMsg: "Ocurrió un error al cargar la página",
       });
     }
 
@@ -117,7 +118,7 @@ export const action: ActionFunction = async ({ request }) => {
   }
 
   return json({
-    errorMsg: "Ocurrió un error al cargar la pagina",
+    errorMsg: "Ocurrió un error al cargar la página",
   });
 };
 
@@ -133,6 +134,13 @@ export default function () {
 
   // Para vista de filtros
   const [filterView, setFilterView] = useState("");
+
+  // Cerrar el drawer de filtros (Escape, fondo, botón X o "Ver resultados")
+  const closeFilters = () => {
+    setShowFilters(false);
+    setFilterView("");
+  };
+  const filtersPanelRef = useFocusTrap<HTMLDivElement>(showFilters, closeFilters);
 
   // Para filtros
   const [searchText, setSearchText] = useState(
@@ -313,16 +321,17 @@ export default function () {
 
   // Si esta vacia la lista
   function EmptyState() {
+    const isFiltered = hasActiveFilters || searchText.trim() !== "";
     return (
       <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-[#E4E0D6] py-16 text-center">
         <p className="font-medium text-[#1F1D1A]">
-          {hasActiveFilters
-            ? "Ningún resultado con estos filtros"
+          {isFiltered
+            ? "Ningún resultado con esta búsqueda o estos filtros"
             : "Todavía no hay mascotas registradas"}
         </p>
         <p className="max-w-xs text-sm text-[#8A8577]">
-          {hasActiveFilters
-            ? "Ajusta o limpia los filtros para ver más resultados."
+          {isFiltered
+            ? "Prueba con otro nombre o limpia la búsqueda y los filtros."
             : "Pronto estará la primera mascota disponible en el catálogo de adopción."}
         </p>
       </div>
@@ -416,23 +425,22 @@ export default function () {
       {showFilters && (
         <aside
           className="fixed right-0 bottom-0 w-full h-[calc(100dvh-5rem)] bg-black/60 flex justify-end"
-          onClick={() => {
-            setShowFilters(false);
-            setFilterView("");
-          }}
+          onClick={closeFilters}
         >
           <div
-            className="h-full w-3/4 md:w-[20%] flex flex-col gap-y-3 bg-white p-3"
+            ref={filtersPanelRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Filtros"
+            tabIndex={-1}
+            className="h-full w-3/4 md:w-[20%] flex flex-col gap-y-3 bg-white p-3 outline-none"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
               <h2 className="text-lg font-bold text-blue-meraki">Filtros</h2>
               <button
                 aria-label="Cerrar filtros"
-                onClick={() => {
-                  setShowFilters(false);
-                  setFilterView("");
-                }}
+                onClick={closeFilters}
                 className="flex items-center justify-center w-8 h-8 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
               >
                 <IoCloseOutline className="w-5 h-5" />
@@ -512,10 +520,7 @@ export default function () {
             <div className="px-5 py-4 border-t border-gray-100 flex gap-x-3">
               <PrimaryButton
                 label="Ver resultados"
-                onClick={() => {
-                  setShowFilters(false);
-                  setFilterView("");
-                }}
+                onClick={closeFilters}
               />
             </div>
           </div>

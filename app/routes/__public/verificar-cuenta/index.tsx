@@ -9,7 +9,7 @@ import {
 } from "~/services/db/accountVerificationToken.service";
 
 export const meta = () => {
-  return [{ title: "Verificar cuenta" }];
+  return [{ title: "Verificar cuenta | Asociación Meraki" }];
 };
 
 /*==============================| Loader Function |==============================*/

@@ -1,7 +1,7 @@
 import { MERAKI_EMAIL, MERAKI_PHONE_DISPLAY } from "~/utils/whatsapp";
 
 export const meta = () => {
-  return [{ title: "TÉRMINOS Y CONDICIONES" }];
+  return [{ title: "Términos y condiciones | Asociación Meraki" }];
 };
 
 /*==============================| Component |==============================*/
