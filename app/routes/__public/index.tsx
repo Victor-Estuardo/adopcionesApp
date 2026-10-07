@@ -1,30 +1,27 @@
-import { ActionFunction, json } from "@remix-run/node";
-import { useFetcher, useSearchParams } from "@remix-run/react";
+import { json, LoaderArgs, V2_MetaFunction } from "@remix-run/node";
+import {
+  useLoaderData,
+  useNavigation,
+  useSearchParams,
+} from "@remix-run/react";
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react";
 import SearchInput from "~/components/Input/SearchInput";
-import {
-  CountPetsDb,
-  listPetsWithImagesDb,
-  PetWithImage,
-} from "~/services/db/pet.service";
 import { IoCheckmark, IoCloseOutline, IoFilterOutline } from "react-icons/io5";
 import Pagination from "~/components/Pagination";
-import { gender_pet, Prisma, status_pet } from "@prisma/client";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { toast } from "sonner";
 import { RiArrowDropDownLine } from "react-icons/ri";
 import ListWithChek from "~/components/List/ListWithChek";
 import { listPetSpeciesDb } from "~/services/db/petSpecies.service";
-import { SecondaryButton } from "~/components/Button/secondary";
 import { PetCard } from "~/components/Card/PetCard";
+import { PrimaryButton } from "~/components/Button/primary";
 import { config } from "~/config";
 import { useFocusTrap } from "~/hooks/useFocusTrap";
 import { PUBLIC_PET_STATUSES } from "~/utils/pet-helpers";
-import { PrimaryButton } from "~/components/Button/primary";
-
-export const meta = () => {
-  return [{ title: "Mascotas | Asociación Meraki" }];
-};
+import type { PetWithImage } from "~/services/db/pet.service";
+import { listPublicPets } from "~/utils/pet-routes.server";
+import { absoluteUrl } from "~/utils/site.server";
+import { homeMeta } from "~/utils/pet-meta";
 
 /*==============================| Types |==============================*/
 interface FilterOption {
@@ -32,104 +29,62 @@ interface FilterOption {
   label: string;
 }
 
-/*==============================| Action Function |==============================*/
-export const action: ActionFunction = async ({ request }) => {
-  //=============| Datos del POST |==============================//
-  const formData = await request.formData();
-  const { action, payload } = Object.fromEntries(formData);
+/*==============================| Loader Function |==============================*/
+// La lista llega renderizada en el HTML (los buscadores no ejecutan el
+// fetch del cliente) y se vuelve a ejecutar al cambiar filtros o página.
+export const loader = async ({ request }: LoaderArgs) => {
+  const { searchParams } = new URL(request.url);
 
-  if (action === "loadInformation") {
-    // Obtenemos la lista de categeorias de mascotas
-    const petSpeciesResponse = await listPetSpeciesDb({ active: true });
+  const [petSpeciesResponse, list] = await Promise.all([
+    listPetSpeciesDb({ active: true }),
+    listPublicPets(searchParams),
+  ]);
 
-    if (!petSpeciesResponse.success) {
-      return json({
+  // Siempre la portada sin parámetros: los filtros y la paginación no se
+  // indexan por separado
+  const base = {
+    cloudName: config.cloudinaryCloudName,
+    canonicalUrl: absoluteUrl("/"),
+  };
+
+  if (!petSpeciesResponse.success || !list) {
+    return json(
+      {
+        ...base,
         errorMsg: "Ocurrió un error al cargar la página",
-      });
-    }
-
-    // creamos el filtro de especies
-    const speciesFilter: FilterOption[] = petSpeciesResponse.data.map(
-      (specie) => ({
-        value: specie.id.toString(),
-        label: specie.name,
-      }),
-    );
-
-    return json({
-      species_filter: speciesFilter,
-      cloudName: config.cloudinaryCloudName,
-    });
-  }
-
-  if (action === "loadPets") {
-    let data: {
-      page?: number;
-      search?: string;
-      gender?: string;
-      species?: string;
-      status?: string;
-    } | null = null;
-
-    if (typeof payload === "string") data = JSON.parse(payload);
-
-    // Obtenemos los parametros de la url
-    const url = new URL(request.url);
-    const searchParams = url.searchParams;
-
-    // Información de paginación
-    const page = Number(data?.page || searchParams.get("page") || "1");
-    const limit = Number(searchParams.get("limit") || "20");
-
-    // Información de filtros
-    const search = (data?.search ?? searchParams.get("search")) || undefined;
-    const genders = (data?.gender ?? searchParams.get("gender")) || undefined;
-    const species = (data?.species ?? searchParams.get("species")) || undefined;
-    const status = (data?.status ?? searchParams.get("status")) || undefined;
-
-    // Filtro para la llamada de lista de mascotas
-    const whereListPets: Prisma.petWhereInput = {
-      status: {
-        in: status ? (status.split(",") as status_pet[]) : PUBLIC_PET_STATUSES,
+        species_filter: [] as FilterOption[],
+        petList: [],
+        totalPages: 0,
       },
-      name: { contains: search, mode: "insensitive" },
-      gender: genders ? { in: genders.split(",") as gender_pet[] } : undefined,
-      pet_species_id: species
-        ? { in: species.split(",").map(Number) }
-        : undefined,
-    };
-
-    // Listar mascotas disponibles
-    const [petListResponse, totalPetsResponse] = await Promise.all([
-      listPetsWithImagesDb(whereListPets, (page - 1) * limit, limit),
-      CountPetsDb(whereListPets),
-    ]);
-
-    if (!petListResponse.success || !totalPetsResponse.success) {
-      return json({
-        errorMsg: "Ocurrió un error al cargar la página",
-      });
-    }
-
-    return json({
-      petList: petListResponse.data || [],
-      totalPages: Math.ceil(totalPetsResponse.data / limit),
-    });
+      { status: 500 },
+    );
   }
 
   return json({
-    errorMsg: "Ocurrió un error al cargar la página",
+    ...base,
+    errorMsg: null,
+    species_filter: petSpeciesResponse.data.map(
+      (specie): FilterOption => ({
+        value: specie.id.toString(),
+        label: specie.name,
+      }),
+    ),
+    petList: list.petList,
+    totalPages: list.totalPages,
   });
 };
+
+export const meta: V2_MetaFunction<typeof loader> = ({ data }) =>
+  homeMeta(data?.canonicalUrl);
 
 /*==============================| Component |==============================*/
 export default function () {
   //Hooks...
-  const fetcher = useFetcher();
+  const data = useLoaderData<typeof loader>();
+  const navigation = useNavigation();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Estados de la pagina
-  const [loadingPets, setLoadingPets] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
 
   // Para vista de filtros
@@ -156,7 +111,7 @@ export default function () {
     ],
     [],
   );
-  const [speciesFilter, setSpeciesFilter] = useState<FilterOption[]>([]);
+  const speciesFilter = data.species_filter;
   const statusFilter = useMemo(() => {
     return PUBLIC_PET_STATUSES.map((v) => ({
       label: v.replace("_", " "),
@@ -175,13 +130,15 @@ export default function () {
     (searchParams.get("status") || "").split(",").filter(Boolean),
   );
 
-  // Lista de mascotas
-  const [petList, setpetList] = useState<PetWithImage[]>([]);
-  const [cloudName, setCloudName] = useState("");
+  // Lista de mascotas (vienen del loader; cambian al cambiar la URL)
+  const { petList, cloudName, totalPages } = data;
+  // Solo mientras se recarga la propia portada (filtros/página), no al salir de ella
+  const loadingPets =
+    navigation.state === "loading" &&
+    (navigation.location?.pathname ?? "/") === "/";
 
   // Paginación
   const page = Number(searchParams.get("page") || "1");
-  const [totalPages, setTotalPages] = useState(0);
 
   // Cantidad total de filtros activos (para el badge del botón "Filtro")
   const activeFiltersCount =
@@ -189,41 +146,10 @@ export default function () {
 
   const hasActiveFilters = activeFiltersCount > 0;
 
-  /*------------------------------CARGA DE CATÁLOGOS------------------------------*/
+  /*------------------------------ERRORES DEL LOADER------------------------------*/
   useEffect(() => {
-    fetcher.submit(
-      {
-        action: "loadInformation",
-      },
-      { method: "post" },
-    );
-  }, []);
-
-  /*------------------------------SETEO DE DATOS PROVENIENTES DEL POST------------------------------*/
-  useEffect(() => {
-    // Mensaje de error durante algun proceso
-    if (fetcher.data?.errorMsg) {
-      toast.error(fetcher.data.errorMsg);
-      setLoadingPets(false);
-    }
-
-    // Filtros
-    if (fetcher.data?.species_filter) {
-      setSpeciesFilter(fetcher.data.species_filter);
-      handleLoadPets({});
-    }
-
-    if (fetcher.data?.cloudName) {
-      setCloudName(fetcher.data.cloudName);
-    }
-
-    if (fetcher.data?.petList) {
-      const list = fetcher.data.petList;
-      setpetList(list);
-      setTotalPages(fetcher.data?.totalPages || 0);
-      setLoadingPets(false);
-    }
-  }, [fetcher.data]);
+    if (data.errorMsg) toast.error(data.errorMsg);
+  }, [data.errorMsg]);
 
   /*------------------------------FUNCIONES------------------------------*/
   // Función que maneja el cambio en el filtro de texto
@@ -242,25 +168,18 @@ export default function () {
     setDebounceTimeout(timeoutId);
   };
 
-  // Función que maneja la carga de mascotas
+  // Función que maneja la carga de mascotas: actualiza la URL y el loader
+  // vuelve a traer la lista
   const handleLoadPets = (params: Record<string, string>) => {
-    setSearchParams((prev) => {
-      for (const [key, value] of Object.entries(params)) {
-        if (!value) prev.delete(key);
-        else prev.set(key, value);
-      }
-      return prev;
-    });
-
-    setLoadingPets(true);
-    fetcher.submit(
-      {
-        action: "loadPets",
-        payload: JSON.stringify({
-          ...params,
-        }),
+    setSearchParams(
+      (prev) => {
+        for (const [key, value] of Object.entries(params)) {
+          if (!value) prev.delete(key);
+          else prev.set(key, value);
+        }
+        return prev;
       },
-      { method: "post" },
+      { preventScrollReset: true },
     );
   };
 
@@ -396,21 +315,20 @@ export default function () {
           <div className="flex-grow grid grid-cols-1 md:grid-cols-[repeat(auto-fill,minmax(350px,1fr))] md:gap-x-16 gap-y-7 md:gap-y-11 justify-items-center">
             {petList.map((pet, index) => (
               <PetCard
-                key={`${index}_${pet.name}`}
-                pet={pet}
-                onClickCard={() =>
-                  (window.location.href = `/mascota/${pet.id}`)
-                }
+                key={pet.id}
+                // El JSON del loader trae las fechas como string; PetCard solo las formatea
+                pet={pet as unknown as PetWithImage}
+                href={`/mascota/${pet.id}`}
                 cloudName={cloudName}
                 petTagNub
               >
                 <div className="flex justify-center items-center border-t border-[#F0EDE5] pt-3">
-                  <SecondaryButton
-                    label="Ver"
-                    borderColor="border-blue-meraki"
-                    textColor="white"
-                    width="w-[80%]"
-                  />
+                  <span
+                    aria-hidden
+                    className="w-[80%] rounded-full border border-blue-meraki px-4 md:px-6 py-2 text-center text-sm md:text-base"
+                  >
+                    Ver
+                  </span>
                 </div>
               </PetCard>
             ))}

@@ -1,3 +1,4 @@
+import { Link } from "@remix-run/react";
 import React from "react";
 import { IoFemaleOutline, IoMaleOutline } from "react-icons/io5";
 import { PetWithImage } from "~/services/db/pet.service";
@@ -11,6 +12,8 @@ interface PetCardProps {
   healthStatus?: boolean;
   children: React.ReactNode;
   onClickCard?: () => void;
+  /** Si se pasa, el nombre es un enlace real que cubre toda la tarjeta. */
+  href?: string;
   cloudName?: string;
 }
 
@@ -20,6 +23,7 @@ export function PetCard({
   healthStatus = false,
   children,
   onClickCard,
+  href,
   cloudName = "",
 }: PetCardProps) {
   const accent = getSpeciesAccent(pet.petSpecies?.name || "default");
@@ -31,7 +35,7 @@ export function PetCard({
   return (
     <article
       className={`max-h-max group relative overflow-hidden rounded-2xl border border-[#EAE6DC] bg-white shadow-sm transition-shadow hover:shadow-md ${
-        onClickCard ? "cursor-pointer" : ""
+        onClickCard || href ? "cursor-pointer" : ""
       }`}
       onClick={onClickCard}
     >
@@ -77,7 +81,18 @@ export function PetCard({
       <div className="flex flex-col gap-y-3 p-4">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <h3 className="font-semibold text-[#1F1D1A]">{pet.name}</h3>
+            <h3 className="font-semibold text-[#1F1D1A]">
+              {href ? (
+                <Link
+                  to={href}
+                  className="after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-blue-meraki focus-visible:after:rounded-2xl"
+                >
+                  {pet.name}
+                </Link>
+              ) : (
+                pet.name
+              )}
+            </h3>
             <p className="text-sm text-[#8A8577]">
               {pet.race || pet.petSpecies?.name} · {calculateAge(pet.birthdate)}
             </p>
