@@ -2,9 +2,7 @@
 
 Aplicación web fullstack para la **Asociación Meraki** (Guatemala) que digitaliza el proceso de adopción de mascotas, la transparencia de donaciones y la difusión de historias del albergue. Fue desarrollada de forma individual como **proyecto de graduación** de Ingeniería en Sistemas de Información y Ciencias de la Computación (Universidad Mariano Gálvez de Guatemala).
 
-🌐 Sitio en producción: [merakigt.org](https://merakigt.org)
-
-<!-- Agrega aquí 2 o 3 capturas: ![Catálogo](docs/screenshots/catalogo.png) -->
+🌐 Sitio en producción: [adopciones.merakigt.org](https://adopciones.merakigt.org)
 
 ## Qué resuelve
 
@@ -17,6 +15,7 @@ La asociación gestionaba adopciones y donaciones de forma manual. Esta platafor
 ## Funcionalidades
 
 **Sitio público**
+
 - Catálogo de mascotas con búsqueda por nombre y filtros por especie y género; ficha con galería de fotos.
 - Solicitud de adopción: formulario dinámico y carta de compromiso aceptada con fecha, hora e IP.
 - Cuenta de usuario: registro, verificación de correo, recuperación de contraseña, perfil, mascotas guardadas y estado de solicitudes (pendiente, en revisión, aprobada, rechazada).
@@ -25,6 +24,7 @@ La asociación gestionaba adopciones y donaciones de forma manual. Esta platafor
 - SEO: páginas renderizadas en servidor, metadatos, `sitemap.xml` dinámico y `robots.txt`.
 
 **Panel administrativo**
+
 - Gestión de mascotas (con fotos), solicitudes de adopción, donaciones, patrocinadores, proyectos e historias.
 - **Roles y permisos dinámicos** (Leer, Crear, Actualizar) almacenados en base de datos; el menú se genera a partir de los módulos asignados.
 - Gestión de usuarios administrativos.
@@ -40,13 +40,13 @@ La asociación gestionaba adopciones y donaciones de forma manual. Esta platafor
 
 ## Stack
 
-| Capa | Tecnologías |
-|---|---|
-| Frontend | Remix 1.x, React 18, TypeScript, Tailwind CSS, Recharts, Sonner |
-| Backend | Remix (loaders y actions), Node.js, Prisma ORM 6 |
-| Base de datos | PostgreSQL (Supabase), 25 modelos |
-| Servicios | Cloudinary (imágenes), Resend (correo), ExcelJS (reportes) |
-| Despliegue | Vercel (con tarea programada) |
+| Capa          | Tecnologías                                                     |
+| ------------- | --------------------------------------------------------------- |
+| Frontend      | Remix 1.x, React 18, TypeScript, Tailwind CSS, Recharts, Sonner |
+| Backend       | Remix (loaders y actions), Node.js, Prisma ORM 6                |
+| Base de datos | PostgreSQL (Supabase), 25 modelos                               |
+| Servicios     | Cloudinary (imágenes), Resend (correo), ExcelJS (reportes)      |
+| Despliegue    | Vercel (con tarea programada)                                   |
 
 ## Estructura del proyecto
 
@@ -102,11 +102,11 @@ npm run dev
 
 ## Scripts
 
-| Comando | Descripción |
-|---|---|
-| `npm run dev` | Servidor de desarrollo con compilación de Tailwind en vivo |
-| `npm run build` | Compilación de producción |
-| `npm run typecheck` | Verificación de tipos con TypeScript |
+| Comando             | Descripción                                                |
+| ------------------- | ---------------------------------------------------------- |
+| `npm run dev`       | Servidor de desarrollo con compilación de Tailwind en vivo |
+| `npm run build`     | Compilación de producción                                  |
+| `npm run typecheck` | Verificación de tipos con TypeScript                       |
 
 ## Decisiones técnicas
 
