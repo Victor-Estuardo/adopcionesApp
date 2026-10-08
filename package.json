@@ -1,4 +1,6 @@
 {
+  "name": "adopciones-app",
+  "version": "1.0.0",
   "private": true,
   "sideEffects": false,
   "scripts": {
@@ -7,34 +9,28 @@
     "dev": "concurrently \"npm run dev:css\" \"remix dev\"",
     "dev:remix": "cross-env NODE_ENV=development PORT=4200 remix dev",
     "dev:css": "tailwindcss -w -i ./styles/app.css -o app/styles/app.css",
-    "start": "cross-env NODE_ENV=production",
+    "start": "cross-env NODE_ENV=production remix-serve build",
     "typecheck": "tsc",
     "postinstall": "npx prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^6.17.1",
-    "@reduxjs/toolkit": "^1.9.5",
     "@remix-run/css-bundle": "^1.14.0",
     "@remix-run/node": "^1.14.0",
     "@remix-run/react": "^1.14.0",
     "@remix-run/vercel": "^1.14.0",
     "bcryptjs": "^3.0.3",
-    "classnames": "^2.3.2",
     "cloudinary": "^2.10.0",
     "cross-env": "^7.0.3",
     "date-fns": "^4.1.0",
-    "dayjs": "^1.11.10",
     "exceljs": "^4.4.0",
     "isbot": "^3.6.8",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-icons": "^5.5.0",
-    "react-redux": "^8.1.1",
     "recharts": "^3.9.2",
     "resend": "^6.9.1",
-    "sonner": "^2.0.7",
-    "styled-components": "^6.0.8",
-    "uuid": "^14.0.0"
+    "sonner": "^2.0.7"
   },
   "devDependencies": {
     "@remix-run/dev": "^1.14.0",
@@ -52,6 +48,6 @@
     "typescript": "^5.0.4"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=18.18.0"
   }
 }

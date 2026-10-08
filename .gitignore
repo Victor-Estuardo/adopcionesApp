@@ -12,3 +12,5 @@ node_modules
 /prisma/backup
 /auditoria_seguridad_rutas.md
 /auditoria_seguridad_owasp.md
+# Herramientas de asistente de código (locales)
+/.claude/
