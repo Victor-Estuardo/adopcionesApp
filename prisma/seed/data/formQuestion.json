@@ -1,0 +1,812 @@
+[
+  {
+    "id": "198901e6-081b-4a07-8613-27bc5e4f88e5",
+    "section": "DATOS PERSONALES",
+    "question_text": "Nombre completo",
+    "field_type": "text",
+    "options": null,
+    "required": true,
+    "sort_order": 2,
+    "active": true
+  },
+  {
+    "id": "7c83d210-5382-47b8-99a1-b111757c1d0f",
+    "section": "DATOS PERSONALES",
+    "question_text": "Edad",
+    "field_type": "number",
+    "options": null,
+    "required": true,
+    "sort_order": 3,
+    "active": true
+  },
+  {
+    "id": "c8c02d10-fd73-4f11-b0ec-cea4d458fd35",
+    "section": "DATOS PERSONALES",
+    "question_text": "Estado civil",
+    "field_type": "radio",
+    "options": [
+      "Casado/a",
+      "Soltero/a"
+    ],
+    "required": true,
+    "sort_order": 4,
+    "active": true
+  },
+  {
+    "id": "b8b170b1-7a46-4728-9190-d59d65f53bd8",
+    "section": "DATOS PERSONALES",
+    "question_text": "Profesión",
+    "field_type": "text",
+    "options": null,
+    "required": true,
+    "sort_order": 5,
+    "active": true
+  },
+  {
+    "id": "3b166a22-89d3-4e60-a196-ff9980387817",
+    "section": "DATOS PERSONALES",
+    "question_text": "Domicilio completo",
+    "field_type": "text",
+    "options": null,
+    "required": true,
+    "sort_order": 6,
+    "active": true
+  },
+  {
+    "id": "c6894b1b-f009-4df5-946b-c026f90ff3e8",
+    "section": "DATOS PERSONALES",
+    "question_text": "Correo electrónico",
+    "field_type": "text",
+    "options": null,
+    "required": true,
+    "sort_order": 7,
+    "active": true
+  },
+  {
+    "id": "98951a42-7bbb-4271-b10e-e80564500b9e",
+    "section": "DATOS PERSONALES",
+    "question_text": "NÚMERO DE DPI",
+    "field_type": "number",
+    "options": null,
+    "required": true,
+    "sort_order": 8,
+    "active": true
+  },
+  {
+    "id": "25407925-6379-4051-90bf-a7e2d96548d9",
+    "section": "DATOS PERSONALES",
+    "question_text": "Casa propia",
+    "field_type": "radio",
+    "options": [
+      "sí",
+      "no",
+      "alquilada"
+    ],
+    "required": true,
+    "sort_order": 9,
+    "active": true
+  },
+  {
+    "id": "e9c0ac7a-403a-4195-b871-83d1abbdb817",
+    "section": "DATOS PERSONALES",
+    "question_text": "¿De ser alquilada el dueño de la casa está de acuerdo con que tengan animales?",
+    "field_type": "yes_no",
+    "options": null,
+    "required": true,
+    "sort_order": 10,
+    "active": true
+  },
+  {
+    "id": "d838fbc6-999d-4fd0-9a3c-f923c46328eb",
+    "section": "DATOS PERSONALES",
+    "question_text": "Tipo de vivienda",
+    "field_type": "radio",
+    "options": [
+      "Casa",
+      "Apartamento",
+      "Granja",
+      "Finca"
+    ],
+    "required": true,
+    "sort_order": 11,
+    "active": true
+  },
+  {
+    "id": "138201af-e070-4fe2-8092-6a6ba1b04a78",
+    "section": "DATOS PERSONALES",
+    "question_text": "¿Tiempo de vivir en el domicilio?",
+    "field_type": "text",
+    "options": null,
+    "required": true,
+    "sort_order": 12,
+    "active": true
+  },
+  {
+    "id": "b57135c5-095f-4bc3-b442-548ce51d9111",
+    "section": "DATOS PERSONALES",
+    "question_text": "Teléfono fijo o de casa",
+    "field_type": "number",
+    "options": null,
+    "required": true,
+    "sort_order": 13,
+    "active": true
+  },
+  {
+    "id": "05470b93-2611-47ee-8019-c5e9d417f9df",
+    "section": "DATOS PERSONALES",
+    "question_text": "Teléfono celular 1",
+    "field_type": "number",
+    "options": null,
+    "required": true,
+    "sort_order": 14,
+    "active": true
+  },
+  {
+    "id": "69c1c0bd-32cb-460c-9d39-b8efc0ef997a",
+    "section": "DATOS PERSONALES",
+    "question_text": "Teléfono celular 2",
+    "field_type": "number",
+    "options": null,
+    "required": false,
+    "sort_order": 15,
+    "active": true
+  },
+  {
+    "id": "1e406dc6-1cb2-47f5-bed6-57c76bd18727",
+    "section": "DATOS PERSONALES",
+    "question_text": "¿Cómo apareces en redes sociales?",
+    "field_type": "textarea",
+    "options": null,
+    "required": true,
+    "sort_order": 16,
+    "active": true
+  },
+  {
+    "id": "570093b6-f562-4210-b59b-6cd75d9d4f03",
+    "section": "DATOS LABORALES",
+    "question_text": "Nombre de la empresa",
+    "field_type": "text",
+    "options": null,
+    "required": true,
+    "sort_order": 17,
+    "active": true
+  },
+  {
+    "id": "244e47b1-2c13-417d-906d-2dd961a140c6",
+    "section": "DATOS LABORALES",
+    "question_text": "Dirección de la empresa",
+    "field_type": "text",
+    "options": null,
+    "required": true,
+    "sort_order": 18,
+    "active": true
+  },
+  {
+    "id": "0d916bad-956c-42ac-a258-284fa9ee4ea5",
+    "section": "DATOS LABORALES",
+    "question_text": "Teléfono de la empresa",
+    "field_type": "number",
+    "options": null,
+    "required": true,
+    "sort_order": 19,
+    "active": true
+  },
+  {
+    "id": "053643c9-ef87-4c0d-9431-96e7beeddde0",
+    "section": "DATOS LABORALES",
+    "question_text": "¿Tiempo de laborar para la empresa?",
+    "field_type": "text",
+    "options": null,
+    "required": true,
+    "sort_order": 20,
+    "active": true
+  },
+  {
+    "id": "4d77b995-61d0-4a92-a963-906419b9e960",
+    "section": "DATOS LABORALES",
+    "question_text": "Cargo o puesto",
+    "field_type": "textarea",
+    "options": null,
+    "required": true,
+    "sort_order": 21,
+    "active": true
+  },
+  {
+    "id": "401ba2b6-6017-4128-bee7-a61919986300",
+    "section": "REFERENCIAS PERSONALES",
+    "question_text": "Referencia 1",
+    "field_type": "section",
+    "options": null,
+    "required": false,
+    "sort_order": 22,
+    "active": true
+  },
+  {
+    "id": "3c324785-0339-4b2c-9ac5-0608bfe9cf68",
+    "section": "REFERENCIAS PERSONALES",
+    "question_text": "Nombre",
+    "field_type": "text",
+    "options": null,
+    "required": true,
+    "sort_order": 23,
+    "active": true
+  },
+  {
+    "id": "da261716-4d7e-4cb9-bc70-c8ab47907786",
+    "section": "REFERENCIAS PERSONALES",
+    "question_text": "Número de teléfono",
+    "field_type": "number",
+    "options": null,
+    "required": true,
+    "sort_order": 24,
+    "active": true
+  },
+  {
+    "id": "6c59bede-5860-470a-be02-7e2a7206ba44",
+    "section": "REFERENCIAS PERSONALES",
+    "question_text": "Dirección",
+    "field_type": "textarea",
+    "options": null,
+    "required": true,
+    "sort_order": 25,
+    "active": true
+  },
+  {
+    "id": "9167095d-8f17-48be-90ee-64e5e51ad90a",
+    "section": "REFERENCIAS PERSONALES",
+    "question_text": "Parentesco",
+    "field_type": "text",
+    "options": null,
+    "required": true,
+    "sort_order": 26,
+    "active": true
+  },
+  {
+    "id": "f0c97c48-d1f1-4e2a-a901-f156918e36b5",
+    "section": "REFERENCIAS PERSONALES",
+    "question_text": "Referencia 2",
+    "field_type": "section",
+    "options": null,
+    "required": false,
+    "sort_order": 27,
+    "active": true
+  },
+  {
+    "id": "a9bce042-928c-4741-836f-3f3edd0e6ffc",
+    "section": "REFERENCIAS PERSONALES",
+    "question_text": "Nombre",
+    "field_type": "text",
+    "options": null,
+    "required": true,
+    "sort_order": 28,
+    "active": true
+  },
+  {
+    "id": "15c2c711-297a-4b60-a6d1-00bfd338a73a",
+    "section": "REFERENCIAS PERSONALES",
+    "question_text": "Número de teléfono",
+    "field_type": "number",
+    "options": null,
+    "required": true,
+    "sort_order": 29,
+    "active": true
+  },
+  {
+    "id": "8d2b905b-8196-41a4-a09c-ec47bf519888",
+    "section": "REFERENCIAS PERSONALES",
+    "question_text": "Dirección",
+    "field_type": "textarea",
+    "options": null,
+    "required": true,
+    "sort_order": 30,
+    "active": true
+  },
+  {
+    "id": "d8a78134-da5d-43dd-8ca0-dca1a645cd17",
+    "section": "REFERENCIAS PERSONALES",
+    "question_text": "Parentesco",
+    "field_type": "text",
+    "options": null,
+    "required": true,
+    "sort_order": 31,
+    "active": true
+  },
+  {
+    "id": "f17cc520-7409-4d44-b503-7f1785415734",
+    "section": "REFERENCIAS PERSONALES",
+    "question_text": "Referencia 3",
+    "field_type": "section",
+    "options": null,
+    "required": false,
+    "sort_order": 32,
+    "active": true
+  },
+  {
+    "id": "82ef3259-786e-4552-81e1-84d20ae0816b",
+    "section": "REFERENCIAS PERSONALES",
+    "question_text": "Nombre",
+    "field_type": "text",
+    "options": null,
+    "required": true,
+    "sort_order": 33,
+    "active": true
+  },
+  {
+    "id": "edbe707e-236b-48d0-9623-26d64e3bac77",
+    "section": "REFERENCIAS PERSONALES",
+    "question_text": "Número de teléfono",
+    "field_type": "number",
+    "options": null,
+    "required": true,
+    "sort_order": 34,
+    "active": true
+  },
+  {
+    "id": "59fbd28e-701b-4268-b05d-944c345601a8",
+    "section": "REFERENCIAS PERSONALES",
+    "question_text": "Dirección",
+    "field_type": "textarea",
+    "options": null,
+    "required": true,
+    "sort_order": 35,
+    "active": true
+  },
+  {
+    "id": "751da726-ce39-4e62-9de1-642ee948a92e",
+    "section": "REFERENCIAS PERSONALES",
+    "question_text": "Parentesco",
+    "field_type": "text",
+    "options": null,
+    "required": true,
+    "sort_order": 36,
+    "active": true
+  },
+  {
+    "id": "8dc8ea0d-8c8f-472d-95c0-800f4b9105b0",
+    "section": "SOBRE LA MASCOTA",
+    "question_text": "Nombre de la mascota que desea adoptar",
+    "field_type": "text",
+    "options": null,
+    "required": true,
+    "sort_order": 37,
+    "active": true
+  },
+  {
+    "id": "350f0f1b-81eb-42b6-81a5-347704c27b3d",
+    "section": "SOBRE LA MASCOTA",
+    "question_text": "¿Por qué deseas adoptar? Explica",
+    "field_type": "textarea",
+    "options": null,
+    "required": true,
+    "sort_order": 38,
+    "active": true
+  },
+  {
+    "id": "10d2b1e9-de4e-4e04-bb54-aa6dba634078",
+    "section": "SOBRE LA MASCOTA",
+    "question_text": "¿En dónde se mantendrá la mascota?",
+    "field_type": "radio",
+    "options": [
+      "Patio",
+      "Jardín",
+      "Balcón",
+      "Terraza",
+      "Toda la casa"
+    ],
+    "required": true,
+    "sort_order": 39,
+    "active": true
+  },
+  {
+    "id": "2189dbd6-a74a-422f-a92f-f8d1e2309277",
+    "section": "SOBRE LA MASCOTA",
+    "question_text": "¿Con qué frecuencia tendrá contacto humano la mascota?",
+    "field_type": "radio",
+    "options": [
+      "Día",
+      "Tarde",
+      "Noche",
+      "Todo el día"
+    ],
+    "required": true,
+    "sort_order": 40,
+    "active": true
+  },
+  {
+    "id": "e07ed2f3-9147-4203-ac81-3d3b875c34a6",
+    "section": "VIVENCIA",
+    "question_text": "¿Cuántos adultos viven con usted?",
+    "field_type": "number",
+    "options": null,
+    "required": true,
+    "sort_order": 41,
+    "active": true
+  },
+  {
+    "id": "759b3201-46c3-4ad5-94fe-674423d99f67",
+    "section": "VIVENCIA",
+    "question_text": "Edades",
+    "field_type": "text",
+    "options": null,
+    "required": true,
+    "sort_order": 42,
+    "active": true
+  },
+  {
+    "id": "2328a49a-df8c-4fdf-a0aa-36073ccf3496",
+    "section": "VIVENCIA",
+    "question_text": "¿Cuántos niños viven con usted?",
+    "field_type": "number",
+    "options": null,
+    "required": true,
+    "sort_order": 43,
+    "active": true
+  },
+  {
+    "id": "04bd77c5-6a4b-4494-a009-88b6b645d467",
+    "section": "VIVENCIA",
+    "question_text": "Edades",
+    "field_type": "text",
+    "options": null,
+    "required": true,
+    "sort_order": 44,
+    "active": true
+  },
+  {
+    "id": "39db3c25-7681-48ff-9468-c053f493b806",
+    "section": "VIVENCIA",
+    "question_text": "¿Todos aman a los animales y están de acuerdo con la adopción?",
+    "field_type": "yes_no",
+    "options": null,
+    "required": true,
+    "sort_order": 45,
+    "active": true
+  },
+  {
+    "id": "f02f4967-b7ad-42b7-84cf-839547ec56d1",
+    "section": "VIVENCIA",
+    "question_text": "¿Siempre habrá alguien en casa?",
+    "field_type": "yes_no",
+    "options": null,
+    "required": true,
+    "sort_order": 46,
+    "active": true
+  },
+  {
+    "id": "5231a11f-0571-4c5e-b230-31af8a114729",
+    "section": "VIVENCIA",
+    "question_text": "Si su respuesta fue NO, ¿cuánto tiempo pasará sola la mascota? Si fue sí, solo agregue que siempre habrá alguien",
+    "field_type": "text",
+    "options": null,
+    "required": true,
+    "sort_order": 47,
+    "active": true
+  },
+  {
+    "id": "398a8dc8-d007-4b96-b23e-180487d4f4de",
+    "section": "VIVENCIA",
+    "question_text": "¿Dónde dormiría la mascota?",
+    "field_type": "radio",
+    "options": [
+      "Dentro de casa",
+      "Patio",
+      "Jardín",
+      "Garage",
+      "Terraza",
+      "otro lugar"
+    ],
+    "required": true,
+    "sort_order": 48,
+    "active": true
+  },
+  {
+    "id": "3a79d9cf-f8ac-4e9d-aec7-f18e15209c6f",
+    "section": "VIVENCIA",
+    "question_text": "¿La vivienda es segura y cerrada para evitar que se escape?",
+    "field_type": "yes_no",
+    "options": null,
+    "required": true,
+    "sort_order": 49,
+    "active": true
+  },
+  {
+    "id": "e47874b2-68a7-470e-b2a3-f0be0a7d57d7",
+    "section": "VIVENCIA",
+    "question_text": "¿Tiene suficiente lugar para evitar que el animal se estrese?",
+    "field_type": "yes_no",
+    "options": null,
+    "required": true,
+    "sort_order": 50,
+    "active": true
+  },
+  {
+    "id": "06f75f28-392b-47ad-b91a-40d969c3a7d6",
+    "section": "VIVENCIA",
+    "question_text": "¿Cuando una mascota llega a un nuevo hogar, hay un periodo de adaptación aprox. 3-4 semanas, tendrá Ud. la paciencia y el cuidado para que aprenda su nueva rutina?",
+    "field_type": "yes_no",
+    "options": null,
+    "required": true,
+    "sort_order": 51,
+    "active": true
+  },
+  {
+    "id": "070aa2c1-bbc2-446f-8122-f1ccf8e9e82b",
+    "section": "VIVENCIA",
+    "question_text": "¿Cómo sacaría a pasear a su mascota?",
+    "field_type": "textarea",
+    "options": null,
+    "required": true,
+    "sort_order": 52,
+    "active": true
+  },
+  {
+    "id": "0be1df59-7472-4f4c-b7aa-ba1c11a23d24",
+    "section": "VIVENCIA",
+    "question_text": "¿Tiene la economía para su alimentación, veterinario y gastos futuros?",
+    "field_type": "yes_no",
+    "options": null,
+    "required": true,
+    "sort_order": 53,
+    "active": true
+  },
+  {
+    "id": "2c5e954a-5023-419a-9efa-d78fe4f159d1",
+    "section": "VIVENCIA",
+    "question_text": "En caso de mudarse de casa, salir del país o enfermarse ¿Qué haría con la mascota?",
+    "field_type": "textarea",
+    "options": null,
+    "required": true,
+    "sort_order": 54,
+    "active": true
+  },
+  {
+    "id": "32a31d2c-9597-427e-a1fd-b70519f2ca80",
+    "section": "VIVENCIA",
+    "question_text": "¿La devolvería a la asociación?",
+    "field_type": "yes_no",
+    "options": null,
+    "required": true,
+    "sort_order": 55,
+    "active": true
+  },
+  {
+    "id": "60d0b3cb-04ec-4fa7-bca5-3b2e83cab292",
+    "section": "VIVENCIA",
+    "question_text": "¿Se llevaría a la mascota?",
+    "field_type": "yes_no",
+    "options": null,
+    "required": true,
+    "sort_order": 56,
+    "active": true
+  },
+  {
+    "id": "8e240a7d-6a60-4d3e-a9ac-5f252f492964",
+    "section": "VIVENCIA",
+    "question_text": "¿Alguna vez ha tenido mascotas?",
+    "field_type": "yes_no",
+    "options": null,
+    "required": true,
+    "sort_order": 57,
+    "active": true
+  },
+  {
+    "id": "05eee290-faab-4536-9c34-d9a84befb328",
+    "section": "VIVENCIA",
+    "question_text": "¿Cuáles? ",
+    "field_type": "text",
+    "options": null,
+    "required": false,
+    "sort_order": 58,
+    "active": true
+  },
+  {
+    "id": "f24366c1-36be-4d35-8203-92fc8b3b36bf",
+    "section": "VIVENCIA",
+    "question_text": "¿Qué marca y tipo de alimento le daba Ud. a su mascota?",
+    "field_type": "text",
+    "options": null,
+    "required": true,
+    "sort_order": 59,
+    "active": true
+  },
+  {
+    "id": "bbb93ff8-ad5d-4def-bbe1-01775610e83a",
+    "section": "VIVENCIA",
+    "question_text": "¿Qué le sucedió a su última mascota?",
+    "field_type": "text",
+    "options": null,
+    "required": false,
+    "sort_order": 60,
+    "active": true
+  },
+  {
+    "id": "46cea9eb-8423-4807-8311-e42d63b41eab",
+    "section": "VIVENCIA",
+    "question_text": "¿Tiene mascotas actualmente?",
+    "field_type": "yes_no",
+    "options": null,
+    "required": true,
+    "sort_order": 61,
+    "active": true
+  },
+  {
+    "id": "5038603f-7681-4cf8-adda-c77bb2570227",
+    "section": "VIVENCIA",
+    "question_text": "¿Cuántas?",
+    "field_type": "number",
+    "options": null,
+    "required": true,
+    "sort_order": 62,
+    "active": true
+  },
+  {
+    "id": "f8bf24b3-5175-42d1-92d7-2a8ff8dde95b",
+    "section": "VIVENCIA",
+    "question_text": "¿Cuáles?",
+    "field_type": "text",
+    "options": null,
+    "required": false,
+    "sort_order": 63,
+    "active": true
+  },
+  {
+    "id": "e9bc2254-c94a-4eb1-9701-a0acb3252819",
+    "section": "VIVENCIA",
+    "question_text": "¿Desea adoptar para su hogar o para guardia?",
+    "field_type": "radio",
+    "options": [
+      "Hogar",
+      "Guardiana",
+      "Otro"
+    ],
+    "required": true,
+    "sort_order": 64,
+    "active": true
+  },
+  {
+    "id": "b1241ebf-3d69-48ef-889d-efb399e6fc28",
+    "section": "VIVENCIA",
+    "question_text": "¿Qué características busca en un perro o gato?",
+    "field_type": "textarea",
+    "options": null,
+    "required": true,
+    "sort_order": 65,
+    "active": true
+  },
+  {
+    "id": "85c340c3-5784-4cbb-8a76-931733d9e5a6",
+    "section": "VIVENCIA",
+    "question_text": "¿Hay personas con algún tipo de alergias?",
+    "field_type": "yes_no",
+    "options": null,
+    "required": true,
+    "sort_order": 66,
+    "active": true
+  },
+  {
+    "id": "b5dfbe31-e225-4084-b091-048b7763411a",
+    "section": "CUIDADO DE MASCOTA",
+    "question_text": "¿Está  consciente  que  una  mascota  rescatada  puede  buscar  puertas,  ventanas,  algún  espacio para escapar?",
+    "field_type": "yes_no",
+    "options": null,
+    "required": true,
+    "sort_order": 67,
+    "active": true
+  },
+  {
+    "id": "6f43cd15-5f07-46aa-a1c5-f7a45ea38cd2",
+    "section": "CUIDADO DE MASCOTA",
+    "question_text": "¿Qué haría?",
+    "field_type": "textarea",
+    "options": null,
+    "required": true,
+    "sort_order": 68,
+    "active": true
+  },
+  {
+    "id": "badffb16-7aba-4ebc-bceb-491ada6a02d6",
+    "section": "CUIDADO DE MASCOTA",
+    "question_text": "¿Está consciente que un perro sea adulto o cachorro podría dañar o usar de juguetes sus adornos?",
+    "field_type": "yes_no",
+    "options": null,
+    "required": true,
+    "sort_order": 69,
+    "active": true
+  },
+  {
+    "id": "25a106db-2a54-4481-9ea5-9abbcf438fa6",
+    "section": "CUIDADO DE MASCOTA",
+    "question_text": "¿Qué haría?",
+    "field_type": "textarea",
+    "options": null,
+    "required": true,
+    "sort_order": 70,
+    "active": true
+  },
+  {
+    "id": "cb00e588-59a5-4cae-bbd8-8024c1a653b5",
+    "section": "CUIDADO DE MASCOTA",
+    "question_text": "¿Está usted dispuesto a comprender y educar a su mascota en las travesuras que incurra en el transcurso de adaptación?",
+    "field_type": "yes_no",
+    "options": null,
+    "required": true,
+    "sort_order": 71,
+    "active": true
+  },
+  {
+    "id": "ce394070-e48b-46d3-b573-50d7081f869f",
+    "section": "CUIDADO DE MASCOTA",
+    "question_text": "Cuando entregamos en adopción, es política visitar periódicamente al adoptado para verificar su buen trato y estado. ¿Aceptas estas visitas?",
+    "field_type": "yes_no",
+    "options": null,
+    "required": true,
+    "sort_order": 72,
+    "active": true
+  },
+  {
+    "id": "8f5a6bf9-2f40-413f-91ff-fb5726fb203e",
+    "section": "CUIDADO DE MASCOTA",
+    "question_text": "El Adoptante no podrá en ningún caso entregar al adoptado a terceras personas, comprometiéndose a dar aviso oportuno a la asociación o directamente a la persona que se lo entregó.  Siendo este el caso, proporcionará al adoptado los días que sean necesarios para su nueva adopción.  En este punto cabe recordar que usted está adoptando un ser vivo que sufriría si pierde a su familia, la suya. ¿Se compromete avisar a la asociación con una semana de anticipación?",
+    "field_type": "yes_no",
+    "options": null,
+    "required": true,
+    "sort_order": 73,
+    "active": true
+  },
+  {
+    "id": "cd043c0f-4c98-4536-adb6-6414dfb92100",
+    "section": "CUIDADO DE MASCOTA",
+    "question_text": "¿En caso de no haber sido esterilizado se compromete hacerlo en corto o mediano plazo dependiendo de la edad de su mascota? La asociación le dará fecha para cumplir con este requisito en nuestras campañas de esterilización.",
+    "field_type": "yes_no",
+    "options": null,
+    "required": true,
+    "sort_order": 74,
+    "active": true
+  },
+  {
+    "id": "ac22f659-18a0-483e-9f67-5a1fbdc186f1",
+    "section": "CUIDADO DE MASCOTA",
+    "question_text": "¿Está consciente que a partir de que usted adopte a la mascota se encargará de cubrir sus gastos veterinarios, llevar el control de vacunas, desparasitante y cualquier enfermedad en la mascota e informar con certificado médico de por qué enfermó a la asociación?",
+    "field_type": "yes_no",
+    "options": null,
+    "required": true,
+    "sort_order": 75,
+    "active": true
+  },
+  {
+    "id": "10301912-97fc-42c3-bca4-4309961c3e7e",
+    "section": "CUIDADO DE MASCOTA",
+    "question_text": "¿Está usted consciente que tener una mascota va más allá de darle agua y comida a un animal? que también es necesario sacarlo a pasear, visitas veterinarias, brindarle amor,  dedicarle tiempo, tener un espacio para él donde protegerlo del sol frío y lluvia? puede cumplir con estos requisitos....",
+    "field_type": "yes_no",
+    "options": null,
+    "required": true,
+    "sort_order": 76,
+    "active": true
+  },
+  {
+    "id": "ac3b9037-e3ff-419f-ab88-155d9b75db73",
+    "section": "CUIDADO DE MASCOTA",
+    "question_text": "¿Está usted consciente que si la mascota no está bien cuidada, o si deja de enviar fotografías o videos como se ha acordado desde un principio, la mascota podrá ser retirada y reubicada en otro hogar?",
+    "field_type": "yes_no",
+    "options": null,
+    "required": true,
+    "sort_order": 77,
+    "active": true
+  },
+  {
+    "id": "b30747ef-4da6-496c-9a15-a2c3a848018d",
+    "section": "CUIDADO DE MASCOTA",
+    "question_text": "¿Está usted dispuesto a brindarle las 5 libertades que la ley exige que los animales deben de tener?",
+    "field_type": "checkbox",
+    "options": [
+      "libre de hambre y sed",
+      "libre de miedos y angustias",
+      "libre de incomodidades físicas y térmicas",
+      "libre de lesiones y enfermedades",
+      "libre para expresa sus pautas propias de comportamiento"
+    ],
+    "required": true,
+    "sort_order": 78,
+    "active": true
+  }
+]

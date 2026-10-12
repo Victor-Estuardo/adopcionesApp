@@ -1,0 +1,172 @@
+[
+  {
+    "id": 1,
+    "key": "/",
+    "name": "Mascotas",
+    "icon": "FaPaw",
+    "order": 1,
+    "is_active": true,
+    "nav_zone": "TOPBAR",
+    "nav_audience": "ALL"
+  },
+  {
+    "id": 2,
+    "key": "/donacion",
+    "name": "Donaciones",
+    "icon": "BiSolidDonateHeart",
+    "order": 2,
+    "is_active": true,
+    "nav_zone": "TOPBAR",
+    "nav_audience": "ALL"
+  },
+  {
+    "id": 3,
+    "key": "/finales-felices",
+    "name": "Finales felices",
+    "icon": "MdOutlineMiscellaneousServices",
+    "order": 3,
+    "is_active": true,
+    "nav_zone": "TOPBAR",
+    "nav_audience": "ALL"
+  },
+  {
+    "id": 5,
+    "key": "/mi-cuenta",
+    "name": "Mi cuenta",
+    "icon": "LuUser",
+    "order": 4,
+    "is_active": true,
+    "nav_zone": "ACCOUNT",
+    "nav_audience": "AUTH_ONLY"
+  },
+  {
+    "id": 6,
+    "key": "/mi-cuenta/editar",
+    "name": "Mi cuenta",
+    "icon": "LuUser",
+    "order": 5,
+    "is_active": true,
+    "nav_zone": "ACCOUNT",
+    "nav_audience": "AUTH_ONLY"
+  },
+  {
+    "id": 7,
+    "key": "/mi-cuenta/solicitudes",
+    "name": "Mis solicitudes",
+    "icon": "BsClipboard2Heart",
+    "order": 6,
+    "is_active": true,
+    "nav_zone": "ACCOUNT",
+    "nav_audience": "AUTH_ONLY"
+  },
+  {
+    "id": 8,
+    "key": "/mi-cuenta/guardados",
+    "name": "Guardados",
+    "icon": "LuHeart",
+    "order": 7,
+    "is_active": true,
+    "nav_zone": "ACCOUNT",
+    "nav_audience": "AUTH_ONLY"
+  },
+  {
+    "id": 9,
+    "key": "/mascotas",
+    "name": "Mascotas",
+    "icon": "FaPaw",
+    "order": 8,
+    "is_active": true,
+    "nav_zone": "ADMIN_SIDEBAR",
+    "nav_audience": "ADMIN_ONLY"
+  },
+  {
+    "id": 10,
+    "key": "/solicitudes",
+    "name": "Solicitudes",
+    "icon": "BsClipboard2Heart",
+    "order": 9,
+    "is_active": true,
+    "nav_zone": "ADMIN_SIDEBAR",
+    "nav_audience": "ADMIN_ONLY"
+  },
+  {
+    "id": 11,
+    "key": "/roles",
+    "name": "Roles",
+    "icon": "LuClipboardList",
+    "order": 10,
+    "is_active": true,
+    "nav_zone": "ADMIN_SIDEBAR",
+    "nav_audience": "ADMIN_ONLY"
+  },
+  {
+    "id": 12,
+    "key": "/usuarios",
+    "name": "Usuarios",
+    "icon": "FaUsers",
+    "order": 11,
+    "is_active": true,
+    "nav_zone": "ADMIN_SIDEBAR",
+    "nav_audience": "ADMIN_ONLY"
+  },
+  {
+    "id": 13,
+    "key": "/patrocinadores",
+    "name": "Patrocinadores",
+    "icon": "LuBuilding",
+    "order": 13,
+    "is_active": true,
+    "nav_zone": "ADMIN_SIDEBAR",
+    "nav_audience": "ADMIN_ONLY"
+  },
+  {
+    "id": 14,
+    "key": "/proyectos",
+    "name": "Proyectos",
+    "icon": "LuImage",
+    "order": 14,
+    "is_active": true,
+    "nav_zone": "ADMIN_SIDEBAR",
+    "nav_audience": "ADMIN_ONLY"
+  },
+  {
+    "id": 15,
+    "key": "/donaciones",
+    "name": "Donaciones",
+    "icon": "BiSolidDonateHeart",
+    "order": 12,
+    "is_active": true,
+    "nav_zone": "ADMIN_SIDEBAR",
+    "nav_audience": "ADMIN_ONLY"
+  },
+  {
+    "id": 16,
+    "key": "/estadisticas",
+    "name": "Estadísticas",
+    "icon": "MdBarChart",
+    "order": 16,
+    "is_active": true,
+    "nav_zone": "ADMIN_SIDEBAR",
+    "nav_audience": "ADMIN_ONLY"
+  },
+  {
+    "id": 17,
+    "key": "/camino-al-arcoiris",
+    "name": "Camino al arcoíris",
+    "icon": "LuRainbow",
+    "order": 4,
+    "is_active": true,
+    "nav_zone": "TOPBAR",
+    "nav_audience": "ALL"
+  },
+  {
+    "id": 18,
+    "key": "/historias",
+    "name": "Historias",
+    "icon": "LuBookHeart",
+    "order": 17,
+    "is_active": true,
+    "nav_zone": "ADMIN_SIDEBAR",
+    "nav_audience": "ADMIN_ONLY"
+  }
+]

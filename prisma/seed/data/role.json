@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "name": "Administrador",
+    "description": "Manejo total administrativo de la página",
+    "active": true,
+    "created_in": "2026-03-17T00:00:00.000Z",
+    "its_administrative": true,
+    "is_system": true
+  },
+  {
+    "id": 3,
+    "name": "Adoptante",
+    "description": "Publico general",
+    "active": true,
+    "created_in": "2026-03-17T00:00:00.000Z",
+    "its_administrative": false,
+    "is_system": true
+  }
+]

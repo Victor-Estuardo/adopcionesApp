@@ -1,0 +1,258 @@
+[
+  {
+    "id": 1,
+    "name": "Solicitar Adopción",
+    "description": "Poder solicitar la adopción de una mascota",
+    "module_id": 1,
+    "action": "Crear",
+    "created_in": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": 2,
+    "name": "Guardar Mascota",
+    "description": "Poder darle a guardar a una mascota",
+    "module_id": 1,
+    "action": "Guardar",
+    "created_in": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": 3,
+    "name": "Ver Mi Cuenta",
+    "description": "Poder ver la pantalla de mi cuenta, para adoptantes",
+    "module_id": 5,
+    "action": "Leer",
+    "created_in": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": 4,
+    "name": "Ver Editar Mi Cuenta",
+    "description": "Poder ver el modulo de editar mi cuenta, para adoptante",
+    "module_id": 6,
+    "action": "Leer",
+    "created_in": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": 5,
+    "name": "Ver Mis Solicitudes",
+    "description": "Poder ver el modulo de mis solicitudes, para adoptante",
+    "module_id": 7,
+    "action": "Leer",
+    "created_in": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": 6,
+    "name": "Ver Mis Guardados",
+    "description": "Poder ver el modulo de guardados, para adoptante",
+    "module_id": 8,
+    "action": "Leer",
+    "created_in": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": 7,
+    "name": "Ver Mascotas",
+    "description": "Poder ver el modulo de gestion de mascotas par admin",
+    "module_id": 9,
+    "action": "Leer",
+    "created_in": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": 8,
+    "name": "Agregar Mascotas",
+    "description": "Poder agregar mascotas a la app",
+    "module_id": 9,
+    "action": "Crear",
+    "created_in": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": 9,
+    "name": "Editar Mascotas",
+    "description": "Poder editar mascotas de la app",
+    "module_id": 9,
+    "action": "Actualizar",
+    "created_in": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": 10,
+    "name": "Ver Solicitudes",
+    "description": "Poder ver el modulo de mis solicitudes, para admin",
+    "module_id": 10,
+    "action": "Leer",
+    "created_in": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": 11,
+    "name": "Editar Solicitudes",
+    "description": "Poder editar las solicitudes de adopcion",
+    "module_id": 10,
+    "action": "Actualizar",
+    "created_in": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "id": 12,
+    "name": "Ver Roles",
+    "description": "Poder ver el modulo de gestion de roles",
+    "module_id": 11,
+    "action": "Leer",
+    "created_in": "2026-07-14T14:26:46.000Z"
+  },
+  {
+    "id": 13,
+    "name": "Editar Rol",
+    "description": "Poder hacer cambios en los roles",
+    "module_id": 11,
+    "action": "Actualizar",
+    "created_in": "2026-07-14T15:16:34.000Z"
+  },
+  {
+    "id": 14,
+    "name": "Crear Rol",
+    "description": "Poder crear roles en la aplicacion",
+    "module_id": 11,
+    "action": "Crear",
+    "created_in": "2026-07-14T15:47:42.000Z"
+  },
+  {
+    "id": 15,
+    "name": "Ver Usuarios",
+    "description": "Poder ver los usuarios",
+    "module_id": 12,
+    "action": "Leer",
+    "created_in": "2026-07-14T15:59:56.000Z"
+  },
+  {
+    "id": 16,
+    "name": "Crear Usuario",
+    "description": "Poder crear un nuevo usuario administrativo",
+    "module_id": 12,
+    "action": "Crear",
+    "created_in": "2026-07-14T16:51:23.000Z"
+  },
+  {
+    "id": 17,
+    "name": "Leer Patrocinadores",
+    "description": "Permite leer en Patrocinadores",
+    "module_id": 13,
+    "action": "Leer",
+    "created_in": "2026-09-02T23:12:23.017Z"
+  },
+  {
+    "id": 18,
+    "name": "Crear Patrocinadores",
+    "description": "Permite crear en Patrocinadores",
+    "module_id": 13,
+    "action": "Crear",
+    "created_in": "2026-09-02T23:12:24.050Z"
+  },
+  {
+    "id": 19,
+    "name": "Actualizar Patrocinadores",
+    "description": "Permite actualizar en Patrocinadores",
+    "module_id": 13,
+    "action": "Actualizar",
+    "created_in": "2026-09-02T23:12:25.699Z"
+  },
+  {
+    "id": 20,
+    "name": "Leer Proyectos",
+    "description": "Permite leer en Proyectos",
+    "module_id": 14,
+    "action": "Leer",
+    "created_in": "2026-09-02T23:29:04.584Z"
+  },
+  {
+    "id": 21,
+    "name": "Crear Proyectos",
+    "description": "Permite crear en Proyectos",
+    "module_id": 14,
+    "action": "Crear",
+    "created_in": "2026-09-02T23:29:06.733Z"
+  },
+  {
+    "id": 22,
+    "name": "Actualizar Proyectos",
+    "description": "Permite actualizar en Proyectos",
+    "module_id": 14,
+    "action": "Actualizar",
+    "created_in": "2026-09-02T23:29:07.808Z"
+  },
+  {
+    "id": 23,
+    "name": "Ver donaciones",
+    "description": "Permite leer en donaciones admin",
+    "module_id": 15,
+    "action": "Leer",
+    "created_in": "2026-09-04T23:49:58.000Z"
+  },
+  {
+    "id": 24,
+    "name": "Crear Donaciones",
+    "description": "Permite crear donaciones manuales desde admin",
+    "module_id": 15,
+    "action": "Crear",
+    "created_in": "2026-09-09T01:27:43.000Z"
+  },
+  {
+    "id": 25,
+    "name": "Editar donacioens",
+    "description": "Permite editar confirmar/rechazar las donaciones",
+    "module_id": 15,
+    "action": "Actualizar",
+    "created_in": "2026-09-09T17:10:43.000Z"
+  },
+  {
+    "id": 26,
+    "name": "Leer Estadísticas",
+    "description": "Permite leer en Estadísticas",
+    "module_id": 16,
+    "action": "Leer",
+    "created_in": "2026-09-15T03:31:25.436Z"
+  },
+  {
+    "id": 27,
+    "name": "Crear Estadísticas",
+    "description": "Permite crear en Estadísticas",
+    "module_id": 16,
+    "action": "Crear",
+    "created_in": "2026-09-15T03:31:27.586Z"
+  },
+  {
+    "id": 28,
+    "name": "Actualizar Estadísticas",
+    "description": "Permite actualizar en Estadísticas",
+    "module_id": 16,
+    "action": "Actualizar",
+    "created_in": "2026-09-15T03:31:29.634Z"
+  },
+  {
+    "id": 29,
+    "name": "Actualizar usuarios",
+    "description": "Permite actualizar estados de usuarios",
+    "module_id": 12,
+    "action": "Actualizar",
+    "created_in": "2026-09-16T17:03:26.000Z"
+  },
+  {
+    "id": 30,
+    "name": "Leer Historias",
+    "description": "Permite leer en Historias",
+    "module_id": 18,
+    "action": "Leer",
+    "created_in": "2026-09-30T18:26:36.281Z"
+  },
+  {
+    "id": 31,
+    "name": "Crear Historias",
+    "description": "Permite crear en Historias",
+    "module_id": 18,
+    "action": "Crear",
+    "created_in": "2026-09-30T18:26:38.541Z"
+  },
+  {
+    "id": 32,
+    "name": "Actualizar Historias",
+    "description": "Permite actualizar en Historias",
+    "module_id": 18,
+    "action": "Actualizar",
+    "created_in": "2026-09-30T18:26:41.090Z"
+  }
+]
