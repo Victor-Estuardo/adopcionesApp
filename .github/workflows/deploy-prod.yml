@@ -1,0 +1,49 @@
+name: Deploy producción (Vercel – Asociación Meraki)
+
+# Cada push a main despliega a producción en la cuenta de Vercel de Asociación Meraki.
+# Se usa el CLI con token porque el plan Hobby bloquea los deploys disparados por
+# commits de usuarios que no son dueños de la cuenta.
+# Las migraciones de Prisma NO se aplican aquí: se ejecutan a mano.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Un deploy a la vez; si llegan varios pushes seguidos se encolan (no se cancela uno en curso).
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+env:
+  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  VERCEL_CLI: vercel@65.16.0
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # Solo desde main, también cuando se lanza manualmente.
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # postinstall ejecuta `prisma generate`
+      - run: npm ci
+
+      - name: Verificación de tipos
+        run: npm run typecheck
+
+      - name: Traer configuración y variables de producción
+        run: npx $VERCEL_CLI pull --yes --environment=production
+
+      - name: Compilar
+        run: npx $VERCEL_CLI build --prod
+
+      - name: Desplegar
+        run: npx $VERCEL_CLI deploy --prebuilt --prod
